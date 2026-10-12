@@ -1,22 +1,27 @@
 {
   "name": "ecogarden",
-  "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
+  "version": "0.8.0",
+  "private": true,
+  "description": "生态花园：可离线运行的体素生态游戏（模块化工程，零 npm 运行时依赖）",
+  "type": "commonjs",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "dev": "vite",
-    "build": "vite build",
-    "preview": "vite preview"
+    "dev": "node server.cjs",
+    "start": "node server.cjs",
+    "build": "node scripts/build.cjs",
+    "preview": "node scripts/preview.cjs",
+    "test": "node tests/behavior.cjs && node tests/render.cjs",
+    "test:ecology": "node tests/ecology.cjs",
+    "demo": "node scripts/landscape-demo.cjs"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "type": "module",
-  "devDependencies": {
-    "vite": "^8.3.4"
+  "engines": {
+    "node": ">=18"
   },
-  "dependencies": {
-    "three": "^0.128.0"
-  }
+  "keywords": [
+    "game",
+    "ecology",
+    "threejs",
+    "voxel",
+    "offline"
+  ],
+  "license": "SEE LICENSE IN THIRD-PARTY-NOTICES.txt"
 }
