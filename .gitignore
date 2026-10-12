@@ -1,5 +1,27 @@
+# 依赖与构建产物
 node_modules/
 dist/
+
+# 发布包原始素材（由朋友提供的压缩包解压目录，未纳入版本管理）
+生态花园-ecogarden-v0.8/
+
+# 发布包中体积较大或属于可选素材的文件（按需取消忽略后再提交）
+# 例外：docs/演示花园.json 是第五关演示存档，landscape-demo.cjs 会写到这里，随工程保留。
+演示花园.json
+!docs/演示花园.json
+试玩-*.png
+从头开始-新存档.json
+
+# 本地临时协作报告（Lead/teammate 使用，不是工程内容）
+.dsh-reports/
+
+# 压缩包
+*.zip
+
+# 注意：docs/population-log.jsonl 是 npm run test:ecology 的采样输出，
+# 有意随仓库保留（docs/验证记录.md 的长时观察表格取自它），因此这里不忽略 *.jsonl。
+
+# 编辑器、系统与日志
 .DS_Store
 Thumbs.db
 *.log

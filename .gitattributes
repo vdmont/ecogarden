@@ -1,0 +1,11 @@
+# 行尾策略
+#
+# 默认按文本处理并交给 core.autocrlf 决定工作区行尾（仓库内以 LF 存储）。
+* text=auto
+
+# 例外：批处理文件必须是 CRLF，否则 cmd.exe 会把 if/else(...) 块解析错乱
+# （本项目的 开始试玩.cmd 含中文提示，LF-only 时实测会从多字节字符中间切开当成命令执行）。
+# 用 -text 让 Git 完全不做行尾转换，blob 里就存 CRLF —— 这样无论对方 autocrlf 怎么设、
+# 还是直接下载 ZIP / tarball，拿到的都是能运行的版本。
+*.cmd -text
+*.bat -text
