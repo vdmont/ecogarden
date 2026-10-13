@@ -5,7 +5,7 @@ const TERRAIN_UNLOCK={lake:300,forest:650,mountain:1000};
 const blankMetrics=()=>Object.fromEntries(METRICS.map(k=>[k,0]));
 const soil=()=>({ground:'soil',plant:null,animal:null,age:0,plantLife:0,waterAge:0,fire:0,ash:0,recovery:0,burns:0,fert:0,moist:0,elevation:0,variant:0});
 const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
-function defaultProfile(){return {version:VERSION,unlocked:0,current:0,completed:[],achievements:{},totalScore:0,totals:blankMetrics(),worlds:{},tutorial:{},seen:{},records:{},settings:{sound:true,labels:true,autoFocus:false,quality:'auto'}};}
+function defaultProfile(){return {version:VERSION,unlocked:0,current:0,completed:[],achievements:{},totalScore:0,totals:blankMetrics(),worlds:{},tutorial:{},tutorialCounts:{},seen:{},records:{},settings:{sound:true,labels:true,autoFocus:false,quality:'auto'}};}
 function valid(x,y,w,h){if(x<0||y<0||x>=w||y>=h)return false;let u=(x-w/2+.5)/(w/2-.5),v=(y-h/2+.5)/(h/2-.5),a=Math.atan2(v,u);return Math.pow(Math.abs(u),3.5)+Math.pow(Math.abs(v),3.5)<1+.045*Math.sin(a*5);}
 function makeWorld(level){
  const cfg=LEVELS[level],s={level,w:cfg.w,h:cfg.h,cells:[],tick:0,energy:level===0?50:100,score:0,combo:1,comboLeft:0,lastCombo:'',metrics:blankMetrics(),complete:false,notified:{},events:[],rng:(1234567+Date.now()+level*177)>>>0};

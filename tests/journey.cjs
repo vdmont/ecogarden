@@ -12,3 +12,9 @@ console.log('PASS fire kills each animal species on burning ground');
 console.log('PASS early tutorial advances on actual objectives and completed steps survive saves');
 assert(E.LIFE.sheep<720&&E.LIFE.alpaca<840&&E.LIFE.rabbit<360);
 console.log('PASS shorter animal lifetimes');
+{
+ const p=E.defaultProfile(),s=E.makeWorld(0);const step=GardenJourney.plan(s,p);GardenJourney.learned(p,step);assert(GardenJourney.plan(s,p));GardenJourney.learned(p,step);assert.equal(GardenJourney.plan(s,p),null);
+ const late=E.makeWorld(5);assert.equal(GardenJourney.plan(late,E.defaultProfile()),null);
+ p.worlds[0]=s;const q=E.validateProfile(JSON.parse(JSON.stringify(p)));assert.equal(q.tutorialCounts.seed,2);assert.equal(GardenJourney.plan(s,q),null);
+}
+console.log('PASS repeated teaching capped at two, persisted, and final chapter has no tutorial');
