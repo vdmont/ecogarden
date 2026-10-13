@@ -1,6 +1,6 @@
 {
   "name": "ecogarden",
-  "version": "0.8.0",
+  "version": "0.9.0",
   "private": true,
   "description": "生态花园：可离线运行的体素生态游戏（模块化工程，零 npm 运行时依赖）",
   "type": "commonjs",
@@ -9,7 +9,7 @@
     "start": "node server.cjs",
     "build": "node scripts/build.cjs",
     "preview": "node scripts/preview.cjs",
-    "test": "node tests/behavior.cjs && node tests/render.cjs",
+    "test": "node tests/behavior.cjs && node tests/render.cjs && node tests/journey.cjs",
     "test:ecology": "node tests/ecology.cjs",
     "demo": "node scripts/landscape-demo.cjs"
   },
