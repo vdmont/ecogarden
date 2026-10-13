@@ -2,7 +2,7 @@
 
 一个纯前端的浮岛生态沙盒游戏。种子、幼虫、火、羊驼——所有生命都在一座小岛上慢慢发生。
 
-当前版本 **v0.8**（六个章节、15 种动物、42 项成就），并且已经完成从「一个 HTML 走天下」到**模块化工程**的改造：源码按数据 / 模拟 / 状态 / 渲染 / 界面分层放在 `src/` 下，构建脚本再把它组装成可离线双击打开的单文件版。
+当前版本 **v0.9**（六个章节、15 种动物、42 项成就），并且已经完成从「一个 HTML 走天下」到**模块化工程**的改造：源码按数据 / 模拟 / 状态 / 渲染 / 界面分层放在 `src/` 下，构建脚本再把它组装成可离线双击打开的单文件版。
 
 ## 环境要求
 
@@ -16,7 +16,7 @@ git clone https://github.com/vdmont/ecogarden.git
 cd ecogarden
 
 npm run dev      # 本地试玩：http://127.0.0.1:8877/
-npm test         # 行为检查 + 渲染检查（22 + 2 项）
+npm test         # 行为检查 + 渲染检查（既有行为、渲染及园丁引导检查）
 npm run build    # 生成离线单文件版 dist/index.html
 npm run preview  # 预览构建产物：http://127.0.0.1:4173/
 ```
@@ -128,3 +128,5 @@ npm run test:ecology  # 长时种群观察，输出 3 个种子的采样 JSON
 - [`docs/GameJam-双端核对.md`](docs/GameJam-双端核对.md) — 平台交付核对
 - [`legacy/README.md`](legacy/README.md) — 改造前的单文件基线说明
 - [`THIRD-PARTY-NOTICES.txt`](THIRD-PARTY-NOTICES.txt) — Three.js 许可
+
+新版主界面、创造/观察模式、引导、地形解锁与生态调整见 [v0.9 园丁引导](docs/v0.9-园丁引导.md)。

@@ -1,6 +1,6 @@
 (function(){
 const VERSION=6, STEP_MS=500;
-const LIFE={bug:180,butterfly:180,bird:480,sheep:720,alpaca:840,rabbit:360,deer:720,fox:600,bee:240,chicken:480,frog:480,hedgehog:600,wolf:840,squirrel:480,boar:720};
+const LIFE={bug:150,butterfly:150,bird:360,sheep:480,alpaca:600,rabbit:260,deer:480,fox:440,bee:180,chicken:340,frog:360,hedgehog:420,wolf:600,squirrel:340,boar:480};
 const ANIMAL_NAMES={bug:T.m001,butterfly:T.m002,bird:T.m003,sheep:T.m004,alpaca:T.m005,rabbit:T.m006,deer:T.m007,fox:T.m008,bee:T.m009,chicken:T.m010,frog:T.m011,hedgehog:T.m012,wolf:T.m013,squirrel:T.m014,boar:T.m015};
 const WEIGHTS={bug:20,bird:15,sheep:10,alpaca:10,rabbit:10,deer:5,fox:5,butterfly:5,bee:4,chicken:4,frog:3,hedgehog:3,wolf:2,squirrel:2,boar:2};
 const HERBS=['sheep','alpaca','rabbit','deer','boar','squirrel'], HUNTERS=['bird','chicken','frog','hedgehog'], POLLINATORS=['butterfly','bee'];

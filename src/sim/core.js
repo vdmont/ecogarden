@@ -1,10 +1,11 @@
 (function(root){
 'use strict';
 const {VERSION,STEP_MS,LIFE,ANIMAL_NAMES,WEIGHTS,HERBS,HUNTERS,POLLINATORS,PREY,EXTRA_METRICS,PET_TITLES,PLANT_LIFE,BREED,TOOL,BASE,LATE,LEVELS,ACHIEVEMENTS,SECRET,METRICS}=EcoData;
+const TERRAIN_UNLOCK={lake:300,forest:650,mountain:1000};
 const blankMetrics=()=>Object.fromEntries(METRICS.map(k=>[k,0]));
 const soil=()=>({ground:'soil',plant:null,animal:null,age:0,plantLife:0,waterAge:0,fire:0,ash:0,recovery:0,burns:0,fert:0,moist:0,elevation:0,variant:0});
 const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
-function defaultProfile(){return {version:VERSION,unlocked:0,current:0,completed:[],achievements:{},totalScore:0,totals:blankMetrics(),worlds:{},seen:{},records:{},settings:{sound:true,labels:true,autoFocus:false,quality:'auto'}};}
+function defaultProfile(){return {version:VERSION,unlocked:0,current:0,completed:[],achievements:{},totalScore:0,totals:blankMetrics(),worlds:{},tutorial:{},tutorialCounts:{},seen:{},records:{},settings:{sound:true,labels:true,autoFocus:false,quality:'auto'}};}
 function valid(x,y,w,h){if(x<0||y<0||x>=w||y>=h)return false;let u=(x-w/2+.5)/(w/2-.5),v=(y-h/2+.5)/(h/2-.5),a=Math.atan2(v,u);return Math.pow(Math.abs(u),3.5)+Math.pow(Math.abs(v),3.5)<1+.045*Math.sin(a*5);}
 function makeWorld(level){
  const cfg=LEVELS[level],s={level,w:cfg.w,h:cfg.h,cells:[],tick:0,energy:level===0?50:100,score:0,combo:1,comboLeft:0,lastCombo:'',metrics:blankMetrics(),complete:false,notified:{},events:[],rng:(1234567+Date.now()+level*177)>>>0};
@@ -32,6 +33,7 @@ function allow(s,tool,i,p,replace=false){
  const c=s.cells[i];if(!c)return T.m215;
  if(!LEVELS[s.level].tools.includes(tool))return T.m216;
  if(tool==='inspect'||tool==='erase')return '';
+ if(s.level>=4&&TERRAIN_UNLOCK[tool]&&s.score<TERRAIN_UNLOCK[tool])return '需要 '+TERRAIN_UNLOCK[tool]+' 生态值解锁';
  if(s.level!==5&&s.energy<TOOL[tool].cost)return T.m217;
  if(tool==='fire')return c.plant&&['grass','flower','tree','bush'].includes(c.plant)&&!c.fire?'':T.m218;
  if((tool==='animal'||Object.hasOwn(LIFE,tool))){
@@ -92,7 +94,7 @@ function step(s,p){
  for(const i of order){let c=s.cells[i],n=nearby(s,i),x=i%s.w,y=Math.floor(i/s.w);c.age++;if(c.recovery)c.recovery--;
   if(c.plant&&++c.plantLife>=PLANT_LIFE[c.plant]){const was=c.plant;c.plant=s.level>=3&&c.moist>0?'seed':null;c.plantLife=0;c.age=0;c.fert=Math.min(3,c.fert+.2);if(was==='tree'||was==='bush')note(s,'plantCycle',T.m232,T.m233,i);}
   if(c.ground==='water'&&++c.waterAge>700&&rand(s)<.0008&&!n.some(j=>s.cells[j].ground==='spring'))c.ground='soil';
-  if(c.fire){c.fire--;for(const j of n){if(Math.abs(j%s.w-x)+Math.abs(Math.floor(j/s.w)-y)!==1)continue;let d=s.cells[j];if(['grass','flower','tree','bush'].includes(d.plant)&&!d.fire&&rand(s)<.16){d.fire=10;d.plant=null;count(s,'burned',1,p);}}
+  if(c.fire){if(c.animal){c.animal=null;c.fert=Math.min(3,c.fert+.3);}c.fire--;for(const j of n){if(Math.abs(j%s.w-x)+Math.abs(Math.floor(j/s.w)-y)!==1)continue;let d=s.cells[j];if(['grass','flower','tree','bush'].includes(d.plant)&&!d.fire&&rand(s)<.16){d.fire=10;d.plant=null;count(s,'burned',1,p);}}
    if(!c.fire){c.ground='ash';c.ash=30;c.age=0;c.recovery=180;c.fert=Math.min(3,c.fert+.6*Math.pow(.65,c.burns));c.burns++;}continue;
   }
   if(c.ash>0)c.ash--;
@@ -116,11 +118,11 @@ function step(s,p){
   const predator=!!PREY[a.type], pollinator=POLLINATORS.includes(a.type), herb=HERBS.includes(a.type), budget=predator?300:200;
   if(a.hunger>budget){c.animal=null;c.fert=Math.min(3,c.fert+.3);continue;}
   let ate=false,food=eatPlants(s,i,a),prey=predator?nearby(s,i,2).filter(j=>PREY[a.type].includes(s.cells[j].animal?.type)):[];
-  const appetite=a.type==='bug'?.055:predator?.075:pollinator?.07:.12;
+  const appetite=a.type==='bug'?.055:predator?.14:pollinator?.07:.12;
   const preySupply=predator?PREY[a.type].reduce((sum,k)=>sum+(population[k]||0),0):0;
   const competitors=predator?Object.keys(PREY).filter(k=>PREY[k].some(t=>PREY[a.type].includes(t))).reduce((sum,k)=>sum+(population[k]||0),0):0;
   const huntingRate=appetite*Math.min(1,preySupply/Math.max(8,competitors*2));
-  if(prey.length&&a.hunger>45&&rand(s)<huntingRate){
+  if(prey.length&&a.hunger>24&&rand(s)<huntingRate){
    let j=prey[Math.floor(rand(s)*prey.length)],victim=s.cells[j].animal.type;s.cells[j].animal=null;population[victim]=Math.max(0,(population[victim]||1)-1);s.cells[j].fert=Math.min(3,s.cells[j].fert+.2);ate=true;count(s,'hunts',1,p);
    if(a.type==='bird'){count(s,'birdMeals',1,p);combo(s,T.m250);note(s,'birdMeal',T.m251,T.m252,i);}
    if(a.type==='fox'){award(p,'fox',s,typeof i==='number'?i:-1);combo(s,T.m253);note(s,'foxMeal',T.m142,T.m254,i);}
@@ -138,10 +140,10 @@ function step(s,p){
   if(a.type==='bird'&&s.tick%24===0){let j=n.find(j=>s.cells[j].ground==='soil'&&!s.cells[j].plant);if(j!==undefined){s.cells[j].plant='seed';s.cells[j].age=0;s.cells[j].plantLife=0;}}
   // Resource-dependent capacity and reproduction: feeding is required; scarcity stops births.
   const available=predator?PREY[a.type].reduce((sum,k)=>sum+(population[k]||0),0):plants;
-  const breed=BREED[a.type],cap=Math.min(breed.limit||1000,predator?Math.max(2,Math.floor(available/3)):Math.max(2,Math.floor(plants/breed.space)));
+  const breed=BREED[a.type],cap=Math.min(breed.limit||1000,predator?Math.max(2,Math.floor(available/4)):Math.max(2,Math.floor(plants/(breed.space*1.35))));
   const local=n.filter(j=>s.cells[j].animal?.type===a.type).length,habitatOK=a.type!=='frog'||c.moist>=.6;
   const adults=population[a.type]||0;
-  if(a.full>=breed.food&&a.hunger<65&&a.age>20&&s.tick-(a.bred||0)>breed.cool&&available>0&&adults<cap&&habitatOK&&local<3&&rand(s)<.16*(1-adults/(cap+1))/(1+local)){
+  if(a.full>=breed.food&&a.hunger<65&&a.age>20&&s.tick-(a.bred||0)>breed.cool&&available>0&&adults<cap&&habitatOK&&local<3&&rand(s)<.11*(1-adults/(cap+1))/(1+local)){
    let j=n.find(j=>isLand(s.cells[j])&&!s.cells[j].animal&&!['tree','bush'].includes(s.cells[j].plant));
    if(j!==undefined){let baby=animal(a.type);baby.age=-20;baby.variant=(a.variant+1)%5;baby.moved=s.tick;s.cells[j].animal=baby;a.full=0;a.bred=s.tick;population[a.type]=(population[a.type]||0)+1;count(s,'births',1,p);if(a.type==='sheep')award(p,'baby',s,typeof i==='number'?i:-1);if(a.type==='rabbit')award(p,'rabbit',s,typeof i==='number'?i:-1);}
   }
@@ -172,5 +174,5 @@ function check(s,p){
  }
 }
 
-root.Eco={VERSION,STEP_MS,LIFE,WEIGHTS,BREED,arrive,census,habitat,canWalk,largestLake,refreshTerrain,surfaceHeight,PET_TITLES,SECRET,pet,PLANT_LIFE,ANIMAL_NAMES,TOOL,LEVELS,ACHIEVEMENTS,defaultProfile,makeWorld,nearby,updateMoisture,place,allow,step,check,soil,METRICS,EXTRA_METRICS,rand,award,animal,valid};
+root.Eco={TERRAIN_UNLOCK,VERSION,STEP_MS,LIFE,WEIGHTS,BREED,arrive,census,habitat,canWalk,largestLake,refreshTerrain,surfaceHeight,PET_TITLES,SECRET,pet,PLANT_LIFE,ANIMAL_NAMES,TOOL,LEVELS,ACHIEVEMENTS,defaultProfile,makeWorld,nearby,updateMoisture,place,allow,step,check,soil,METRICS,EXTRA_METRICS,rand,award,animal,valid};
 })(globalThis);
