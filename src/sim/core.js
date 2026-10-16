@@ -85,7 +85,7 @@ function award(profile,id,s,i){if(profile.achievements[id])return false;profile.
 function note(s,id,title,text,i){if(s.notified[id])return;s.notified[id]=true;s.events.unshift({id,title,text,i,tick:s.tick});s.events=s.events.slice(0,40);}
 function count(s,key,n,p){s.metrics[key]=(s.metrics[key]||0)+n;if(p)p.totals[key]=(p.totals[key]||0)+n;}
 function combo(s,source){s.combo=clamp(s.combo+1,1,8);s.comboLeft=48;s.lastCombo=source;}
-function animal(type){return {type,age:0,full:0,drunk:0,sleep:0,dir:0,moved:-1,hunger:0,bred:0,petUntil:0,variant:0,drift:0,driftDir:-1};}
+function animal(type){return {type,age:0,full:0,drunk:0,sleep:0,dir:0,moved:-1,hunger:0,bred:0,petUntil:0,variant:0,habit:0,drift:0,driftDir:-1};}
 // 站上去/贴上去的高度：水与土地跟着格子自己的高度，石头再加一个石头的高度。
 // （水以前被压成 0，所以高处放水会"掉到平地"；现在水跟着地形，能做出不同高度的水面与落差。）
 function surfaceHeight(c){if(!c)return 0;const e=c.elevation||0;if(c.ground==='rock')return e+.65;if(c.ground==='mountain')return e||1.8;return e;}
@@ -136,6 +136,7 @@ function allow(s,tool,i,p,replace=false){
  if(c.animal)return T.m222;
  if(!isLand(c))return T.m223;
  if(['lake','mountain','forest'].includes(tool)&&!c.fire&&!c.ash&&[null,'seed','grass','flower'].includes(c.plant))return '';if(c.fire||c.ash>0)return T.m224;
+ if(c.plant==='grass'&&['rock','bush'].includes(tool))return '';
  if(c.plant&&!(replace&&['seed','flower'].includes(c.plant)))return T.m225;
  return '';
 }
@@ -185,11 +186,23 @@ function maxStep(a){const t=TRAITS[a&&a.type];return CLIMB_BASE+(t?(t.climb||0):
 // 水里也能走（蹚水、浮着、飞过）——会不会被冲走由 TRAITS 的 move/mass 决定，而不是靠这里禁止
 function canWalk(c,a,from){
  if(!c||c.fire)return false;
- if(!(isLand(c)||WATERY.includes(c.ground)||a.type==='alpaca'&&['rock','mountain'].includes(c.ground)))return false;
+ if(!(isLand(c)||WATERY.includes(c.ground)||(a.type==='alpaca'||TRAITS[a.type]?.move==='fly')&&['rock','mountain'].includes(c.ground)))return false;
  if(['tree','bush'].includes(c.plant)&&!THROUGH_VEG.includes(a.type))return false;
  if(from&&WATERY.indexOf(c.ground)<0&&WATERY.indexOf(from.ground)<0&&(!TRAITS[a.type]||TRAITS[a.type].move!=='fly')&&maxStep(a)<surfaceHeight(c)-surfaceHeight(from))return false;
  return true;
 }
+// Habits influence movement only when food is not urgent. They never eat playmates.
+function habit(s,i,a){
+ if(a.hunger>65||a.drunk||a.sleep||a.petUntil>s.tick)return {kind:0,rest:false,targets:[]};
+ const c=s.cells[i],kind=EcoData.VISITORS[a.type]?.[1],area=[i,...nearby(s,i,4)];
+ if(kind==='cat'){const targets=area.filter(j=>s.cells[j].animal?.type==='butterfly');if(targets.length)return {kind:1,rest:false,targets};if(a.age%100>=65&&a.age%100<85&&c.ground==='soil'&&!['tree','bush'].includes(c.plant))return {kind:2,rest:true,targets:[]};}
+ if(kind==='dog'&&a.age%120<80)return {kind:3,rest:false,targets:area.filter(j=>s.cells[j].animal?.type==='sheep')};
+ if(a.type==='capybara'){const rest=WATERY.includes(c.ground)&&a.age%100<65;return {kind:4,rest,targets:area.filter(j=>WATERY.includes(s.cells[j].ground))};}
+ if(kind==='bird'||a.type==='bird'){const targets=area.filter(j=>s.cells[j].animal?.type==='capybara'&&WATERY.includes(s.cells[j].ground));return {kind:5,rest:targets.some(j=>nearby(s,i).includes(j))&&a.age%80<50,targets};}
+ if(a.type==='dragon'){const targets=area.filter(j=>s.cells[j].ground==='mountain');const peak=targets.reduce((n,j)=>Math.max(n,surfaceHeight(s.cells[j])),0);return {kind:6,rest:c.ground==='mountain'&&surfaceHeight(c)>=peak&&a.age%120<80,targets:targets.filter(j=>surfaceHeight(s.cells[j])>=peak)};}
+ return {kind:0,rest:false,targets:[]};
+}
+function habitScore(s,j,h){if(!h.targets.length)return 0;const distance=Math.min(...h.targets.map(k=>Math.hypot(k%s.w-j%s.w,Math.floor(k/s.w)-Math.floor(j/s.w))));return Math.max(0,6-distance)*3;}
 function habitat(s,i,type){const nn=[i,...nearby(s,i,2)];if(type==='alpaca')return nn.some(j=>['mountain','rock'].includes(s.cells[j].ground))?2:0;if(['deer','squirrel'].includes(type))return Math.min(3,nn.filter(j=>s.cells[j].plant==='tree').length)*.8;if(type==='frog')return s.cells[i].moist>=.6?3:-3;if(type==='boar')return nn.some(j=>s.cells[j].plant==='bush')?1:0;return 0;}
 
 function arrive(s,p){
@@ -267,9 +280,10 @@ function step(s,p){
    let j=n.find(j=>isLand(s.cells[j])&&!s.cells[j].animal&&!['tree','bush'].includes(s.cells[j].plant));
    if(j!==undefined){let baby=animal(a.type);baby.age=-20;baby.variant=(a.variant+1)%5;baby.moved=s.tick;s.cells[j].animal=baby;a.full=0;a.bred=s.tick;population[a.type]=(population[a.type]||0)+1;count(s,'births',1,p);if(a.type==='sheep')award(p,'baby',s,typeof i==='number'?i:-1);if(a.type==='rabbit')award(p,'rabbit',s,typeof i==='number'?i:-1);}
   }
-  if(!a.drunk&&!a.sleep&&a.petUntil<=s.tick&&rand(s)<(a.type==='bug'?.18:pollinator||a.type==='bird'?.42:.3)){
+  const behavior=habit(s,i,a);a.habit=behavior.rest?behavior.kind:0;
+  if(!behavior.rest&&!a.drunk&&!a.sleep&&a.petUntil<=s.tick&&rand(s)<(a.type==='bug'?.18:pollinator||a.type==='bird'?.42:.3)){
    let choices=n.filter(j=>canWalk(s.cells[j],a,c)&&!s.cells[j].animal);
-   if(choices.length){const scores=choices.map(j=>{let nn=[j,...nearby(s,j)];return[j,habitat(s,j,a.type)+(predator?nn.filter(k=>PREY[a.type].includes(s.cells[k].animal?.type)).length*5+eatPlants(s,j,a).length*.15:eatPlants(s,j,a).reduce((sum,k)=>sum+(s.cells[k].plant==='bush'?4:1),0))];});
+   if(choices.length){const scores=choices.map(j=>{let nn=[j,...nearby(s,j)];return[j,habitScore(s,j,behavior)+habitat(s,j,a.type)+(predator?nn.filter(k=>PREY[a.type].includes(s.cells[k].animal?.type)).length*5+eatPlants(s,j,a).length*.15:eatPlants(s,j,a).reduce((sum,k)=>sum+(s.cells[k].plant==='bush'?4:1),0))];});
     let target=rand(s)<.65?scores.sort((a,b)=>b[1]-a[1])[0][0]:choices[Math.floor(rand(s)*choices.length)];
     a.dir=Math.atan2(target%s.w-x,Math.floor(target/s.w)-y);s.cells[target].animal=a;c.animal=null;
    }
@@ -305,5 +319,5 @@ function check(s,p){
  }
 }
 
-root.Eco={TERRAIN,TERRAIN_UNLOCK,SHAPE_CURRENT,FLOW_DIR,FLOW_DROP,TRAITS,ensureFlow,flowPush,eatPlants,menuAccepts,maxStep,CLIMB_BASE,CLIMB_STEP,VERSION,STEP_MS,LIFE,WEIGHTS,BREED,arrive,census,habitat,canWalk,largestLake,waterArea,refreshTerrain,surfaceHeight,PET_TITLES,SECRET,pet,PLANT_LIFE,ANIMAL_NAMES,TOOL,LEVELS,ACHIEVEMENTS,defaultProfile,makeWorld,nearby,updateMoisture,place,allow,step,check,soil,METRICS,EXTRA_METRICS,rand,award,animal,valid,islandMask,islandRadius};
+root.Eco={habit,habitScore,TERRAIN,TERRAIN_UNLOCK,SHAPE_CURRENT,FLOW_DIR,FLOW_DROP,TRAITS,ensureFlow,flowPush,eatPlants,menuAccepts,maxStep,CLIMB_BASE,CLIMB_STEP,VERSION,STEP_MS,LIFE,WEIGHTS,BREED,arrive,census,habitat,canWalk,largestLake,waterArea,refreshTerrain,surfaceHeight,PET_TITLES,SECRET,pet,PLANT_LIFE,ANIMAL_NAMES,TOOL,LEVELS,ACHIEVEMENTS,defaultProfile,makeWorld,nearby,updateMoisture,place,allow,step,check,soil,METRICS,EXTRA_METRICS,rand,award,animal,valid,islandMask,islandRadius};
 })(globalThis);

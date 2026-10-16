@@ -9,7 +9,7 @@
     "start": "node server.cjs",
     "build": "node scripts/build.cjs",
     "preview": "node scripts/preview.cjs",
-    "test": "node tests/behavior.cjs && node tests/render.cjs && node tests/journey.cjs && node tests/shape.cjs && node tests/flow.cjs && node tests/traits.cjs && node tests/visitors.cjs && node tests/audio.cjs",
+    "test": "node tests/behavior.cjs && node tests/render.cjs && node tests/journey.cjs && node tests/shape.cjs && node tests/flow.cjs && node tests/traits.cjs && node tests/visitors.cjs && node tests/audio.cjs && node tests/habits-undo.cjs",
     "test:ecology": "node tests/ecology.cjs",
     "demo": "node scripts/landscape-demo.cjs",
     "demo:water": "node scripts/water-demo.cjs"
