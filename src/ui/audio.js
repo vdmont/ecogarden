@@ -20,5 +20,6 @@ function pet(type,s){unlock(s);if(!ctx||s.sound===false)return;const t=ctx.curre
  else if(type==='frog'){tone(180,t,.2,.1,'square',90);tone(160,t+.3,.18,.07,'sine',70);}
  else if(['sheep','deer','boar'].includes(type)||k==='capy'){for(let j=0;j<4;j++)tone(260+j%2*55,t+j*.09,.13,.07,'triangle',210);}
  else if(k==='dragon'||k==='myth'){tone(k==='dragon'?90:320,t,.7,.09,'triangle',k==='dragon'?45:180);}
+ else {tone(type==='butterfly'?1500:950,t,.13,.028,'sine',type==='butterfly'?1900:1250);tone(type==='butterfly'?1900:1250,t+.16,.16,.02,'sine',type==='butterfly'?1700:1100);}
 }
 document.addEventListener('visibilitychange',()=>configure(settings));root.GardenAudio={unlock,configure,pet,musicStep};})(globalThis);
