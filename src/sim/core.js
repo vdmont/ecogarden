@@ -158,13 +158,33 @@ function place(s,tool,i,p,replace=false){
 }
 function recordKinds(s){let types=new Set(s.cells.filter(c=>c?.animal).map(c=>c.animal.type));s.metrics.animalKinds=Math.max(s.metrics.animalKinds||0,types.size);return types;}
 function pet(s,i,p){const a=s.cells[i]?.animal;if(!a)return {ok:false,reason:T.m228};if(a.petUntil>s.tick)return {ok:false,reason:T.m229};a.petUntil=s.tick+6;count(s,'pets',1,p);award(p,'pet'+a.type,s,typeof i==='number'?i:-1);if(a.drunk||a.sleep)award(p,'petDrunk',s,typeof i==='number'?i:-1);let n=Object.keys(PET_TITLES).filter(k=>p.achievements['pet'+k]).length;if(n>=5)award(p,'petFriends',s,typeof i==='number'?i:-1);if(n===15)award(p,'petAll',s,typeof i==='number'?i:-1);return {ok:true,type:a.type};}
-function eatPlants(s,i,a){let spots=[i,...nearby(s,i)];return spots.filter(j=>{let d=s.cells[j];if(['wolf','frog','hedgehog'].includes(a.type))return false;if(['fox','bird','chicken'].includes(a.type))return d.plant==='seed'||d.plant==='bush'&&d.age>=80;if(POLLINATORS.includes(a.type))return d.plant==='flower'||d.plant==='bush'&&d.age>=50;if(a.type==='squirrel')return d.plant==='tree'&&d.age%24<3||d.plant==='seed'||d.plant==='bush'&&d.age>=80;return d.plant==='grass'&&d.age>=12||d.plant==='flower'||d.plant==='bush'&&d.age>=80;}).sort((j,k)=>(s.cells[k].plant==='bush')-(s.cells[j].plant==='bush'));}
+// 食谱也来自属性：TRAITS[type].plants 的每一项说明「吃哪种植物、要长到什么状态才吃」。
+// 以前这里是一串 ['wolf','frog','hedgehog'].includes(...) 的分支，现在改属性就能改吃法。
+function menuAccepts(d,entry){
+ const kind=Array.isArray(entry)?entry[0]:entry,min=Array.isArray(entry)?(entry[1]||0):0,nibble=Array.isArray(entry)&&entry[2]==='nibble';
+ if(!d.plant||d.plant!==kind)return false;
+ return nibble?d.age%24<3:d.age>=min;
+}
+function eatPlants(s,i,a){
+ const menu=(TRAITS[a.type]||{}).plants||[];
+ if(!menu.length)return [];
+ return [i,...nearby(s,i)].filter(j=>{const d=s.cells[j];return menu.some(entry=>menuAccepts(d,entry));}).sort((j,k)=>(s.cells[k].plant==='bush')-(s.cells[j].plant==='bush'));
+}
 // 能走的地面：陆地与低山坡；树丛会挡住大个子，但小动物能钻过去，
 // 否则成片森林会把它们困在一小块地方（玩家反馈）。
 const THROUGH_VEG=['deer','squirrel','bird','bug','butterfly','bee','frog','hedgehog','chicken','rabbit'];
 const WATERY=['water','spring'];
+// 爬坡：一次能爬多高，由 climb 属性决定。会飞的直接越过；水里被水冲着走的不看坡度。
+const CLIMB_BASE=.4, CLIMB_STEP=.6;
+function maxStep(a){const t=TRAITS[a&&a.type];return CLIMB_BASE+(t?(t.climb||0):0)*CLIMB_STEP;}
 // 水里也能走（蹚水、浮着、飞过）——会不会被冲走由 TRAITS 的 move/mass 决定，而不是靠这里禁止
-function canWalk(c,a){return !!c&&!c.fire&&(isLand(c)||WATERY.includes(c.ground)||a.type==='alpaca'&&['rock','mountain'].includes(c.ground))&&(!['tree','bush'].includes(c.plant)||THROUGH_VEG.includes(a.type));}
+function canWalk(c,a,from){
+ if(!c||c.fire)return false;
+ if(!(isLand(c)||WATERY.includes(c.ground)||a.type==='alpaca'&&['rock','mountain'].includes(c.ground)))return false;
+ if(['tree','bush'].includes(c.plant)&&!THROUGH_VEG.includes(a.type))return false;
+ if(from&&WATERY.indexOf(c.ground)<0&&WATERY.indexOf(from.ground)<0&&(!TRAITS[a.type]||TRAITS[a.type].move!=='fly')&&maxStep(a)<surfaceHeight(c)-surfaceHeight(from))return false;
+ return true;
+}
 function habitat(s,i,type){const nn=[i,...nearby(s,i,2)];if(type==='alpaca')return nn.some(j=>['mountain','rock'].includes(s.cells[j].ground))?2:0;if(['deer','squirrel'].includes(type))return Math.min(3,nn.filter(j=>s.cells[j].plant==='tree').length)*.8;if(type==='frog')return s.cells[i].moist>=.6?3:-3;if(type==='boar')return nn.some(j=>s.cells[j].plant==='bush')?1:0;return 0;}
 
 function arrive(s,p){
@@ -243,7 +263,7 @@ function step(s,p){
    if(j!==undefined){let baby=animal(a.type);baby.age=-20;baby.variant=(a.variant+1)%5;baby.moved=s.tick;s.cells[j].animal=baby;a.full=0;a.bred=s.tick;population[a.type]=(population[a.type]||0)+1;count(s,'births',1,p);if(a.type==='sheep')award(p,'baby',s,typeof i==='number'?i:-1);if(a.type==='rabbit')award(p,'rabbit',s,typeof i==='number'?i:-1);}
   }
   if(!a.drunk&&!a.sleep&&a.petUntil<=s.tick&&rand(s)<(a.type==='bug'?.18:pollinator||a.type==='bird'?.42:.3)){
-   let choices=n.filter(j=>canWalk(s.cells[j],a)&&!s.cells[j].animal);
+   let choices=n.filter(j=>canWalk(s.cells[j],a,c)&&!s.cells[j].animal);
    if(choices.length){const scores=choices.map(j=>{let nn=[j,...nearby(s,j)];return[j,habitat(s,j,a.type)+(predator?nn.filter(k=>PREY[a.type].includes(s.cells[k].animal?.type)).length*5+eatPlants(s,j,a).length*.15:eatPlants(s,j,a).reduce((sum,k)=>sum+(s.cells[k].plant==='bush'?4:1),0))];});
     let target=rand(s)<.65?scores.sort((a,b)=>b[1]-a[1])[0][0]:choices[Math.floor(rand(s)*choices.length)];
     a.dir=Math.atan2(target%s.w-x,Math.floor(target/s.w)-y);s.cells[target].animal=a;c.animal=null;
@@ -280,5 +300,5 @@ function check(s,p){
  }
 }
 
-root.Eco={TERRAIN,TERRAIN_UNLOCK,SHAPE_CURRENT,FLOW_DIR,FLOW_DROP,TRAITS,ensureFlow,flowPush,VERSION,STEP_MS,LIFE,WEIGHTS,BREED,arrive,census,habitat,canWalk,largestLake,waterArea,refreshTerrain,surfaceHeight,PET_TITLES,SECRET,pet,PLANT_LIFE,ANIMAL_NAMES,TOOL,LEVELS,ACHIEVEMENTS,defaultProfile,makeWorld,nearby,updateMoisture,place,allow,step,check,soil,METRICS,EXTRA_METRICS,rand,award,animal,valid,islandMask,islandRadius};
+root.Eco={TERRAIN,TERRAIN_UNLOCK,SHAPE_CURRENT,FLOW_DIR,FLOW_DROP,TRAITS,ensureFlow,flowPush,eatPlants,menuAccepts,maxStep,CLIMB_BASE,CLIMB_STEP,VERSION,STEP_MS,LIFE,WEIGHTS,BREED,arrive,census,habitat,canWalk,largestLake,waterArea,refreshTerrain,surfaceHeight,PET_TITLES,SECRET,pet,PLANT_LIFE,ANIMAL_NAMES,TOOL,LEVELS,ACHIEVEMENTS,defaultProfile,makeWorld,nearby,updateMoisture,place,allow,step,check,soil,METRICS,EXTRA_METRICS,rand,award,animal,valid,islandMask,islandRadius};
 })(globalThis);

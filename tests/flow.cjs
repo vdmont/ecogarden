@@ -94,10 +94,10 @@ test('walkers get washed downstream, flyers do not', () => {
     }
     assert(pushed, '走兽站在活水上应该被推着走（drift>0），或者直接被冲走');
   }
-  // 结果：走兽一路冲到岛外就消失
+  // 结果：走兽一路冲到岛外就消失（放在靠近岛外的水道格上，几步之内就会被冲下去）
   {
     const { p, s, path } = streamWorld();
-    s.cells[path[2]].animal = E.animal('rabbit');
+    s.cells[path[path.length - 2]].animal = E.animal('rabbit');
     for (let t = 0; t < 300; t++) E.step(s, p);
     assert(s.metrics.washed >= 1, '水道里的兔子最终应该被冲下岛（washed=' + s.metrics.washed + '）');
     assert(Object.keys(s.notified).some(k => k.startsWith('washed')), '应该留下一条「被水冲走」的记录');
@@ -105,7 +105,7 @@ test('walkers get washed downstream, flyers do not', () => {
   // 会飞的：同样泡在水里，一拍都不会被推动
   {
     const { p, s, path } = streamWorld();
-    const fly = E.animal('bird'); s.cells[path[2]].animal = fly;
+    const fly = E.animal('bird'); s.cells[path[path.length - 2]].animal = fly;
     for (let t = 0; t < 300; t++) E.step(s, p);
     // 别的动物可能自己游荡进水里被冲走，但鸟绝不会
     assert(!s.notified.washedbird, '会飞的鸟不该被冲走');
