@@ -16,9 +16,10 @@ git clone https://github.com/vdmont/ecogarden.git
 cd ecogarden
 
 npm run dev      # 本地试玩：http://127.0.0.1:8877/
-npm test         # 行为检查 + 渲染检查（既有行为、渲染及园丁引导检查）
+npm test         # 45 项检查：行为 + 渲染 + 引导 + 形态 + 涌现式水流
 npm run build    # 生成离线单文件版 dist/index.html
 npm run preview  # 预览构建产物：http://127.0.0.1:4173/
+npm run demo:water  # 生成 docs/水流演示.json（水流冲走动物的演示存档）
 ```
 
 Windows 用户也可以直接双击 `开始试玩.cmd`，效果等同于 `npm run dev`；如果机器上没有 Node.js，启动器会先尝试打开 `dist/index.html`，没有构建产物时回退到改造前的单文件基线 `legacy/index.html`，两者都不存在才提示安装 Node.js。
@@ -34,6 +35,17 @@ Windows 用户也可以直接双击 `开始试玩.cmd`，效果等同于 `npm ru
 - 每个世界还记录自己是用哪一版海岸线生成的（存档字段 `shape`）：**老存档继续用当年的圆岛轮廓**，所以能照旧打开、继续玩、再保存，面积一点不变。
 - 详细说明、逐关数据、本轮按反馈修的 5 个问题与自查方法见 [`docs/地形改版.md`](docs/地形改版.md)。
 
+## 涌现式玩法
+
+玩法不靠"给每种动物写一条规则"，而是**属性 × 环境**自己撞出结果。第一个例子是水：
+
+- 动物有 `move`（走 / 飞 / 游）与 `mass`（体重）。
+- 有落差的水格会**随机定下一个流向并永远不再改变**（静水不流）。
+- 站在活水里的走兽会被推着走、体重越小冲得越快，冲出岛就回不来；**会飞的一律不受影响**。
+- 演示存档：`docs/水流演示.json`（游戏内「存档 → 导入」即可），或 `npm run demo:water` 重新生成。
+
+细节、属性表和逐步自查见 [`docs/涌现式玩法.md`](docs/涌现式玩法.md)。
+
 ## 目录结构
 
 ```
@@ -46,15 +58,15 @@ Windows 用户也可以直接双击 `开始试玩.cmd`，效果等同于 `npm ru
 ├── src/
 │   ├── data/               # 纯数据与文案（改数值、改文字来这里）
 │   │   ├── text.js         #   全部界面文案与页面骨架（m001 等键名稳定，勿改键名）
-│   │   ├── species.js      #   15 种动物的寿命、权重、食谱、繁殖参数
+│   │   ├── species.js      #   15 种动物的寿命、权重、食谱、繁殖参数与属性（move/mass）
 │   │   ├── levels.js       #   六个章节的工具、目标与地图配置
 │   │   ├── achievements.js #   42 项成就与指标定义
 │   │   ├── copy.js         #   分阶段开放的玩法说明、图鉴、秘密成就线索
 │   │   └── palette.js      #   植物与动物配色
-│   ├── sim/core.js         # 生态模拟：生长、捕食、迁入、繁殖、火与地形
+│   ├── sim/core.js         # 生态模拟：生长、捕食、迁入、繁殖、火、地形与水流
 │   ├── state/save.js       # 存档校验与旧版本兼容
 │   ├── render/
-│   │   ├── scene.js        # 相机、平移、瀑布、实例化绘制
+│   │   ├── scene.js        # 相机、平移、瀑布、水流方向与实例化绘制
 │   │   └── models/         # 每种动物/植物一个文件的程序化模型
 │   └── ui/
 │       ├── app.js          # 界面交互与主循环
@@ -66,12 +78,14 @@ Windows 用户也可以直接双击 `开始试玩.cmd`，效果等同于 `npm ru
 │   ├── build.cjs           # 构建：内联 CSS 与全部脚本 → dist/index.html
 │   ├── static-server.cjs   # 上面两个服务器共用的实现
 │   ├── preview.cjs         # 预览 dist/
-│   └── landscape-demo.cjs  # 生成可选的第五关演示存档
+│   ├── landscape-demo.cjs  # 生成可选的第五关演示存档
+│   └── water-demo.cjs      # 生成水流演示存档（docs/水流演示.json）
 ├── tests/                  # Node 测试（无需浏览器）
 │   ├── behavior.cjs        #  22 项行为检查
 │   ├── render.cjs          #  2 项渲染检查
 │   ├── journey.cjs         #  5 项引导推进、地形解锁、火焰与寿命检查
-│   ├── shape.cjs           #  10 项形态/渲染护栏（轮廓与种子、地形内容、可玩性、方块重叠、预算）
+│   ├── shape.cjs           #  11 项形态/渲染护栏（轮廓与种子、地形内容、可玩性、方块重叠、预算）
+│   ├── flow.cjs            #  5 项涌现式水流检查（流向固定、冲刷、体重、存档）
 │   ├── ecology.cjs         #  长时种群观察（3 个种子 × 3000 秒）
 │   ├── load.cjs            #  按顺序加载 src 下的模块
 │   └── fixtures/v0.7.json  #  旧版本存档迁移样本
@@ -112,7 +126,7 @@ Windows 用户也可以直接双击 `开始试玩.cmd`，效果等同于 `npm ru
 ## 测试
 
 ```bash
-npm test              # 22 项行为检查 + 2 项渲染检查 + 5 项引导检查 + 10 项形态/渲染护栏
+npm test              # 22 行为 + 2 渲染 + 5 引导 + 11 形态/渲染 + 5 涌现式水流 = 45 项
 npm run test:ecology  # 长时种群观察，输出 3 个种子的采样 JSON
 ```
 
@@ -138,6 +152,7 @@ npm run test:ecology  # 长时种群观察，输出 3 个种子的采样 JSON
 
 ## 更多文档
 
+- [`docs/涌现式玩法.md`](docs/涌现式玩法.md) — 属性 × 环境（第一例：水流冲走小动物）与演示存档用法
 - [`docs/地形改版.md`](docs/地形改版.md) — 开局地形生成、海岸线与老存档兼容（大白话版）
 - [`docs/发布说明-原发布包.md`](docs/发布说明-原发布包.md) — 朋友提供的 v0.8 发布包原始说明
 - [`docs/反馈落实.md`](docs/反馈落实.md) — v0.8 逐条改动

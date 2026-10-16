@@ -1,9 +1,13 @@
 (function(root){
 'use strict';
-const {VERSION,STEP_MS,LIFE,ANIMAL_NAMES,WEIGHTS,HERBS,HUNTERS,POLLINATORS,PREY,EXTRA_METRICS,PET_TITLES,PLANT_LIFE,BREED,TOOL,BASE,LATE,LEVELS,ACHIEVEMENTS,SECRET,METRICS,TERRAIN}=EcoData;
+const {VERSION,STEP_MS,LIFE,ANIMAL_NAMES,WEIGHTS,HERBS,HUNTERS,POLLINATORS,PREY,EXTRA_METRICS,PET_TITLES,PLANT_LIFE,BREED,TOOL,BASE,LATE,LEVELS,ACHIEVEMENTS,SECRET,METRICS,TERRAIN,TRAITS}=EcoData;
 const TERRAIN_UNLOCK={lake:300,forest:650,mountain:1000};
+// 水与动物的相互作用：水有「流向」，动物有「移动方式 + 体重」，两者相遇自动产生结果，
+// 而不是给每种动物写一条规则。
+const FLOW_DIR=[[1,0],[1,1],[0,1],[-1,1],[-1,0],[-1,-1],[0,-1],[1,-1]];   // 8 个方向
+const FLOW_DROP=.28;    // 落差超过这个值才算「有落差的水」，开始流动
 const blankMetrics=()=>Object.fromEntries(METRICS.map(k=>[k,0]));
-const soil=()=>({ground:'soil',plant:null,animal:null,age:0,plantLife:0,waterAge:0,fire:0,ash:0,recovery:0,burns:0,fert:0,moist:0,elevation:0,variant:0});
+const soil=()=>({ground:'soil',plant:null,animal:null,age:0,plantLife:0,waterAge:0,fire:0,ash:0,recovery:0,burns:0,fert:0,moist:0,elevation:0,variant:0,flow:0});
 const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
 function defaultProfile(){return {version:VERSION,unlocked:0,current:0,completed:[],achievements:{},totalScore:0,totals:blankMetrics(),worlds:{},tutorial:{},tutorialCounts:{},seen:{},records:{},settings:{sound:true,labels:true,autoFocus:false,quality:'auto'}};}
 // ===== 岛屿轮廓 =====
@@ -81,10 +85,36 @@ function award(profile,id,s,i){if(profile.achievements[id])return false;profile.
 function note(s,id,title,text,i){if(s.notified[id])return;s.notified[id]=true;s.events.unshift({id,title,text,i,tick:s.tick});s.events=s.events.slice(0,40);}
 function count(s,key,n,p){s.metrics[key]=(s.metrics[key]||0)+n;if(p)p.totals[key]=(p.totals[key]||0)+n;}
 function combo(s,source){s.combo=clamp(s.combo+1,1,8);s.comboLeft=48;s.lastCombo=source;}
-function animal(type){return {type,age:0,full:0,drunk:0,sleep:0,dir:0,moved:-1,hunger:0,bred:0,petUntil:0,variant:0};}
+function animal(type){return {type,age:0,full:0,drunk:0,sleep:0,dir:0,moved:-1,hunger:0,bred:0,petUntil:0,variant:0,drift:0,driftDir:-1};}
 // 站上去/贴上去的高度：水与土地跟着格子自己的高度，石头再加一个石头的高度。
 // （水以前被压成 0，所以高处放水会"掉到平地"；现在水跟着地形，能做出不同高度的水面与落差。）
 function surfaceHeight(c){if(!c)return 0;const e=c.elevation||0;if(c.ground==='rock')return e+.65;if(c.ground==='mountain')return e||1.8;return e;}
+// 静水不流。有落差的水在「第一次要流」时从所有更低的方向里随机挑一个，之后永远不变（并写进存档）。
+function ensureFlow(s,i){
+ const c=s.cells[i];
+ if(!c)return 0;
+ if(c.flow)return c.flow;                                  // 已经定过方向：不再改变
+ if(!['water','spring'].includes(c.ground))return 0;
+ const x=i%s.w,y=Math.floor(i/s.w),here=surfaceHeight(c),cand=[];
+ for(let k=0;k<8;k++){const xx=x+FLOW_DIR[k][0],yy=y+FLOW_DIR[k][1];
+  if(xx<0||yy<0||xx>=s.w||yy>=s.h){cand.push(k);continue;}  // 岛外＝直接流出去
+  const d=s.cells[yy*s.w+xx];
+  if(!d){cand.push(k);continue;}
+  if(surfaceHeight(d)<here-FLOW_DROP)cand.push(k);}
+ if(!cand.length)return 0;                                  // 四周都不低：静水
+ c.flow=cand[Math.floor(hash01(i,s.seed,s.seed+7)*cand.length)%cand.length]+1;
+ return c.flow;
+}
+// 站在活水里的动物会不会被冲走：会飞的不会；越重、越会游的越抗冲
+function flowPush(s,i,a){
+ const c=s.cells[i];
+ if(!c||!['water','spring'].includes(c.ground))return 0;
+ const t=TRAITS[a.type];
+ if(!t||t.move==='fly')return 0;
+ const flow=ensureFlow(s,i);
+ if(!flow)return 0;
+ return Math.min(1,1.15/(t.mass*(t.move==='swim'?2.2:1)));
+}
 // 能种能放的地面：泥土、灰烬，以及不高的山坡（真正高的石头山留给羊驼）
 function isLand(c){return !!c&&!c.fire&&(['soil','ash'].includes(c.ground)||(c.ground==='mountain'&&(c.elevation||0)<=2.2));}
 function allow(s,tool,i,p,replace=false){
@@ -132,7 +162,9 @@ function eatPlants(s,i,a){let spots=[i,...nearby(s,i)];return spots.filter(j=>{l
 // 能走的地面：陆地与低山坡；树丛会挡住大个子，但小动物能钻过去，
 // 否则成片森林会把它们困在一小块地方（玩家反馈）。
 const THROUGH_VEG=['deer','squirrel','bird','bug','butterfly','bee','frog','hedgehog','chicken','rabbit'];
-function canWalk(c,a){return !!c&&!c.fire&&(isLand(c)||a.type==='alpaca'&&['rock','mountain'].includes(c.ground))&&(!['tree','bush'].includes(c.plant)||THROUGH_VEG.includes(a.type));}
+const WATERY=['water','spring'];
+// 水里也能走（蹚水、浮着、飞过）——会不会被冲走由 TRAITS 的 move/mass 决定，而不是靠这里禁止
+function canWalk(c,a){return !!c&&!c.fire&&(isLand(c)||WATERY.includes(c.ground)||a.type==='alpaca'&&['rock','mountain'].includes(c.ground))&&(!['tree','bush'].includes(c.plant)||THROUGH_VEG.includes(a.type));}
 function habitat(s,i,type){const nn=[i,...nearby(s,i,2)];if(type==='alpaca')return nn.some(j=>['mountain','rock'].includes(s.cells[j].ground))?2:0;if(['deer','squirrel'].includes(type))return Math.min(3,nn.filter(j=>s.cells[j].plant==='tree').length)*.8;if(type==='frog')return s.cells[i].moist>=.6?3:-3;if(type==='boar')return nn.some(j=>s.cells[j].plant==='bush')?1:0;return 0;}
 
 function arrive(s,p){
@@ -141,7 +173,7 @@ function arrive(s,p){
  const ready={bug:graze>=6&&pl.wet>=3,bird:s.level>=1&&pl.tree>=1&&bug>=2,butterfly:s.level>=1&&pl.flower>=3,bee:pl.flower>=4,sheep:graze>=10&&pl.bush>=1,alpaca:graze>=12&&pl.bush>=1,rabbit:graze>=8&&pl.bush>=1,deer:pl.tree>=4&&graze>=8,fox:(nums.rabbit||0)+(nums.chicken||0)>=3,chicken:graze>=8&&bug>=1,frog:pl.wet>=5&&bug>=2,hedgehog:pl.tree>=2&&bug>=2,wolf:herbs>=8&&(pl.mountain>0||pl.tree>=5),squirrel:pl.tree>=5,boar:pl.bush>=3&&graze>=15};
  const options=Object.keys(WEIGHTS).filter(k=>ready[k]&&(s.level>=3||['bug','bird','butterfly'].includes(k))&&(nums[k]||0)<(k==='bug'?Math.min(8,Math.max(2,Math.floor(graze/12))):k==='boar'?2:3));
  if(!options.length||rand(s)>.7)return false;let roll=rand(s)*options.reduce((n,k)=>n+WEIGHTS[k],0),type=options.at(-1);for(const k of options){roll-=WEIGHTS[k];if(roll<0){type=k;break;}}
- const spots=s.cells.map((c,i)=>c&&!c.animal&&canWalk(c,{type})&&(type!=='bug'||['grass','flower'].includes(c.plant))&&(type!=='frog'||c.moist>=.6)?i:-1).filter(i=>i>=0);if(!spots.length)return false;
+ const spots=s.cells.map((c,i)=>c&&!c.animal&&isLand(c)&&canWalk(c,{type})&&(type!=='bug'||['grass','flower'].includes(c.plant))&&(type!=='frog'||c.moist>=.6)?i:-1).filter(i=>i>=0);if(!spots.length)return false;
  const i=spots[Math.floor(rand(s)*spots.length)],a=animal(type);a.variant=s.cells[i].variant;a.moved=s.tick;s.cells[i].animal=a;count(s,'arrivals',1,p);note(s,'arrival'+type,ANIMAL_NAMES[type]+T.m230,T.m231,i);if(type==='alpaca')award(p,'alpaca',s,typeof i==='number'?i:-1);return type;
 }
 function waterArea(s){let n=0;for(const c of s.cells)if(c&&(c.ground==='water'||c.ground==='spring'))n++;return n;}
@@ -160,6 +192,7 @@ function step(s,p){
    if(!c.fire){c.ground='ash';c.ash=30;c.age=0;c.recovery=180;c.fert=Math.min(3,c.fert+.6*Math.pow(.65,c.burns));c.burns++;}continue;
   }
   if(c.ash>0)c.ash--;
+  if(WATERY.includes(c.ground))ensureFlow(s,i);   // 有落差的水自己就会流，不必等动物踩上去
   if(c.ground==='ash'&&!c.plant&&!c.ash&&rand(s)<(c.moist>=.6?.025:.008)*(1+c.fert*.3)){
    c.plant='grass';c.age=0;c.plantLife=0;c.ground='soil';count(s,'reborn',1,p);combo(s,T.m234);award(p,'fire',s,typeof i==='number'?i:-1);note(s,'regrowth',T.m116,T.m235,i);
   }
@@ -216,6 +249,17 @@ function step(s,p){
     a.dir=Math.atan2(target%s.w-x,Math.floor(target/s.w)-y);s.cells[target].animal=a;c.animal=null;
    }
   }
+  // 属性 × 环境：站在活水里的走兽会被冲向下游，会飞的冲不走；冲到岛外就没了
+  if(c.animal===a){
+   const push=flowPush(s,i,a);
+   if(push>0&&rand(s)<push){const t=TRAITS[a.type]||{mass:1};a.drift=2+Math.round(2/t.mass);a.driftDir=s.cells[i].flow-1;}
+   if(a.drift>0){a.drift--;const dir=FLOW_DIR[a.driftDir]||FLOW_DIR[0],xx=x+dir[0],yy=y+dir[1];
+    if(xx<0||yy<0||xx>=s.w||yy>=s.h||!s.cells[yy*s.w+xx]){c.animal=null;a.drift=0;count(s,'washed',1,p);note(s,'washed'+a.type,ANIMAL_NAMES[a.type]+T.m409,T.m410,i);recordKinds(s);continue;}
+    const j=yy*s.w+xx,d=s.cells[j];
+    if(d.animal||d.fire||(['tree','bush'].includes(d.plant)&&!THROUGH_VEG.includes(a.type))){a.drift=0;continue;}
+    a.dir=Math.atan2(xx-x,yy-y);d.animal=a;c.animal=null;continue;
+   }
+  }
  }
  let kinds=new Set(),bio=0;for(const c of s.cells)if(c){if(c.plant){kinds.add(c.plant);bio+=c.plant==='tree'?3:1;}if(c.animal){kinds.add(c.animal.type);bio+=2;}if(['water','spring','rock','mountain'].includes(c.ground))kinds.add(c.ground==='spring'?'water':c.ground);}
  const types=recordKinds(s);if(types.size>=15)award(p,'allAnimals',s,typeof i==='number'?i:-1);
@@ -236,5 +280,5 @@ function check(s,p){
  }
 }
 
-root.Eco={TERRAIN,TERRAIN_UNLOCK,SHAPE_CURRENT,VERSION,STEP_MS,LIFE,WEIGHTS,BREED,arrive,census,habitat,canWalk,largestLake,waterArea,refreshTerrain,surfaceHeight,PET_TITLES,SECRET,pet,PLANT_LIFE,ANIMAL_NAMES,TOOL,LEVELS,ACHIEVEMENTS,defaultProfile,makeWorld,nearby,updateMoisture,place,allow,step,check,soil,METRICS,EXTRA_METRICS,rand,award,animal,valid,islandMask,islandRadius};
+root.Eco={TERRAIN,TERRAIN_UNLOCK,SHAPE_CURRENT,FLOW_DIR,FLOW_DROP,TRAITS,ensureFlow,flowPush,VERSION,STEP_MS,LIFE,WEIGHTS,BREED,arrive,census,habitat,canWalk,largestLake,waterArea,refreshTerrain,surfaceHeight,PET_TITLES,SECRET,pet,PLANT_LIFE,ANIMAL_NAMES,TOOL,LEVELS,ACHIEVEMENTS,defaultProfile,makeWorld,nearby,updateMoisture,place,allow,step,check,soil,METRICS,EXTRA_METRICS,rand,award,animal,valid,islandMask,islandRadius};
 })(globalThis);
