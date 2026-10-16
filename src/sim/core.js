@@ -1,20 +1,75 @@
 (function(root){
 'use strict';
-const {VERSION,STEP_MS,LIFE,ANIMAL_NAMES,WEIGHTS,HERBS,HUNTERS,POLLINATORS,PREY,EXTRA_METRICS,PET_TITLES,PLANT_LIFE,BREED,TOOL,BASE,LATE,LEVELS,ACHIEVEMENTS,SECRET,METRICS}=EcoData;
+const {VERSION,STEP_MS,LIFE,ANIMAL_NAMES,WEIGHTS,HERBS,HUNTERS,POLLINATORS,PREY,EXTRA_METRICS,PET_TITLES,PLANT_LIFE,BREED,TOOL,BASE,LATE,LEVELS,ACHIEVEMENTS,SECRET,METRICS,TERRAIN}=EcoData;
 const TERRAIN_UNLOCK={lake:300,forest:650,mountain:1000};
 const blankMetrics=()=>Object.fromEntries(METRICS.map(k=>[k,0]));
 const soil=()=>({ground:'soil',plant:null,animal:null,age:0,plantLife:0,waterAge:0,fire:0,ash:0,recovery:0,burns:0,fert:0,moist:0,elevation:0,variant:0});
 const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
 function defaultProfile(){return {version:VERSION,unlocked:0,current:0,completed:[],achievements:{},totalScore:0,totals:blankMetrics(),worlds:{},tutorial:{},tutorialCounts:{},seen:{},records:{},settings:{sound:true,labels:true,autoFocus:false,quality:'auto'}};}
-function valid(x,y,w,h){if(x<0||y<0||x>=w||y>=h)return false;let u=(x-w/2+.5)/(w/2-.5),v=(y-h/2+.5)/(h/2-.5),a=Math.atan2(v,u);return Math.pow(Math.abs(u),3.5)+Math.pow(Math.abs(v),3.5)<1+.045*Math.sin(a*5);}
-function makeWorld(level){
- const cfg=LEVELS[level],s={level,w:cfg.w,h:cfg.h,cells:[],tick:0,energy:level===0?50:100,score:0,combo:1,comboLeft:0,lastCombo:'',metrics:blankMetrics(),complete:false,notified:{},events:[],rng:(1234567+Date.now()+level*177)>>>0};
- for(let y=0;y<s.h;y++)for(let x=0;x<s.w;x++)s.cells.push(valid(x,y,s.w,s.h)?soil():null);
+// ===== 岛屿轮廓 =====
+// 每个世界记住两样东西：world.shape（用哪一版海岸线规则）和 world.seed（这一局的随机种子）。
+// 老存档继续用它当年的圆岛轮廓与种子，新世界每局的海岸线和地形都不一样。
+const SHAPE_CURRENT=2;
+// 只看坐标和种子的噪声：不消耗游戏里的随机数流，所以校验存档时重算的结果永远一致。
+function hash01(x,y,seed){let n=Math.imul(x|0,374761393)+Math.imul(y|0,668265263)+Math.imul(seed|0,1442695041);n=Math.imul(n^(n>>>13),1274126177);return ((n^(n>>>16))>>>0)/4294967296;}
+function valueNoise(x,y,seed){const xi=Math.floor(x),yi=Math.floor(y),xf=x-xi,yf=y-yi,u=xf*xf*(3-2*xf),v=yf*yf*(3-2*yf);const a=hash01(xi,yi,seed),b=hash01(xi+1,yi,seed),c=hash01(xi,yi+1,seed),d=hash01(xi+1,yi+1,seed);return (a*(1-u)+b*u)*(1-v)+(c*(1-u)+d*u)*v;}
+function fbm(x,y,seed,oct){let amp=.5,sum=0,norm=0;for(let k=0;k<(oct||4);k++){sum+=amp*valueNoise(x,y,seed+k*97);norm+=amp;x*=2;y*=2;amp*=.5;}return sum/norm;}
+function islandRadius(x,y,w,h){let u=(x-w/2+.5)/(w/2-.5),v=(y-h/2+.5)/(h/2-.5);return Math.pow(Math.abs(u)**3.5+Math.abs(v)**3.5,1/3.5);}
+// 第 1 版轮廓（老存档用）：基本就是个圆。这段必须原样保留，否则老存档会打不开。
+function maskV1(x,y,w,h){if(x<0||y<0||x>=w||y>=h)return false;let u=(x-w/2+.5)/(w/2-.5),v=(y-h/2+.5)/(h/2-.5),a=Math.atan2(v,u);return Math.pow(Math.abs(u),3.5)+Math.pow(Math.abs(v),3.5)<1+.045*Math.sin(a*5);}
+// 第 2 版轮廓：三个不同频率的波瓣 + 本局种子决定的低频起伏。
+// 注：相位是写死的，所以尺寸相近的关卡看起来仍然相似——这属于已知问题，暂不改动（改它会让
+// 最近这段时间存下的 shape 2 存档全部失效，需要连同 shape 版本号一起升）。
+function ragged(x,y,w,h,seed){
+ if(x<0||y<0||x>=w||y>=h)return false;
+ const u=(x-w/2+.5)/(w/2-.5),v=(y-h/2+.5)/(h/2-.5),r=Math.pow(Math.abs(u)**3.5+Math.abs(v)**3.5,1/3.5);
+ if(r>1.7)return false;
+ const a=Math.atan2(v,u),lobe=.16*Math.sin(a*3+.4)+.09*Math.sin(a*5+1.7)+.05*Math.sin(a*8+.9)+.09*(fbm(x*.33,y*.33,seed+17,2)-.5)*2;
+ return r<1+lobe;
+}
+// 去掉孤零零的单格，保证还是一片连着的岛
+function maskV2(x,y,w,h,seed){if(!ragged(x,y,w,h,seed))return false;let n=0;if(ragged(x-1,y,w,h,seed))n++;if(ragged(x+1,y,w,h,seed))n++;if(ragged(x,y-1,w,h,seed))n++;if(ragged(x,y+1,w,h,seed))n++;return n>=2;}
+const MASKS={1:maskV1,2:maskV2};
+function islandMask(x,y,w,h,shape,seed){return (MASKS[shape]||MASKS[SHAPE_CURRENT])(x,y,w,h,seed||0);}
+const valid=(x,y,w,h)=>islandMask(x,y,w,h,1,0);
+// ===== 地形生成 =====
+// 开局只生成地形：起伏的坡地、最高的山脊、一处湖。树木留给玩家自己种——
+// 成片森林会把水和小动物的活动路线堵死，也会让玩家无处可种。
+function shapeTerrain(s,level){
+ const w=s.w,h=s.h,seed=s.seed,land=[];
+ for(let i=0;i<s.cells.length;i++)if(s.cells[i])land.push(i);
+ // 1) 高度场：靠海低、内陆高，用本局种子，所以每局地形都不一样
+ for(const i of land){const x=i%w,y=Math.floor(i/w),c=s.cells[i],margin=clamp((1.08-islandRadius(x,y,w,h))/.5,0,1);
+  const e=(fbm(x*.17,y*.17,seed,4)-.42)*3.6+(fbm(x*.45,y*.45,seed+41,3)-.5)*.9;
+  c.elevation=Math.max(0,Math.round(e*(.16+.84*margin)*100)/100);}
+ // 2) 山脊：取本局最高的那一小撮（小岛也保证有 3 格），所以每局的岛都有山、比例也稳定
+ const want=Math.max(3,Math.round(land.length*.05)),byElev=land.slice().sort((a,b)=>s.cells[b].elevation-s.cells[a].elevation),spread=level<2?1.6:4.2;
+ byElev.slice(0,want).forEach((idx,k)=>{const c=s.cells[idx],t=1-k/Math.max(1,want-1);c.ground='mountain';c.elevation=Math.round((2.4+t*spread)*100)/100;});
+ // 3) 湖：从内陆最低处挖一片不规则水面
+ if(level>=2){const inner=land.filter(i=>s.cells[i].ground==='soil'&&islandRadius(i%w,Math.floor(i/w),w,h)<.66);
+  if(inner.length){const low=inner.reduce((a,b)=>s.cells[a].elevation<=s.cells[b].elevation?a:b),rad=level>=4?3.6:2.6,lx=low%w,ly=Math.floor(low/w),floorElev=s.cells[low].elevation;
+   for(const i of land){const x=i%w,y=Math.floor(i/w),d=Math.hypot(x-lx,y-ly),edge=rad*(.72+.55*fbm(x*.5,y*.5,seed+7,2));
+    if(d<=edge){const c=s.cells[i];c.ground=d<1?'spring':'water';c.plant=null;c.elevation=floorElev;c.animal=null;}}}}
+}
+function makeWorld(level,shape,seed){
+ const cfg=LEVELS[level],sh=shape||SHAPE_CURRENT;
+ // 不传种子时按时间取一个：每次新开一局，海岸线和地形都不一样
+ const sd=seed===undefined?((Date.now()^Math.imul(level+1,2654435761))>>>0):(seed>>>0);
+ const s={level,shape:sh,seed:sd,w:cfg.w,h:cfg.h,cells:[],tick:0,energy:level===0?50:100,score:0,combo:1,comboLeft:0,lastCombo:'',metrics:blankMetrics(),complete:false,notified:{},events:[],rng:(1234567+Date.now()+level*177)>>>0};
+ for(let y=0;y<s.h;y++)for(let x=0;x<s.w;x++)s.cells.push(islandMask(x,y,s.w,s.h,sh,sd)?soil():null);
  const at=(x,y)=>s.cells[y*s.w+x];const cx=Math.floor(s.w/2),cy=Math.floor(s.h/2);
- for(const [dx,dy] of [[-1,0],[0,0],[0,1]])at(cx+dx,cy+dy).ground='water';
+ if(sh>=2)shapeTerrain(s,level);
+ const pondY=at(cx,cy).elevation||0;   // 起点小水塘也按当地地面高度，不再压成 0
+ for(const [dx,dy] of [[-1,0],[0,0],[0,1]]){const c=at(cx+dx,cy+dy);if(c){c.ground='water';c.plant=null;c.animal=null;c.elevation=pondY;}}
  if(level>=1){for(let y=cy-3;y<=cy+3;y++)for(let x=cx-4;x<=cx+4;x++){let c=at(x,y);if(c&&c.ground==='soil'&&(x+y)%3!==0){c.plant='grass';c.age=20;}}}
  if(level>=3){for(let dx of [-4,-2,2,4]){let c=at(cx+dx,cy-3);if(c){c.plant='bush';c.age=70;}}}
- s.cells.forEach((c,i)=>{if(c)c.variant=(Math.imul(i+1,2654435761)>>>0)%5;});updateMoisture(s);return s;
+ s.cells.forEach((c,i)=>{if(c)c.variant=(Math.imul(i+1,2654435761)>>>0)%5;});
+ // 起点只有一两只小虫子，岛依然是荒芜的：树木、动物都得靠自己养出来
+ if(level>=3){const kinds=level>=4?['bug','bug','butterfly']:['bug'];
+  const spots=s.cells.map((c,i)=>c&&['grass','flower'].includes(c.plant)&&!c.animal?i:-1).filter(i=>i>=0);
+  kinds.forEach((type,k)=>{if(!spots.length)return;const i=spots[Math.floor(hash01(k+3,sd,sd+53)*spots.length)%spots.length];const c=s.cells[i];
+   if(c&&!c.animal){const a=animal(type);a.variant=c.variant;a.moved=0;c.animal=a;}});}
+ updateMoisture(s);return s;
 }
 function nearby(s,i,r=1){let x=i%s.w,y=Math.floor(i/s.w),out=[];for(let dy=-r;dy<=r;dy++)for(let dx=-r;dx<=r;dx++){let xx=x+dx,yy=y+dy;if((dx||dy)&&xx>=0&&yy>=0&&xx<s.w&&yy<s.h&&s.cells[yy*s.w+xx])out.push(yy*s.w+xx);}return out;}
 function updateMoisture(s){
@@ -27,8 +82,11 @@ function note(s,id,title,text,i){if(s.notified[id])return;s.notified[id]=true;s.
 function count(s,key,n,p){s.metrics[key]=(s.metrics[key]||0)+n;if(p)p.totals[key]=(p.totals[key]||0)+n;}
 function combo(s,source){s.combo=clamp(s.combo+1,1,8);s.comboLeft=48;s.lastCombo=source;}
 function animal(type){return {type,age:0,full:0,drunk:0,sleep:0,dir:0,moved:-1,hunger:0,bred:0,petUntil:0,variant:0};}
-function surfaceHeight(c){return c?.ground==='mountain'?(c.elevation||1.8):c?.ground==='rock'?.65:0;}
-function isLand(c){return c&&['soil','ash'].includes(c.ground)&&!c.fire;}
+// 站上去/贴上去的高度：水与土地跟着格子自己的高度，石头再加一个石头的高度。
+// （水以前被压成 0，所以高处放水会"掉到平地"；现在水跟着地形，能做出不同高度的水面与落差。）
+function surfaceHeight(c){if(!c)return 0;const e=c.elevation||0;if(c.ground==='rock')return e+.65;if(c.ground==='mountain')return e||1.8;return e;}
+// 能种能放的地面：泥土、灰烬，以及不高的山坡（真正高的石头山留给羊驼）
+function isLand(c){return !!c&&!c.fire&&(['soil','ash'].includes(c.ground)||(c.ground==='mountain'&&(c.elevation||0)<=2.2));}
 function allow(s,tool,i,p,replace=false){
  const c=s.cells[i];if(!c)return T.m215;
  if(!LEVELS[s.level].tools.includes(tool))return T.m216;
@@ -54,16 +112,16 @@ function place(s,tool,i,p,replace=false){
  if((tool==='animal'||Object.hasOwn(LIFE,tool))){let type=tool;if(tool==='animal'){let roll=rand(s)*100;for(const[k,w]of Object.entries(WEIGHTS)){roll-=w;if(roll<0){type=k;break;}}}c.animal=animal(type);c.animal.variant=c.variant;if(type==='alpaca')award(p,'alpaca',s,typeof i==='number'?i:-1);recordKinds(s);check(s,p);return {ok:true,type};}
  c.plantLife=0;
  if(tool==='seed'){c.plant='seed';c.age=0;c.plantLife=0;award(p,'seed',s,typeof i==='number'?i:-1);}
- if(tool==='water'){c.plant=null;c.ground='water';c.waterAge=0;}
+ if(tool==='water'){c.plant=null;c.ground='water';c.waterAge=0;}   // 保留这格自己的高度：水就停在它上面
  if(tool==='bush'){c.plant='bush';c.age=0;c.plantLife=0;count(s,'bushPlaced',1,p);}
  if(tool==='rock'){c.plant=null;c.ground='rock';count(s,'rocksPlaced',1,p);}
  if(tool==='fire'){c.fire=10;c.plant=null;count(s,'burned',1,p);note(s,'firstFire',T.m226,T.m227,i);}
  if(['lake','mountain','forest'].includes(tool)){
   if(['seed','grass','flower'].includes(c.plant))c.plant=null;
-  const spots=[i,...nearby(s,i,tool==='forest'?3:2)].filter(j=>Math.hypot(j%s.w-i%s.w,Math.floor(j/s.w)-Math.floor(i/s.w))<=(tool==='forest'?3:2.6));for(const j of spots){let d=s.cells[j];if(!isLand(d)||d.animal||d.fire||d.ash>0||['tree','bush'].includes(d.plant))continue;d.plant=null;d.elevation=0;
-   if(tool==='lake'){d.ground=j===i?'spring':'water';d.waterAge=0;}
-   if(tool==='mountain'){const distance=Math.max(Math.abs(j%s.w-i%s.w),Math.abs(Math.floor(j/s.w)-Math.floor(i/s.w)));d.ground='mountain';d.elevation=distance===0?2.8:distance===1?1.8:.8;}
-   if(tool==='forest'){d.plant=j===i||rand(s)<.72?'tree':'grass';d.age=0;d.plantLife=0;}
+  const waterLevel=c.elevation||0;const reach=tool==='forest'?4.6:tool==='lake'?3.7:3.1;const spots=[i,...nearby(s,i,Math.ceil(reach))].filter(j=>{const d=Math.hypot(j%s.w-i%s.w,Math.floor(j/s.w)-Math.floor(i/s.w));return d<=reach*(.74+.5*fbm(j%s.w*.5,Math.floor(j/s.w)*.5,s.seed+17,2));});for(const j of spots){let d=s.cells[j];if(!isLand(d)||d.animal||d.fire||d.ash>0||['tree','bush'].includes(d.plant))continue;d.plant=null;
+   if(tool==='lake'){d.ground=j===i?'spring':'water';d.elevation=waterLevel;d.waterAge=0;}
+   if(tool==='mountain'){const dist=Math.hypot(j%s.w-i%s.w,Math.floor(j/s.w)-Math.floor(i/s.w));d.ground='mountain';d.elevation=dist<.6?7:dist<1.5?5.4:dist<2.4?3.2:1.6;}
+   if(tool==='forest'){d.plant=j===i||rand(s)<.55?'tree':'grass';d.age=0;d.plantLife=0;}
   }count(s,tool+'Placed',1,p);
  }
  updateMoisture(s);refreshTerrain(s);check(s,p);return {ok:true};
@@ -71,7 +129,10 @@ function place(s,tool,i,p,replace=false){
 function recordKinds(s){let types=new Set(s.cells.filter(c=>c?.animal).map(c=>c.animal.type));s.metrics.animalKinds=Math.max(s.metrics.animalKinds||0,types.size);return types;}
 function pet(s,i,p){const a=s.cells[i]?.animal;if(!a)return {ok:false,reason:T.m228};if(a.petUntil>s.tick)return {ok:false,reason:T.m229};a.petUntil=s.tick+6;count(s,'pets',1,p);award(p,'pet'+a.type,s,typeof i==='number'?i:-1);if(a.drunk||a.sleep)award(p,'petDrunk',s,typeof i==='number'?i:-1);let n=Object.keys(PET_TITLES).filter(k=>p.achievements['pet'+k]).length;if(n>=5)award(p,'petFriends',s,typeof i==='number'?i:-1);if(n===15)award(p,'petAll',s,typeof i==='number'?i:-1);return {ok:true,type:a.type};}
 function eatPlants(s,i,a){let spots=[i,...nearby(s,i)];return spots.filter(j=>{let d=s.cells[j];if(['wolf','frog','hedgehog'].includes(a.type))return false;if(['fox','bird','chicken'].includes(a.type))return d.plant==='seed'||d.plant==='bush'&&d.age>=80;if(POLLINATORS.includes(a.type))return d.plant==='flower'||d.plant==='bush'&&d.age>=50;if(a.type==='squirrel')return d.plant==='tree'&&d.age%24<3||d.plant==='seed'||d.plant==='bush'&&d.age>=80;return d.plant==='grass'&&d.age>=12||d.plant==='flower'||d.plant==='bush'&&d.age>=80;}).sort((j,k)=>(s.cells[k].plant==='bush')-(s.cells[j].plant==='bush'));}
-function canWalk(c,a){return !!c&&!c.fire&&(isLand(c)||a.type==='alpaca'&&['rock','mountain'].includes(c.ground))&&(!['tree','bush'].includes(c.plant)||['deer','squirrel','bird'].includes(a.type));}
+// 能走的地面：陆地与低山坡；树丛会挡住大个子，但小动物能钻过去，
+// 否则成片森林会把它们困在一小块地方（玩家反馈）。
+const THROUGH_VEG=['deer','squirrel','bird','bug','butterfly','bee','frog','hedgehog','chicken','rabbit'];
+function canWalk(c,a){return !!c&&!c.fire&&(isLand(c)||a.type==='alpaca'&&['rock','mountain'].includes(c.ground))&&(!['tree','bush'].includes(c.plant)||THROUGH_VEG.includes(a.type));}
 function habitat(s,i,type){const nn=[i,...nearby(s,i,2)];if(type==='alpaca')return nn.some(j=>['mountain','rock'].includes(s.cells[j].ground))?2:0;if(['deer','squirrel'].includes(type))return Math.min(3,nn.filter(j=>s.cells[j].plant==='tree').length)*.8;if(type==='frog')return s.cells[i].moist>=.6?3:-3;if(type==='boar')return nn.some(j=>s.cells[j].plant==='bush')?1:0;return 0;}
 
 function arrive(s,p){
@@ -83,7 +144,8 @@ function arrive(s,p){
  const spots=s.cells.map((c,i)=>c&&!c.animal&&canWalk(c,{type})&&(type!=='bug'||['grass','flower'].includes(c.plant))&&(type!=='frog'||c.moist>=.6)?i:-1).filter(i=>i>=0);if(!spots.length)return false;
  const i=spots[Math.floor(rand(s)*spots.length)],a=animal(type);a.variant=s.cells[i].variant;a.moved=s.tick;s.cells[i].animal=a;count(s,'arrivals',1,p);note(s,'arrival'+type,ANIMAL_NAMES[type]+T.m230,T.m231,i);if(type==='alpaca')award(p,'alpaca',s,typeof i==='number'?i:-1);return type;
 }
-function refreshTerrain(s){if(s.level<4)return;s.metrics.lakeArea=largestLake(s);s.metrics.mountainArea=s.cells.filter(c=>c?.ground==='mountain').length;s.metrics.forestArea=s.cells.filter(c=>c?.plant==='tree').length;}
+function waterArea(s){let n=0;for(const c of s.cells)if(c&&(c.ground==='water'||c.ground==='spring'))n++;return n;}
+function refreshTerrain(s){if(s.level<4)return;s.metrics.lakeArea=waterArea(s);s.metrics.mountainArea=s.cells.filter(c=>c?.ground==='mountain').length;s.metrics.forestArea=s.cells.filter(c=>c?.plant==='tree').length;}
 function largestLake(s){let best=0,seen=new Set();for(let i=0;i<s.cells.length;i++){if(seen.has(i)||!['water','spring'].includes(s.cells[i]?.ground))continue;let q=[i];seen.add(i);for(let n=0;n<q.length;n++)for(const j of nearby(s,q[n]))if(Math.abs(j%s.w-q[n]%s.w)+Math.abs(Math.floor(j/s.w)-Math.floor(q[n]/s.w))===1&&!seen.has(j)&&['water','spring'].includes(s.cells[j].ground)){seen.add(j);q.push(j);}best=Math.max(best,q.length);}return best;}
 function census(s){const result={};s.cells.forEach((c,i)=>{if(c?.animal){const t=c.animal.type;(result[t]??=[]).push(i);}});return result;}
 function step(s,p){
@@ -159,7 +221,7 @@ function step(s,p){
  const types=recordKinds(s);if(types.size>=15)award(p,'allAnimals',s,typeof i==='number'?i:-1);
  const foodChain=plants>=15&&types.has('bug')&&HERBS.some(k=>types.has(k))&&HUNTERS.some(k=>types.has(k));
  if(foodChain)count(s,'coexist',.5,p);
- if(s.level>=4){s.metrics.lakeArea=largestLake(s);s.metrics.mountainArea=s.cells.filter(c=>c?.ground==='mountain').length;s.metrics.forestArea=s.cells.filter(c=>c?.plant==='tree').length;const running=foodChain&&kinds.size>=8&&s.metrics.hunts>0&&s.metrics.lakeArea>=12&&s.metrics.mountainArea>=5&&s.metrics.forestArea>=12;s.metrics.stableSeconds=running?Math.min(60,(s.metrics.stableSeconds||0)+.5):0;}
+ if(s.level>=4){s.metrics.lakeArea=waterArea(s);s.metrics.mountainArea=s.cells.filter(c=>c?.ground==='mountain').length;s.metrics.forestArea=s.cells.filter(c=>c?.plant==='tree').length;const running=foodChain&&kinds.size>=8&&s.metrics.hunts>0&&s.metrics.lakeArea>=12&&s.metrics.mountainArea>=5&&s.metrics.forestArea>=12;s.metrics.stableSeconds=running?Math.min(60,(s.metrics.stableSeconds||0)+.5):0;}
  s.metrics.diversity=kinds.size;let gain=bio*.012*(1+(s.combo-1)*.15);s.score+=gain;p.totalScore+=gain;
  check(s,p);return s;
 }
@@ -174,5 +236,5 @@ function check(s,p){
  }
 }
 
-root.Eco={TERRAIN_UNLOCK,VERSION,STEP_MS,LIFE,WEIGHTS,BREED,arrive,census,habitat,canWalk,largestLake,refreshTerrain,surfaceHeight,PET_TITLES,SECRET,pet,PLANT_LIFE,ANIMAL_NAMES,TOOL,LEVELS,ACHIEVEMENTS,defaultProfile,makeWorld,nearby,updateMoisture,place,allow,step,check,soil,METRICS,EXTRA_METRICS,rand,award,animal,valid};
+root.Eco={TERRAIN,TERRAIN_UNLOCK,SHAPE_CURRENT,VERSION,STEP_MS,LIFE,WEIGHTS,BREED,arrive,census,habitat,canWalk,largestLake,waterArea,refreshTerrain,surfaceHeight,PET_TITLES,SECRET,pet,PLANT_LIFE,ANIMAL_NAMES,TOOL,LEVELS,ACHIEVEMENTS,defaultProfile,makeWorld,nearby,updateMoisture,place,allow,step,check,soil,METRICS,EXTRA_METRICS,rand,award,animal,valid,islandMask,islandRadius};
 })(globalThis);

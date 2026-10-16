@@ -21,6 +21,9 @@ const TOOL={
 };
 const BASE=['inspect','seed','water','bug','erase'];
 const LATE=['inspect','seed','water','animal','bush','rock','fire','erase'];
+// 存档校验用的地形数值上限（含端点）：新增/放大高程或变体时只改这里，
+// save.js 与模拟层共用，避免上限散落在多处各自硬编码。
+const TERRAIN={MAX_ELEVATION:12,MAX_VARIANT:4};
 const LEVELS=[
  {name:T.m075,tag:T.m076,w:16,h:12,tools:BASE,tip:T.m077,goals:[['sprouted',12,T.m078],['bugMeals',4,T.m079]]},
  {name:T.m080,tag:T.m081,w:20,h:14,tools:[...BASE,'bird','bush'],tip:T.m082,goals:[['birdMeals',3,T.m083],['bushPlaced',4,T.m084]]},
@@ -30,4 +33,4 @@ const LEVELS=[
  {name:T.m105,tag:T.m106,w:44,h:30,tools:[...LATE,'lake','mountain','forest'],tip:T.m107,goals:[]}
 ];
 
-Object.assign(globalThis.EcoData??={}, {TOOL,BASE,LATE,LEVELS});})();
+Object.assign(globalThis.EcoData??={}, {TOOL,BASE,LATE,LEVELS,TERRAIN});})();

@@ -9,7 +9,7 @@
     "start": "node server.cjs",
     "build": "node scripts/build.cjs",
     "preview": "node scripts/preview.cjs",
-    "test": "node tests/behavior.cjs && node tests/render.cjs && node tests/journey.cjs",
+    "test": "node tests/behavior.cjs && node tests/render.cjs && node tests/journey.cjs && node tests/shape.cjs",
     "test:ecology": "node tests/ecology.cjs",
     "demo": "node scripts/landscape-demo.cjs"
   },
