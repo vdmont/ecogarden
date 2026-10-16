@@ -9,7 +9,7 @@ const FLOW_DROP=.28;    // 落差超过这个值才算「有落差的水」，�
 const blankMetrics=()=>Object.fromEntries(METRICS.map(k=>[k,0]));
 const soil=()=>({ground:'soil',plant:null,animal:null,age:0,plantLife:0,waterAge:0,fire:0,ash:0,recovery:0,burns:0,fert:0,moist:0,elevation:0,variant:0,flow:0});
 const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
-function defaultProfile(){return {version:VERSION,unlocked:0,current:0,completed:[],achievements:{},totalScore:0,totals:blankMetrics(),worlds:{},tutorial:{},tutorialCounts:{},seen:{},records:{},settings:{sound:true,labels:true,autoFocus:false,quality:'auto'}};}
+function defaultProfile(){return {version:VERSION,unlocked:0,current:0,completed:[],achievements:{},totalScore:0,totals:blankMetrics(),worlds:{},tutorial:{},tutorialCounts:{},seen:{},records:{},settings:{music:true,autosave:true,sound:true,labels:true,autoFocus:false,quality:'auto'}};}
 // ===== 岛屿轮廓 =====
 // 每个世界记住两样东西：world.shape（用哪一版海岸线规则）和 world.seed（这一局的随机种子）。
 // 老存档继续用它当年的圆岛轮廓与种子，新世界每局的海岸线和地形都不一样。
@@ -129,7 +129,7 @@ function allow(s,tool,i,p,replace=false){
  if(s.level>=4&&TERRAIN_UNLOCK[tool]&&s.score<TERRAIN_UNLOCK[tool])return '需要 '+TERRAIN_UNLOCK[tool]+' 生态值解锁';
  if(s.level!==5&&s.energy<TOOL[tool].cost)return T.m217;
  if(tool==='fire')return c.plant&&['grass','flower','tree','bush'].includes(c.plant)&&!c.fire?'':T.m218;
- if((tool==='animal'||Object.hasOwn(LIFE,tool))){
+ if((Object.hasOwn(EcoData.POOLS,tool)||Object.hasOwn(LIFE,tool))){
   if(!isLand(c))return T.m219;if(c.animal)return T.m220;
   if(tool==='bug'&&!['grass','flower'].includes(c.plant))return T.m221;return '';
  }
@@ -144,7 +144,7 @@ function place(s,tool,i,p,replace=false){
  if(tool==='inspect')return {ok:true};
  if(tool==='erase'){if(c.animal)c.animal=null;else{c.plant=null;c.ground='soil';c.elevation=0;c.age=0;c.fire=0;c.ash=0;}updateMoisture(s);refreshTerrain(s);return {ok:true};}
  if(s.level!==5)s.energy-=TOOL[tool].cost;count(s,'placed',1,p);
- if((tool==='animal'||Object.hasOwn(LIFE,tool))){let type=tool;if(tool==='animal'){let roll=rand(s)*100;for(const[k,w]of Object.entries(WEIGHTS)){roll-=w;if(roll<0){type=k;break;}}}c.animal=animal(type);c.animal.variant=c.variant;if(type==='alpaca')award(p,'alpaca',s,typeof i==='number'?i:-1);recordKinds(s);check(s,p);return {ok:true,type};}
+ if((Object.hasOwn(EcoData.POOLS,tool)||Object.hasOwn(LIFE,tool))){let type=tool;if(EcoData.POOLS[tool]){const pool=EcoData.POOLS[tool];let roll=rand(s)*Object.values(pool).reduce((a,b)=>a+b,0);for(const[k,w]of Object.entries(pool)){roll-=w;if(roll<0){type=k;break;}}}c.animal=animal(type);c.animal.variant=c.variant;if(tool==='rare')award(p,'rareGuest',s,i);if(tool==='legend')award(p,'legendGuest',s,i);if(type==='dragon')award(p,'dragonGuest',s,i);if(type==='alpaca')award(p,'alpaca',s,typeof i==='number'?i:-1);recordKinds(s);check(s,p);return {ok:true,type};}
  c.plantLife=0;
  if(tool==='seed'){c.plant='seed';c.age=0;c.plantLife=0;award(p,'seed',s,typeof i==='number'?i:-1);}
  if(tool==='water'){c.plant=null;c.ground='water';c.waterAge=0;}   // 保留这格自己的高度：水就停在它上面
@@ -162,7 +162,7 @@ function place(s,tool,i,p,replace=false){
  updateMoisture(s);refreshTerrain(s);check(s,p);return {ok:true};
 }
 function recordKinds(s){let types=new Set(s.cells.filter(c=>c?.animal).map(c=>c.animal.type));s.metrics.animalKinds=Math.max(s.metrics.animalKinds||0,types.size);return types;}
-function pet(s,i,p){const a=s.cells[i]?.animal;if(!a)return {ok:false,reason:T.m228};if(a.petUntil>s.tick)return {ok:false,reason:T.m229};a.petUntil=s.tick+6;count(s,'pets',1,p);award(p,'pet'+a.type,s,typeof i==='number'?i:-1);if(a.drunk||a.sleep)award(p,'petDrunk',s,typeof i==='number'?i:-1);let n=Object.keys(PET_TITLES).filter(k=>p.achievements['pet'+k]).length;if(n>=5)award(p,'petFriends',s,typeof i==='number'?i:-1);if(n===15)award(p,'petAll',s,typeof i==='number'?i:-1);return {ok:true,type:a.type};}
+function pet(s,i,p){const a=s.cells[i]?.animal;if(!a)return {ok:false,reason:T.m228};if(a.petUntil>s.tick)return {ok:false,reason:T.m229};a.petUntil=s.tick+6;count(s,'pets',1,p);award(p,'pet'+a.type,s,typeof i==='number'?i:-1);if(a.drunk||a.sleep)award(p,'petDrunk',s,typeof i==='number'?i:-1);let n=Object.keys(PET_TITLES).filter(k=>p.achievements['pet'+k]).length;if(n>=5)award(p,'petFriends',s,typeof i==='number'?i:-1);if(Object.keys(WEIGHTS).every(k=>p.achievements['pet'+k]))award(p,'petAll',s,typeof i==='number'?i:-1);return {ok:true,type:a.type};}
 // 食谱也来自属性：TRAITS[type].plants 的每一项说明「吃哪种植物、要长到什么状态才吃」。
 // 以前这里是一串 ['wolf','frog','hedgehog'].includes(...) 的分支，现在改属性就能改吃法。
 function menuAccepts(d,entry){
@@ -287,7 +287,7 @@ function step(s,p){
   }
  }
  let kinds=new Set(),bio=0;for(const c of s.cells)if(c){if(c.plant){kinds.add(c.plant);bio+=c.plant==='tree'?3:1;}if(c.animal){kinds.add(c.animal.type);bio+=2;}if(['water','spring','rock','mountain'].includes(c.ground))kinds.add(c.ground==='spring'?'water':c.ground);}
- const types=recordKinds(s);if(types.size>=15)award(p,'allAnimals',s,typeof i==='number'?i:-1);
+ const types=recordKinds(s);if(Object.keys(WEIGHTS).every(k=>types.has(k)))award(p,'allAnimals',s,typeof i==='number'?i:-1);
  const foodChain=plants>=15&&types.has('bug')&&HERBS.some(k=>types.has(k))&&HUNTERS.some(k=>types.has(k));
  if(foodChain)count(s,'coexist',.5,p);
  if(s.level>=4){s.metrics.lakeArea=waterArea(s);s.metrics.mountainArea=s.cells.filter(c=>c?.ground==='mountain').length;s.metrics.forestArea=s.cells.filter(c=>c?.plant==='tree').length;const running=foodChain&&kinds.size>=8&&s.metrics.hunts>0&&s.metrics.lakeArea>=12&&s.metrics.mountainArea>=5&&s.metrics.forestArea>=12;s.metrics.stableSeconds=running?Math.min(60,(s.metrics.stableSeconds||0)+.5):0;}

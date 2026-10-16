@@ -1,0 +1,27 @@
+<!doctype html><html lang="zh"><meta charset="utf-8"><title>生态花园 · 新邻居模型预览</title><style>body{margin:0;background:#eeedda;font:16px sans-serif;color:#40533c}header{padding:16px;display:flex;gap:12px}main{height:calc(100vh - 70px)}canvas{width:100%;height:100%;display:block}#worldLabels{display:none}</style><header>新邻居模型预览 <select id="species"><option value="">全体合照</option></select><button id="pet">听听叫声</button><a href="../">返回游戏</a></header><main><canvas id="garden"></canvas><div id="worldLabels"></div></main><script src="../vendor/three.min.js"></script>
+<script src="../src/data/text.js"></script>
+<script src="../src/data/species.js"></script>
+<script src="../src/data/levels.js"></script>
+<script src="../src/data/achievements.js"></script>
+<script src="../src/data/copy.js"></script>
+<script src="../src/data/palette.js"></script>
+<script src="../src/sim/core.js"></script>
+<script src="../src/state/save.js"></script>
+<script src="../src/state/slots.js"></script>
+<script src="../src/render/models/plants.js"></script>
+<script src="../src/render/models/animals.js"></script>
+<script src="../src/render/models/bug.js"></script>
+<script src="../src/render/models/bird.js"></script>
+<script src="../src/render/models/butterfly.js"></script>
+<script src="../src/render/models/rabbit.js"></script>
+<script src="../src/render/models/deer.js"></script>
+<script src="../src/render/models/fox-wolf.js"></script>
+<script src="../src/render/models/bee.js"></script>
+<script src="../src/render/models/chicken.js"></script>
+<script src="../src/render/models/frog.js"></script>
+<script src="../src/render/models/hedgehog.js"></script>
+<script src="../src/render/models/squirrel.js"></script>
+<script src="../src/render/models/boar.js"></script>
+<script src="../src/render/models/sheep-alpaca.js"></script>
+<script src="../src/render/models/visitors.js"></script>
+<script src="../src/render/scene.js"></script><script src="../src/ui/audio.js"></script><script>const s=Eco.makeWorld(0,1,42);s.w=16;s.h=16;s.cells=Array.from({length:256},()=>Eco.soil());const spots={};Object.keys(EcoData.VISITORS).forEach((type,n)=>{const i=(2+Math.floor(n/4)*4)*16+2+n%4*4;spots[type]=i;s.cells[i].animal=Eco.animal(type);s.cells[i].animal.age=100;document.querySelector("select").add(new Option(Eco.ANIMAL_NAMES[type],type));});const v=new GardenView(document.querySelector("canvas"),()=>{},()=>{},()=>false,()=>{});v.setWorld(s);document.querySelector("select").onchange=e=>e.target.value?v.focusCell(spots[e.target.value]):v.overview();document.querySelector("#pet").onclick=()=>GardenAudio.pet(document.querySelector("select").value||"ragdoll",{sound:true,music:false});function frame(t){v.render(t);requestAnimationFrame(frame);}requestAnimationFrame(frame);</script></html>

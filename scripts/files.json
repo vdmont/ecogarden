@@ -8,6 +8,7 @@
   "src/data/palette.js",
   "src/sim/core.js",
   "src/state/save.js",
+  "src/state/slots.js",
   "src/render/models/plants.js",
   "src/render/models/animals.js",
   "src/render/models/bug.js",
@@ -23,8 +24,10 @@
   "src/render/models/squirrel.js",
   "src/render/models/boar.js",
   "src/render/models/sheep-alpaca.js",
+  "src/render/models/visitors.js",
   "src/ui/mount.js",
   "src/render/scene.js",
   "src/ui/journey.js",
+  "src/ui/audio.js",
   "src/ui/app.js"
 ]

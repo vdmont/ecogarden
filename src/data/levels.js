@@ -1,6 +1,7 @@
 (function(){const {PET_TITLES,ANIMAL_NAMES,EXTRA_METRICS}=globalThis.EcoData||{};
 const TOOL={
-  animal:{name:T.m031,icon:'🐾',cost:6,help:T.m032},
+ rare:{name:'稀有动物',icon:'🐈',cost:12,help:'猫猫、狗狗与特别的鸟儿'},legend:{name:'传说动物',icon:'🐉',cost:30,help:'貔貅、白泽，偶尔遇到龙'},
+  animal:{name:'普通动物',icon:'🐾',cost:6,help:T.m032},
   inspect:{name:T.m033,icon:'⌕',cost:0,help:T.m034},
   seed:{name:T.m035,icon:T.m036,cost:1,help:T.m037},
   water:{name:T.m038,icon:T.m038,cost:3,help:T.m039},
@@ -30,7 +31,7 @@ const LEVELS=[
  {name:T.m085,tag:T.m086,w:26,h:18,tools:[...BASE,'bird','bush','rock','fire'],tip:T.m087,goals:[['rocksPlaced',6,T.m088],['burned',8,T.m089],['reborn',4,T.m090]]},
  {name:T.m091,tag:T.m092,w:28,h:20,tools:LATE,tip:T.m093,goals:[['animalKinds',4,T.m094],['meals',12,T.m095],['coexist',30,T.m096]]},
  {name:T.m097,tag:T.m098,w:36,h:26,tools:[...LATE,'lake','mountain','forest'],tip:T.m099,goals:[['lakeArea',12,T.m100],['mountainArea',5,T.m101],['forestArea',12,T.m102],['stableSeconds',60,T.m103],['births',6,T.m104]]},
- {name:T.m105,tag:T.m106,w:44,h:30,tools:[...LATE,'lake','mountain','forest'],tip:T.m107,goals:[]}
+ {name:T.m105,tag:T.m106,w:44,h:30,tools:[...LATE,'rare','legend','lake','mountain','forest'],tip:T.m107,goals:[]}
 ];
 
 Object.assign(globalThis.EcoData??={}, {TOOL,BASE,LATE,LEVELS,TERRAIN});})();

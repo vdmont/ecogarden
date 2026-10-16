@@ -11,11 +11,11 @@ function world(level = 5, seed = 42) { const p = E.defaultProfile(); p.unlocked 
 
 // ---------- 1. 名单由属性推出，且与旧版写死的名单一致 ----------
 test('role lists are derived from traits and match the old hardcoded ones', () => {
-  assert.equal(set(D.HERBS), set(['sheep', 'alpaca', 'rabbit', 'deer', 'boar', 'squirrel']), 'HERBS 应等于 diet=plant 的物种');
-  assert.equal(set(D.HUNTERS), set(['bird', 'chicken', 'frog', 'hedgehog']), 'HUNTERS 应等于 diet=insect 的物种');
+  assert.equal(set(D.HERBS.filter(k=>D.WEIGHTS[k])), set(['sheep', 'alpaca', 'rabbit', 'deer', 'boar', 'squirrel']), 'HERBS 应等于 diet=plant 的物种');
+  assert.equal(set(D.HUNTERS.filter(k=>D.WEIGHTS[k])), set(['bird', 'chicken', 'frog', 'hedgehog']), 'HUNTERS 应等于 diet=insect 的物种');
   assert.equal(set(D.POLLINATORS), set(['butterfly', 'bee']), 'POLLINATORS 应等于 diet=nectar 的物种');
   const oldPrey = { bird: ['bug'], chicken: ['bug'], frog: ['bug', 'bee'], hedgehog: ['bug'], fox: ['rabbit', 'chicken', 'squirrel'], wolf: ['rabbit', 'sheep', 'deer', 'boar'] };
-  assert.equal(norm(D.PREY), norm(oldPrey), '捕食关系应等于各物种 eats 属性的并集');
+  assert.equal(norm(Object.fromEntries(Object.entries(D.PREY).filter(([k])=>D.WEIGHTS[k]))), norm(oldPrey), '捕食关系应等于各物种 eats 属性的并集');
   // 名单必须真的来自属性，而不是又写了一遍
   assert.equal(set(D.HERBS), set(Object.keys(D.TRAITS).filter(k => D.TRAITS[k].diet === 'plant')));
   // 每个物种的每个属性都在预期范围内
@@ -50,7 +50,7 @@ test('plant menu reproduces the old hardcoded eating rules exactly', () => {
     k++;
   }
   let compared = 0;
-  for (const type of Object.keys(D.TRAITS)) {
+  for (const type of Object.keys(D.WEIGHTS)) {
     for (let i = 0; i < s.cells.length; i += 23) {
       if (!s.cells[i]) continue;
       const got = E.eatPlants(s, i, { type }).sort((a, b) => a - b);

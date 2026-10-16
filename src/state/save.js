@@ -13,7 +13,7 @@ function validateProfile(input){
  for(const [id] of ACHIEVEMENTS)if(typeof input.achievements[id]==='string'&&input.achievements[id].length<80)out.achievements[id]=input.achievements[id];
  out.achievementPlaces={};for(const[id,value]of Object.entries(input.achievementPlaces||{})){if(ACHIEVEMENTS.some(a=>a[0]===id)&&value&&Number.isInteger(value.level)&&LEVELS[value.level]&&Number.isInteger(value.i)&&value.i>=0&&value.i<LEVELS[value.level].w*LEVELS[value.level].h)out.achievementPlaces[id]={level:value.level,i:value.i,type:Object.hasOwn(LIFE,value.type)?value.type:null};}
  for(const k of METRICS)if(finite(input.totals?.[k],0,1e9))out.totals[k]=input.totals[k];
- if(input.settings){for(const k of ['sound','labels','autoFocus'])if(typeof input.settings[k]==='boolean')out.settings[k]=input.settings[k];if(['auto','low','high'].includes(input.settings.quality))out.settings.quality=input.settings.quality;}
+ if(input.settings){for(const k of ['sound','music','autosave','labels','autoFocus'])if(typeof input.settings[k]==='boolean')out.settings[k]=input.settings[k];if(['auto','low','high'].includes(input.settings.quality))out.settings.quality=input.settings.quality;}
  for(const [key,s] of Object.entries(input.worlds)){
   const l=Number(key),cfg=LEVELS[l];if(!cfg||String(l)!==key||l>out.unlocked||!s||s.level!==l||s.w!==cfg.w||s.h!==cfg.h||!Array.isArray(s.cells)||s.cells.length!==cfg.w*cfg.h)throw Error(T.m263);
   // 老存档没有 shape/seed：按第 1 版轮廓（当年那个圆岛）校验，种子按 0 处理，所以老存档照样读得进来。
