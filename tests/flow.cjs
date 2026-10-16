@@ -47,12 +47,49 @@ test('water with a drop picks a flow direction once and keeps it', () => {
   assert(dirs.size >= 1, '流向是 1..8 的方向编号');
   for (let t = 0; t < 60; t++) E.step(s, p);
   assert.deepEqual(path.map(i => s.cells[i].flow), first, '流向一旦定下就不能再改变');
+  // 流向必须是「落差最大」的那个方向（水往最低处流，而不是随机挑）
+  for (const i of path) {
+    const x = i % s.w, y = Math.floor(i / s.w), here = E.surfaceHeight(s.cells[i]);
+    const drops = E.FLOW_DIR.map(([dx, dy]) => {
+      const xx = x + dx, yy = y + dy, outside = xx < 0 || yy < 0 || xx >= s.w || yy >= s.h;
+      const d = outside ? null : s.cells[yy * s.w + xx];
+      return (outside || !d) ? here + 1 : here - E.surfaceHeight(d);
+    });
+    const chosen = s.cells[i].flow - 1;
+    assert(Math.abs(drops[chosen] - Math.max(...drops)) < 1e-9, '水必须流向落差最大的方向');
+  }
   // 流向必须指向一个更低的邻居或岛外
   for (const i of path) {
     const d = E.FLOW_DIR[s.cells[i].flow - 1], x = i % s.w + d[0], y = Math.floor(i / s.w) + d[1];
     const inside = x >= 0 && y >= 0 && x < s.w && y < s.h && s.cells[y * s.w + x];
     if (inside) assert(E.surfaceHeight(s.cells[y * s.w + x]) < s.cells[i].elevation, '水只能往低处流');
   }
+});
+
+// ---------- 1b. 改地形能把水引到想去的地方 ----------
+test('the water follows the terrain the player shapes', () => {
+  const { p, s } = streamWorld();
+  // 手工造一格高处的静水：把它四周垫得更高，水就没法流
+  const spot = s.cells.findIndex((c, k) => {
+    if (!c || c.ground !== 'soil' || c.plant || c.animal) return false;
+    const x = k % s.w, y = Math.floor(k / s.w);
+    return x > 3 && y > 3 && x < s.w - 4 && y < s.h - 4;
+  });
+  assert(spot >= 0, '需要一格内陆空地');
+  const x = spot % s.w, y = Math.floor(spot / s.w);
+  s.cells[spot].ground = 'water'; s.cells[spot].plant = null; s.cells[spot].elevation = 2;
+  for (const [dx, dy] of E.FLOW_DIR) {
+    const n = s.cells[(y + dy) * s.w + x + dx];
+    if (n) { n.plant = null; n.elevation = 2.2; }
+  }
+  E.step(s, p);
+  assert.equal(s.cells[spot].flow, 0, '四周更高时是静水');
+  // 只把东边挖低 → 水必须朝东
+  const east = s.cells[y * s.w + x + 1];
+  east.elevation = .5;
+  E.step(s, p);
+  const dir = E.FLOW_DIR[s.cells[spot].flow - 1];
+  assert(dir && dir[0] === 1 && dir[1] === 0, '把东边挖低之后，水应该朝东流（实际 ' + JSON.stringify(dir) + '）');
 });
 
 // ---------- 2. 静水不流 ----------

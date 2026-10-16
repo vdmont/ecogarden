@@ -89,20 +89,25 @@ function animal(type){return {type,age:0,full:0,drunk:0,sleep:0,dir:0,moved:-1,h
 // 站上去/贴上去的高度：水与土地跟着格子自己的高度，石头再加一个石头的高度。
 // （水以前被压成 0，所以高处放水会"掉到平地"；现在水跟着地形，能做出不同高度的水面与落差。）
 function surfaceHeight(c){if(!c)return 0;const e=c.elevation||0;if(c.ground==='rock')return e+.65;if(c.ground==='mountain')return e||1.8;return e;}
-// 静水不流。有落差的水在「第一次要流」时从所有更低的方向里随机挑一个，之后永远不变（并写进存档）。
+// 水往最低处流：在 8 个方向里挑落差最大的那个（岛外算最低，水会直接流出去）。
+// 方向在「第一次要流」时按当时的地形定下并写进存档，之后不再改变——
+// 所以玩家可以靠堆坡、挖低来把水引到想去的地方，而不是碰运气。
 function ensureFlow(s,i){
  const c=s.cells[i];
  if(!c)return 0;
- if(c.flow)return c.flow;                                  // 已经定过方向：不再改变
+ if(c.flow)return c.flow;                          // 已经定过方向：不再改变
  if(!['water','spring'].includes(c.ground))return 0;
- const x=i%s.w,y=Math.floor(i/s.w),here=surfaceHeight(c),cand=[];
- for(let k=0;k<8;k++){const xx=x+FLOW_DIR[k][0],yy=y+FLOW_DIR[k][1];
-  if(xx<0||yy<0||xx>=s.w||yy>=s.h){cand.push(k);continue;}  // 岛外＝直接流出去
-  const d=s.cells[yy*s.w+xx];
-  if(!d){cand.push(k);continue;}
-  if(surfaceHeight(d)<here-FLOW_DROP)cand.push(k);}
- if(!cand.length)return 0;                                  // 四周都不低：静水
- c.flow=cand[Math.floor(hash01(i,s.seed,s.seed+7)*cand.length)%cand.length]+1;
+ const x=i%s.w,y=Math.floor(i/s.w),here=surfaceHeight(c);
+ let best=-1,bestDrop=FLOW_DROP;                   // 落差不够就不算「会流」
+ for(let k=0;k<8;k++){
+  const xx=x+FLOW_DIR[k][0],yy=y+FLOW_DIR[k][1];
+  const outside=xx<0||yy<0||xx>=s.w||yy>=s.h;
+  const d=outside?null:s.cells[yy*s.w+xx];
+  const drop=(outside||!d)?here+1:here-surfaceHeight(d);   // 岛外按「水面下一格」算
+  if(drop>bestDrop){bestDrop=drop;best=k;}
+ }
+ if(best<0)return 0;                               // 四周都不低：静水
+ c.flow=best+1;
  return c.flow;
 }
 // 站在活水里的动物会不会被冲走：会飞的不会；越重、越会游的越抗冲

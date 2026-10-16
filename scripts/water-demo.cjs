@@ -36,12 +36,12 @@ for (let k = 0; k < LEN; k++) {
   stream.push(i);
 }
 stream.reverse();                                            // 从高处排到岛外
-// 水道两侧垫成缓坡，免得水悬在空中
+// 水道两侧垫成缓坡，免得水悬在空中；注意别垫得比河道本身还低，否则水会往侧面漏
 for (const i of stream) {
   const x = i % s.w, y = Math.floor(i / s.w), e = s.cells[i].elevation;
   for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
     const c = at(x + dx, y + dy);
-    if (c && ['soil', 'ash'].includes(c.ground) && !c.plant && !c.animal) c.elevation = Math.max(0, Math.round((e - 0.35) * 100) / 100);
+    if (c && ['soil', 'ash'].includes(c.ground) && !c.plant && !c.animal) c.elevation = Math.max(0, Math.round((e - 0.12) * 100) / 100);
   }
 }
 
