@@ -1,7 +1,7 @@
 globalThis.GardenModels=globalThis.GardenModels||{};
 GardenModels.plants=function({b,c,i,x,z,variant,wet,labelList}){const box=b;
    if(c.plant==='seed'){b(x,.15,z,.21,.17,.22,0xb77540);b(x-.13,.31,z,.22,.125,.14,0x8ccc6a,0,.2);b(x+.11,.41,z,.18,.125,.14,0x64a45a,0,-.2);labelList.push([i,'种',0xb8d386,.6]);}
-   if(c.plant==='grass'){b(x,.06,z,1,.1,1,wet?0x719b55:0x8ca864);if(c.animal?.type!=='bug')for(let k=0;k<2+variant%3;k++)b(x+(k-1)*.2,.18+variant*.008,z+(k%2)*.18-.09,.11,.19+variant*.016,.11,GardenPalette.leaves[variant][1]);}
+   if(c.plant==='grass'){b(x,.11,z,1,.1,1,wet?0x719b55:0x8ca864);if(c.animal?.type!=='bug')for(let k=0;k<2+variant%3;k++)b(x+(k-1)*.2,.18+variant*.008,z+(k%2)*.18-.09,.11,.19+variant*.016,.11,GardenPalette.leaves[variant][1]);}
    if(c.plant==='flower'){b(x,.09,z,.75,.1,.75,0x83a55e);b(x,.3,z,.125,.45,.125,0x4e8847);for(let [dx,dz] of [[-.15,0],[.15,0],[0,.15],[0,-.15]])b(x+dx,.54,z+dz,.22,.14,.22,GardenPalette.flowers[variant]);b(x,.63,z,.14,.1,.14,0xba804a);}
    if(c.plant==='tree'){const base=box;const b=(dx,y,dz,w,h,d,col)=>{const scale=.88+variant*.06;const color=[0x609252,0x78a75c,0x6f9e53,0x8bb965,0x87b162,0x65934d].includes(col)?GardenPalette.leaves[variant][y>1.5?1:0]:col;base(dx,y*scale,dz,w*(variant===1?.82:1),h*scale,d,col);};
     if(variant===1){b(x,.55,z,.2,1.1,.2,0x7f5c42);for(let k=0;k<4;k++)b(x,.85+k*.36,z,1.1-k*.22,.29,1.1-k*.22,k%2?0x8bb965:0x609252);return;}

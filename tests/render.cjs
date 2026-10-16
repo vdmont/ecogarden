@@ -1,5 +1,5 @@
 const assert=require('node:assert/strict');require('./load.cjs');
-const E=globalThis.Eco,s=E.makeWorld(3),view=Object.create(GardenView.prototype),a=E.animal('alpaca');
+const E=globalThis.Eco,s=E.makeWorld(3,undefined,42),view=Object.create(GardenView.prototype),a=E.animal('alpaca');
 view.world=s;view.motion=new WeakMap();view.lastAnimalFrame=0;view.animals={count:0,instanceMatrix:{},instanceColor:{}};let boxes=[];view.put=(mesh,...args)=>{assert(args.every(Number.isFinite));boxes.push(args);};
 let i=s.cells.findIndex((c,i)=>c&&s.cells[i+1]&&i%s.w>3&&i%s.w<20);s.cells[i].animal=a;
 view.drawAnimals(100);const before={...view.motion.get(a)};s.cells[i].animal=null;s.cells[i+1].animal=a;a.dir=Math.PI/2;

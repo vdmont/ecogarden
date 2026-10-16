@@ -1,4 +1,9 @@
-(function(){const {VERSION,LIFE,LEVELS,ACHIEVEMENTS,METRICS,EXTRA_METRICS,defaultProfile,makeWorld,animal,soil,updateMoisture}=Eco;
+(function(){const {VERSION,LIFE,LEVELS,ACHIEVEMENTS,METRICS,EXTRA_METRICS,TERRAIN,defaultProfile,makeWorld,animal,soil,updateMoisture}=Eco;
+// 存档是「严格」校验的：字段白名单 + 数值范围，任何越界都抛错而不是静默清空。
+// 新增字段的固定流程（漏掉任一步都会让存档往返丢数据或让校验误拒）：
+//   1) 在 soil()/animal() 里给出默认值（src/sim/core.js）；
+//   2) 加进下面 cell / animal 的字段清单与 finite 范围；需要更高上限时改 EcoData.TERRAIN；
+//   3) 若新字段参与渲染或玩法，同步 tests/behavior.cjs 的「确定性续玩」用例与 README 的存档说明。
 function validateProfile(input){
  if(!input||typeof input!=='object'||input.version!==VERSION)throw Error(T.m260);
  if(!Number.isInteger(input.unlocked)||input.unlocked<0||input.unlocked>5||!Number.isInteger(input.current)||input.current<0||input.current>input.unlocked)throw Error(T.m261);
@@ -11,13 +16,18 @@ function validateProfile(input){
  if(input.settings){for(const k of ['sound','labels','autoFocus'])if(typeof input.settings[k]==='boolean')out.settings[k]=input.settings[k];if(['auto','low','high'].includes(input.settings.quality))out.settings.quality=input.settings.quality;}
  for(const [key,s] of Object.entries(input.worlds)){
   const l=Number(key),cfg=LEVELS[l];if(!cfg||String(l)!==key||l>out.unlocked||!s||s.level!==l||s.w!==cfg.w||s.h!==cfg.h||!Array.isArray(s.cells)||s.cells.length!==cfg.w*cfg.h)throw Error(T.m263);
-  const copy=makeWorld(l);for(let i=0;i<s.cells.length;i++){const c=s.cells[i];if(!copy.cells[i]){if(c!==null)throw Error(T.m264);continue;}if(!c||!['soil','water','spring','rock','mountain','ash'].includes(c.ground)||![null,'seed','grass','flower','tree','bush'].includes(c.plant))throw Error(T.m265);
-   const d=soil();d.ground=c.ground;d.plant=c.plant;for(const k of ['age','waterAge','fire','ash','recovery','burns','fert','moist']){if(!finite(c[k],0,k==='fert'?3:k==='moist'?1:1e8))throw Error(T.m266);d[k]=c[k];}if(c.plantLife!==undefined&&!finite(c.plantLife,0,1e8))throw Error(T.m267);d.plantLife=c.plantLife??0;for(const key of ['elevation','variant']){if(c[key]!==undefined&&!finite(c[key],0,key==='variant'?4:4))throw Error(T.m268);d[key]=c[key]??(key==='variant'?(Math.imul(i+1,2654435761)>>>0)%5:0);}
-   if(c.animal){const a=c.animal;if(!Object.hasOwn(LIFE,a.type))throw Error(T.m269);const b=animal(a.type);for(const k of ['age','full','drunk','sleep','dir','moved']){if(!finite(a[k],k==='age'?-100:k==='dir'?-Math.PI:k==='moved'?-1:0,1e9))throw Error(T.m270);b[k]=a[k];}for(const k of ['hunger','bred','petUntil','variant']){if(a[k]!==undefined&&!finite(a[k],0,1e12))throw Error(T.m271);b[k]=a[k]??0;}d.animal=b;}
+  // 老存档没有 shape/seed：按第 1 版轮廓（当年那个圆岛）校验，种子按 0 处理，所以老存档照样读得进来。
+  const sh=Number.isInteger(s.shape)&&s.shape>=1&&s.shape<=Eco.SHAPE_CURRENT?s.shape:1;
+  const sd=Number.isInteger(s.seed)&&s.seed>=0&&s.seed<=4294967295?s.seed:0;
+  const copy=makeWorld(l,sh,sd);for(let i=0;i<s.cells.length;i++){const c=s.cells[i];if(!copy.cells[i]){if(c!==null)throw Error(T.m264);continue;}if(!c||!['soil','water','spring','rock','mountain','ash'].includes(c.ground)||![null,'seed','grass','flower','tree','bush'].includes(c.plant))throw Error(T.m265);
+   // 必填数值字段白名单：新增必填格字段要加进这里，上限见 EcoData.TERRAIN。
+   const d=soil();d.ground=c.ground;d.plant=c.plant;for(const k of ['age','waterAge','fire','ash','recovery','burns','fert','moist']){if(!finite(c[k],0,k==='fert'?3:k==='moist'?1:1e8))throw Error(T.m266);d[k]=c[k];}if(c.plantLife!==undefined&&!finite(c.plantLife,0,1e8))throw Error(T.m267);d.plantLife=c.plantLife??0;for(const key of ['elevation','variant']){if(c[key]!==undefined&&!finite(c[key],0,key==='variant'?TERRAIN.MAX_VARIANT:TERRAIN.MAX_ELEVATION))throw Error(T.m268);d[key]=c[key]??(key==='variant'?(Math.imul(i+1,2654435761)>>>0)%5:0);}if(c.flow!==undefined&&!(Number.isInteger(c.flow)&&c.flow>=0&&c.flow<=8))throw Error(T.m268);d.flow=c.flow??0;
+   // 必填 animal 字段白名单 + 可选字段（hunger/bred/petUntil/variant）：新增行为/动作字段务必加进这两处。
+   if(c.animal){const a=c.animal;if(!Object.hasOwn(LIFE,a.type))throw Error(T.m269);const b=animal(a.type);for(const k of ['age','full','drunk','sleep','dir','moved']){if(!finite(a[k],k==='age'?-100:k==='dir'?-Math.PI:k==='moved'?-1:0,1e9))throw Error(T.m270);b[k]=a[k];}for(const k of ['hunger','bred','petUntil','variant']){if(a[k]!==undefined&&!finite(a[k],0,1e12))throw Error(T.m271);b[k]=a[k]??0;}if(a.drift!==undefined&&!finite(a.drift,0,999))throw Error(T.m271);if(a.driftDir!==undefined&&!finite(a.driftDir,-1,7))throw Error(T.m271);b.drift=a.drift??0;b.driftDir=a.driftDir??-1;d.animal=b;}
    copy.cells[i]=d;
   }
   for(const k of ['tick','energy','score','combo','comboLeft','rng']){if(!finite(s[k],k==='combo'?1:0,k==='energy'?100:k==='combo'?8:k==='comboLeft'?48:1e12))throw Error(T.m272);copy[k]=s[k];}
-  if(typeof s.complete!=='boolean')throw Error(T.m273);copy.complete=s.complete;
+  if(typeof s.complete!=='boolean')throw Error(T.m273);copy.complete=s.complete;copy.shape=sh;copy.seed=sd;
   for(const k of METRICS){if(EXTRA_METRICS.includes(k)&&s.metrics?.[k]===undefined)continue;if(!finite(s.metrics?.[k],0,1e9))throw Error(T.m274);copy.metrics[k]=s.metrics[k];}
   copy.lastCombo=typeof s.lastCombo==='string'?s.lastCombo.slice(0,60):'';
   copy.events=Array.isArray(s.events)?s.events.slice(0,40).filter(e=>e&&typeof e.id==='string'&&typeof e.title==='string'&&typeof e.text==='string'&&Number.isInteger(e.i)&&e.i>=0&&e.i<copy.cells.length&&finite(e.tick,0,1e12)).map(e=>({id:e.id.slice(0,40),title:e.title.slice(0,100),text:e.text.slice(0,500),i:e.i,tick:e.tick})):[];

@@ -9,9 +9,10 @@
     "start": "node server.cjs",
     "build": "node scripts/build.cjs",
     "preview": "node scripts/preview.cjs",
-    "test": "node tests/behavior.cjs && node tests/render.cjs && node tests/journey.cjs",
+    "test": "node tests/behavior.cjs && node tests/render.cjs && node tests/journey.cjs && node tests/shape.cjs && node tests/flow.cjs && node tests/traits.cjs",
     "test:ecology": "node tests/ecology.cjs",
-    "demo": "node scripts/landscape-demo.cjs"
+    "demo": "node scripts/landscape-demo.cjs",
+    "demo:water": "node scripts/water-demo.cjs"
   },
   "engines": {
     "node": ">=18"
