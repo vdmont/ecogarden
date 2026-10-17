@@ -2,7 +2,7 @@
 const ACHIEVEMENTS=[
  ['seed',T.m108,T.m109],['sprout',T.m110,T.m111],
  ['bug',T.m112,T.m113],['bird',T.m114,T.m115],
- ['fire',T.m116,T.m117],['drunk',T.m118,T.m119],
+ ['berries','浆果招待会','观察松鼠采食 4 次成熟浆果'],['drunk',T.m118,T.m119],
  ['alpaca',T.m120,T.m121],['alpacaSnack',T.m122,T.m123],
  ['baby',T.m124,T.m125],['sober',T.m126,T.m127],
  ['combo',T.m128,T.m129],['p500',T.m130,T.m131],

@@ -1,9 +1,9 @@
 (function(root){
 'use strict';
 const intro=[
- ['送你一座小岛','你好，朋友！这座岛送给你，我们一起打理吧。放置需要能量，等一会儿就会恢复；植物发芽、动物进食和新生都会增加生态值。完成左上角任务，就能去下一关啦。'],
- ['谁来吃虫？','你种的草长得真好。再放些幼虫和飞鸟吧：草养幼虫，幼虫养飞鸟，这就是食物链。'],
- ['火后的花园','仅限游戏：现实中不要放火烧山。这里的火后恢复是简化模拟，并不代表烧山能改善土地。我陪你观察一次火后恢复。先围一圈石头，再点燃一小片草地。别靠近动物哦，烧过的土地也需要休息。灰烬冷却后补水种植，肥力能帮助发芽、开花；反复烧同一块地，收益会递减。'],
+ ['种子发芽','你好，朋友！这座岛送给你，我们一起打理吧。放置需要能量，等一会儿就会恢复；植物发芽、动物进食和新生都会增加生态值。完成左上角任务，就能去下一关啦。'],
+ ['小鸟来了','你种的草长得真好。再放些幼虫和飞鸟吧：草养幼虫，幼虫养飞鸟，这就是食物链。'],
+ ['浆果熟了','我们种些浆果，招待松鼠吧！先种 4 丛，等枝头结出果实，再把松鼠放到旁边。它采食 4 次就完成啦；吃种子不计入这个任务。'],
  ['林间来客','新朋友来啦！想让大家住下来，需要：至少 15 格植物，同时有幼虫、一种草食动物（如羊、羊驼、兔子）和一种食虫动物（如鸟、鸡、青蛙）。保持这些邻居共存，累计 30 秒；还需 4 种动物和 12 次进食。'],
  ['一座完整的岛','小岛热闹起来啦！我陪你把山林和湖泊连起来。湖泊 300、森林 650、山脉 1000 生态解锁。完整生态需同时满足：15 格植物、幼虫＋草食动物＋食虫动物、8 种元素（含植物/动物/地形）、曾发生捕食，以及 12 格水域、12 棵树、5 格山地。全部满足才连续计时 60 秒，缺任一项会重新计时；本关另需 6 次自然新生。'],
  ['自由建造','能量无限，地形仍靠本岛生态值解锁。慢慢建一座自己的花园。']
@@ -17,11 +17,10 @@ function nextStep(s,p){
   if(m.bugMeals<4)return choose('feedBug','bug','放置幼虫','给草地添一只幼虫吧！把它拖到草上，等它吃过 4 次就完成啦。');
  }
  if(s.level===1){
-  if(m.bushPlaced<4)return choose('berries','bush','种植浆果','在空地种下 4 丛浆果。图标下面的小数字，是每次放置花掉的能量。');
   if(!s.cells.some(c=>c?.animal?.type==='bug')&&m.birdMeals<3)return {id:'food',tool:'bug',title:'准备食物',body:'先把幼虫放到草地。食物够了，再请飞鸟。'};
   if(m.birdMeals<3)return choose('birds','bird','让食物链接起来','在幼虫附近放一只飞鸟，观察 3 次捕食。任务一直在左上角。');
  }
- if(s.level===2){if(m.rocksPlaced<6)return choose('rocks','rock','先留一道防火边','放下 6 块石头，把准备燃烧的草地围开。');if(m.burned<8)return choose('fire','fire','只点一小片火','仅限游戏，现实中不要放火烧山。火也会伤害动物；选一小片远离动物的草地，观察火后恢复。');return {id:'recover',title:'等土地缓一缓',body:'灰烬冷却后，在旁边补水。任务需要 4 次火后新生。'};}
+ if(s.level===2){if(m.bushPlaced<4)return choose('berries','bush','种植浆果','种下 4 丛浆果，等它们成熟。');if(m.berryMeals<4)return choose('berryGuests','squirrel','松鼠来做客','把松鼠放在成熟的浆果旁边。等待它采食 4 次；灌木吃过后还会再结果。');return null;}
  if(s.level===3)return choose('neighbors','animal','引入动物','种草和浆果，邀请 4 种动物。让它们进食并共同生活；不必一直放新动物。');
  if(s.level>=4){const next=Object.entries(Eco.TERRAIN_UNLOCK).find(([k,n])=>s.score<n);return next?{id:'terrain',tool:'seed',title:'提升生态',body:'发芽、进食和新生命都会增加生态值。下一项：'+Eco.TOOL[next[0]].name+' · '+next[1]+' 生态。'}:{id:'island',tool:s.metrics.lakeArea<12?'lake':s.metrics.forestArea<12?'forest':s.metrics.mountainArea<5?'mountain':null,title:'完善生态',body:'左上角记录湖面、山地、森林、新生与持续生态。创造完，去观察模式看看它们。'};}
  return null;
@@ -70,7 +69,7 @@ function mount(api){
  window.addEventListener('pointerup',e=>{if(!drag)return;const d=drag;drag=null;if(Math.hypot(e.clientX-d.x,e.clientY-d.y)<12)return;const r=canvas.getBoundingClientRect();if(e.clientX<r.left||e.clientX>r.right||e.clientY<r.top||e.clientY>r.bottom)return;api.choose(d.tool);api.pick(api.view.pick(e.clientX,e.clientY));});window.addEventListener('pointercancel',()=>drag=null);
  function update(){const now=performance.now();if(now-lastGuide<80)return;lastGuide=now;const s=api.world(),p=api.profile();if(!s)return;p.tutorial??={};
   $('taskHelp').hidden=s.level===5;if(chapter!==s.level){chapter=s.level;setMode('create');}
-  if(s.metrics.sprouted>=12)p.tutorial.sow=true;if(s.metrics.bugMeals>=4)p.tutorial.feedBug=true;if(s.level===1&&s.metrics.bushPlaced>=4)p.tutorial.berries=true;if(s.level===1&&s.metrics.birdMeals>=3)p.tutorial.birds=true;if(s.level===2&&s.metrics.rocksPlaced>=6)p.tutorial.rocks=true;if(s.level===2&&s.metrics.burned>=8)p.tutorial.fire=true;if(s.level===3&&s.metrics.animalKinds>=4&&s.metrics.meals>=12)p.tutorial.neighbors=true;if(s.complete)p.tutorial['chapter'+s.level]=true;
+  if(s.metrics.sprouted>=12)p.tutorial.sow=true;if(s.metrics.bugMeals>=4)p.tutorial.feedBug=true;if(s.level===2&&s.metrics.bushPlaced>=4)p.tutorial.berries=true;if(s.level===1&&s.metrics.birdMeals>=3)p.tutorial.birds=true;if(s.level===2&&s.metrics.berryMeals>=4)p.tutorial.berryGuests=true;if(s.level===3&&s.metrics.animalKinds>=4&&s.metrics.meals>=12)p.tutorial.neighbors=true;if(s.complete)p.tutorial['chapter'+s.level]=true;
   document.querySelectorAll('.guide-lit').forEach(b=>b.classList.remove('guide-lit'));svg.style.display='none';
   const hidden=s.level===5||!started||!!document.querySelector('dialog[open]')||mode==='observe';guide.hidden=hidden;if(hidden)return;
   const step=plan(s,p),opening=!p.tutorial['intro'+s.level];guide.hidden=!opening&&!step;$('guideOK').hidden=false;if(guide.hidden)return;$('guideTitle').textContent=opening?intro[s.level][0]:step.title;$('guideBody').textContent=opening?intro[s.level][1]+(s.level<3&&step?' '+step.body:''):step.body;if(!step)return;

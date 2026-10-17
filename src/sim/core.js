@@ -9,7 +9,7 @@ const FLOW_DROP=.28;    // 落差超过这个值才算「有落差的水」，�
 const blankMetrics=()=>Object.fromEntries(METRICS.map(k=>[k,0]));
 const soil=()=>({ground:'soil',plant:null,animal:null,age:0,plantLife:0,waterAge:0,fire:0,ash:0,recovery:0,burns:0,fert:0,moist:0,elevation:0,variant:0,flow:0});
 const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
-function defaultProfile(){return {version:VERSION,unlocked:0,current:0,completed:[],achievements:{},totalScore:0,totals:blankMetrics(),worlds:{},tutorial:{},tutorialCounts:{},seen:{},records:{},settings:{music:true,autosave:true,sound:true,labels:true,autoFocus:false,quality:'auto'}};}
+function defaultProfile(){return {version:VERSION,campaign:2,unlocked:0,current:0,completed:[],achievements:{},totalScore:0,totals:blankMetrics(),worlds:{},tutorial:{},tutorialCounts:{},seen:{},records:{},settings:{music:true,autosave:true,sound:true,labels:true,autoFocus:false,quality:'auto'}};}
 // ===== 岛屿轮廓 =====
 // 每个世界记住两样东西：world.shape（用哪一版海岸线规则）和 world.seed（这一局的随机种子）。
 // 老存档继续用它当年的圆岛轮廓与种子，新世界每局的海岸线和地形都不一样。
@@ -128,7 +128,6 @@ function allow(s,tool,i,p,replace=false){
  if(tool==='inspect'||tool==='erase')return '';
  if(s.level>=4&&TERRAIN_UNLOCK[tool]&&s.score<TERRAIN_UNLOCK[tool])return '需要 '+TERRAIN_UNLOCK[tool]+' 生态值解锁';
  if(s.level!==5&&s.energy<TOOL[tool].cost)return T.m217;
- if(tool==='fire')return c.plant&&['grass','flower','tree','bush'].includes(c.plant)&&!c.fire?'':T.m218;
  if((Object.hasOwn(EcoData.POOLS,tool)||Object.hasOwn(LIFE,tool))){
   if(!isLand(c))return T.m219;if(c.animal)return T.m220;
   if(tool==='bug'&&!['grass','flower'].includes(c.plant))return T.m221;return '';
@@ -151,7 +150,6 @@ function place(s,tool,i,p,replace=false){
  if(tool==='water'){c.plant=null;c.ground='water';c.waterAge=0;}   // 保留这格自己的高度：水就停在它上面
  if(tool==='bush'){c.plant='bush';c.age=0;c.plantLife=0;count(s,'bushPlaced',1,p);}
  if(tool==='rock'){c.plant=null;c.ground='rock';count(s,'rocksPlaced',1,p);}
- if(tool==='fire'){c.fire=10;c.plant=null;count(s,'burned',1,p);note(s,'firstFire',T.m226,T.m227,i);}
  if(['lake','mountain','forest'].includes(tool)){
   if(['seed','grass','flower'].includes(c.plant))c.plant=null;
   const waterLevel=c.elevation||0;const reach=tool==='forest'?4.6:tool==='lake'?3.7:2.8;const spots=[i,...nearby(s,i,Math.ceil(reach))].filter(j=>{const d=Math.hypot(j%s.w-i%s.w,Math.floor(j/s.w)-Math.floor(i/s.w));return d<=reach*(.74+.5*fbm(j%s.w*.5,Math.floor(j/s.w)*.5,s.seed+17,2));});for(const j of spots){let d=s.cells[j];if(!isLand(d)||d.animal||d.fire||d.ash>0||['tree','bush'].includes(d.plant))continue;d.plant=null;
@@ -226,14 +224,8 @@ function step(s,p){
  for(const i of order){let c=s.cells[i],n=nearby(s,i),x=i%s.w,y=Math.floor(i/s.w);c.age++;if(c.recovery)c.recovery--;
   if(c.plant&&++c.plantLife>=PLANT_LIFE[c.plant]){const was=c.plant;c.plant=s.level>=3&&c.moist>0?'seed':null;c.plantLife=0;c.age=0;c.fert=Math.min(3,c.fert+.2);if(was==='tree'||was==='bush')note(s,'plantCycle',T.m232,T.m233,i);}
   if(c.ground==='water'&&++c.waterAge>700&&rand(s)<.0008&&!n.some(j=>s.cells[j].ground==='spring'))c.ground='soil';
-  if(c.fire){if(c.animal){c.animal=null;c.fert=Math.min(3,c.fert+.3);}c.fire--;for(const j of n){if(Math.abs(j%s.w-x)+Math.abs(Math.floor(j/s.w)-y)!==1)continue;let d=s.cells[j];if(['grass','flower','tree','bush'].includes(d.plant)&&!d.fire&&rand(s)<.16){d.fire=10;d.plant=null;count(s,'burned',1,p);}}
-   if(!c.fire){c.ground='ash';c.ash=30;c.age=0;c.recovery=180;c.fert=Math.min(3,c.fert+.9*Math.pow(.65,c.burns));c.burns++;note(s,'ashNutrients','灰烬滋养土壤','冷却后补水种植，肥力促进发芽与开花。反复燃烧的收益会递减。',i);}continue;
-  }
-  if(c.ash>0)c.ash--;
-  if(WATERY.includes(c.ground))ensureFlow(s,i);   // 有落差的水自己就会流，不必等动物踩上去
-  if(c.ground==='ash'&&!c.plant&&!c.ash&&rand(s)<(c.moist>=.6?.025:.008)*(1+c.fert*.3)){
-   c.plant='grass';c.age=0;c.plantLife=0;c.ground='soil';count(s,'reborn',1,p);combo(s,T.m234);award(p,'fire',s,typeof i==='number'?i:-1);note(s,'regrowth',T.m116,T.m235,i);
-  }
+  // Legacy fire fields are inert; loaded old saves are normalized to ordinary soil.
+  if(WATERY.includes(c.ground))ensureFlow(s,i);
   if(s.level>=3&&!c.plant&&isLand(c)&&!c.ash&&c.moist>=.6&&c.fert>0&&rand(s)<.012){c.plant='seed';c.age=0;c.plantLife=0;}
   if(c.plant==='seed'&&c.age>=8&&c.moist>=.6&&rand(s)<.14*(1+c.fert*.2)){c.plant='grass';c.age=0;c.plantLife=0;c.fert=Math.max(0,c.fert-.08);count(s,'sprouted',1,p);note(s,'firstSprout',T.m236,T.m237,i);}
   else if(c.plant==='grass'){
@@ -250,7 +242,7 @@ function step(s,p){
   a.hunger=(a.hunger||0)+1;
   const predator=!!PREY[a.type], pollinator=POLLINATORS.includes(a.type), herb=HERBS.includes(a.type), budget=predator?300:200;
   if(a.hunger>budget){c.animal=null;c.fert=Math.min(3,c.fert+.3);continue;}
-  let ate=false,food=eatPlants(s,i,a),prey=predator?nearby(s,i,2).filter(j=>PREY[a.type].includes(s.cells[j].animal?.type)):[];
+  let ate=false,food=eatPlants(s,i,a).sort((left,right)=>a.type==='squirrel'?(s.cells[right].plant==='bush'?1:0)-(s.cells[left].plant==='bush'?1:0):0),prey=predator?nearby(s,i,2).filter(j=>PREY[a.type].includes(s.cells[j].animal?.type)):[];
   const appetite=a.type==='bug'?.055:predator?.14:pollinator?.07:.12;
   const preySupply=predator?PREY[a.type].reduce((sum,k)=>sum+(population[k]||0),0):0;
   const competitors=predator?Object.keys(PREY).filter(k=>PREY[k].some(t=>PREY[a.type].includes(t))).reduce((sum,k)=>sum+(population[k]||0),0):0;
@@ -262,7 +254,7 @@ function step(s,p){
   }else if(food.length&&(!predator||a.hunger>60)&&rand(s)<appetite){
    let j=food[0],d=s.cells[j],fermented=d.plant==='bush'&&d.age>=150;
    if(pollinator){count(s,'pollinated',1,p);d.fert=Math.min(3,d.fert+.04);const k=n.find(k=>s.cells[k].plant==='grass'&&s.cells[k].age>20);if(k!==undefined){s.cells[k].plant='flower';s.cells[k].plantLife=0;s.cells[k].age=0;}}
-   else if(d.plant==='bush')d.age=0;
+   else if(d.plant==='bush'){if(a.type==='squirrel'){count(s,'berryMeals',1,p);note(s,'berryMeal','浆果小客人','松鼠采下了成熟浆果，灌木会再次结果。',j);if(s.metrics.berryMeals>=4)award(p,'berries',s,j);}d.age=0;}
    else if(d.plant!=='tree'){d.plant=s.level>=3?'grass':null;d.age=0;d.plantLife=0;}
    d.fert=Math.min(3,d.fert+.12);ate=true;
    if(a.type==='bug'){count(s,'bugMeals',1,p);note(s,'bugFood',T.m112,T.m255,j);}
