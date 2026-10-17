@@ -5,7 +5,7 @@
 const BUDGET={terrain:60000,animals:50000,rings:1800,flames:9000,fireCores:4500,waterfalls:10000};
 class GardenView{
  constructor(canvas,onPick,onDrag,isPainting,onStrokeEnd){
-  this.canvas=canvas;this.onPick=onPick;this.onDrag=onDrag;this.isPainting=isPainting;this.onStrokeEnd=onStrokeEnd;this.world=null;this.focus=null;this.panMode=false;this.dirty=true;this.lastTick=-1;this.yaw=.72;this.zoom=1;this.targetZoom=1;this.look=new THREE.Vector3();this.targetLook=new THREE.Vector3();this.lastDraw=0;this.selected=-1;this.showLabels=true;
+  this.canvas=canvas;this.onPick=onPick;this.onDrag=onDrag;this.isPainting=isPainting;this.onStrokeEnd=onStrokeEnd;this.world=null;this.focus=null;this.panMode=false;this.dirty=true;this.lastTick=-1;this.yaw=.72;this.pitch=GardenView.PITCH_DEFAULT;this.zoom=1;this.targetZoom=1;this.look=new THREE.Vector3();this.targetLook=new THREE.Vector3();this.lastDraw=0;this.selected=-1;this.showLabels=true;
   this.renderer=new THREE.WebGLRenderer({canvas,alpha:true,antialias:true,powerPreference:'low-power',preserveDrawingBuffer:true});this.renderer.outputEncoding=THREE.sRGBEncoding;this.renderer.setClearColor(0x000000,0);this.renderer.shadowMap.enabled=true;this.renderer.shadowMap.type=THREE.PCFSoftShadowMap;
   this.scene=new THREE.Scene();this.scene.add(new THREE.HemisphereLight(0xe9fff4,0x6c6654,.9));
   this.sun=new THREE.DirectionalLight(0xffefce,.9);this.sun.position.set(-12,30,18);this.sun.castShadow=true;this.sun.shadow.mapSize.set(1024,1024);Object.assign(this.sun.shadow.camera,{left:-30,right:30,top:30,bottom:-30,near:.1,far:100});this.sun.shadow.bias=-.0012;this.sun.shadow.normalBias=.025;this.scene.add(this.sun);
@@ -34,7 +34,10 @@ class GardenView{
  resize(){let r=this.canvas.getBoundingClientRect(),w=Math.max(1,r.width),h=Math.max(1,r.height);this.renderer.setPixelRatio(Math.min(devicePixelRatio||1,this.quality==='high'?2:1.5));this.renderer.setSize(w,h,false);this.width=w;this.height=h;this.updateCamera(1);}
  setQuality(q){this.quality=q;this.renderer.shadowMap.enabled=q!=='low';this.resize();}
  updateCamera(k){if(!this.world)return;this.zoom+=(this.targetZoom-this.zoom)*k;this.look.lerp(this.targetLook,k);let a=this.width/this.height,extent=Math.max(this.world.w*.65/Math.max(.65,a),this.world.h*.73,8)*this.zoom;
-  this.camera.left=-extent*a;this.camera.right=extent*a;this.camera.top=extent;this.camera.bottom=-extent;this.camera.updateProjectionMatrix();this.camera.position.set(this.look.x+Math.sin(this.yaw)*45,36+this.look.y,this.look.z+Math.cos(this.yaw)*45);this.camera.lookAt(this.look);this.camera.updateMatrixWorld();}
+  // 相机绕岛心转圈：水平距离与高度都由倾角（仰角）决定，默认 38.7° 与之前的构图完全一致。
+  // 倾角越大越俯视，越小越接近平视；半径不变，所以画面大小不受影响。
+  const R=57.6,cp=Math.cos(this.pitch),sp=Math.sin(this.pitch);
+  this.camera.left=-extent*a;this.camera.right=extent*a;this.camera.top=extent;this.camera.bottom=-extent;this.camera.updateProjectionMatrix();this.camera.position.set(this.look.x+Math.sin(this.yaw)*R*cp,this.look.y+R*sp,this.look.z+Math.cos(this.yaw)*R*cp);this.camera.lookAt(this.look);this.camera.updateMatrixWorld();}
  screenCell(i){if(!this.world?.cells[i])return null;const r=this.canvas.getBoundingClientRect(),v=new THREE.Vector3(i%this.world.w-this.world.w/2+.5,Eco.surfaceHeight(this.world.cells[i])+.2,Math.floor(i/this.world.w)-this.world.h/2+.5).project(this.camera);return {x:r.left+(v.x+1)*r.width/2,y:r.top+(1-v.y)*r.height/2};}
  focusCell(i){if(!this.world?.cells[i])return;this.focus=i;this.targetLook.set(i%this.world.w-this.world.w/2+.5,Eco.surfaceHeight(this.world.cells[i])+.3,Math.floor(i/this.world.w)-this.world.h/2+.5);this.targetZoom=Math.max(.14,Math.min(.28,5/this.world.w));}
  pan(dx,dy){if(!this.world)return;const factor=(this.camera.top-this.camera.bottom)/Math.max(1,this.height);this.targetLook.x+=(-dx*Math.cos(this.yaw)-dy*Math.sin(this.yaw))*factor;this.targetLook.z+=(dx*Math.sin(this.yaw)-dy*Math.cos(this.yaw))*factor;this.targetLook.x=Math.max(-this.world.w/2,Math.min(this.world.w/2,this.targetLook.x));this.targetLook.z=Math.max(-this.world.h/2,Math.min(this.world.h/2,this.targetLook.z));this.focus=null;}
@@ -108,5 +111,7 @@ class GardenView{
   if(this.followAnimal&&this.focus!==null){const state=this.motion.get(this.followAnimal);if(state)this.targetLook.set(state.x,state.y+.3,state.z);}this.updateCamera(.1);if(this.dirty||this.lastTick!==this.world.tick)this.draw(t);this.drawAnimals(t);this.drawEffects(t);let i=this.hover>=0?this.hover:this.selected;this.cursor.visible=i>=0&&!!this.world.cells[i];if(this.cursor.visible)this.cursor.position.set(i%this.world.w-this.world.w/2+.5,.19+Eco.surfaceHeight(this.world.cells[i]),Math.floor(i/this.world.w)-this.world.h/2+.5);this.updateLabels();this.renderer.render(this.scene,this.camera);}
 }
 GardenView.BUDGET=BUDGET;
+// 默认相机倾角（仰角）：与旧版固定构图一致（水平 45、高 36 → 约 38.66°）。
+GardenView.PITCH_DEFAULT=Math.atan2(36,45);
 root.GardenView=GardenView;
 })(globalThis);

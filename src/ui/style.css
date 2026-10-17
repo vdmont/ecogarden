@@ -39,3 +39,13 @@ dialog{overflow:auto;scroll-padding-top:76px}.dialogHead{position:sticky;top:-28
 #gardenerGuide>div{display:flex;flex-direction:column;min-height:0;max-height:calc(55vh - 44px)}#guideBody{overflow:auto;min-height:0}#gardenerGuide #guideOK{flex-shrink:0;align-self:flex-start}
 
 .residentPanel #residentsBtn{margin:0;border:0;box-shadow:none;background:transparent;font-size:17px}.residentPanel #residentSummary{font-size:14px;margin-top:8px}#newSave{margin-bottom:18px}#toolbar{justify-content:safe center}@media(max-width:900px){.left{grid-template-columns:minmax(0,1fr) 100px}.residentPanel{grid-column:1/-1;padding:5px 10px}.residentPanel #residentsBtn{display:flex;justify-content:center;align-items:center;gap:12px;padding:5px;font-size:13px}.residentPanel #residentSummary{display:inline;margin:0;font-size:12px}}
+
+/* 存档面板：导入与「保存花园照片 / 更新自动存档」同款大小，用暖色区分 */
+.buttonLike{display:inline-flex;align-items:center;justify-content:center;text-align:center}
+.accentBtn{background:#f6ead6;border-color:#dcc39a;color:#8a5c2c;font-weight:bold}
+.accentBtn:hover{background:#f0dfc3}
+
+/* 观察模式的相机倾角：一个贴着「平移 / 旋转 / 缩放」的小滑杆 */
+.cameraControls .tiltControl{display:flex;align-items:center;gap:6px;padding:6px 11px;border:1px solid var(--line);border-radius:18px;background:#fafbf3ca;font-size:10px;color:#6f7f62;white-space:nowrap}
+.cameraControls .tiltControl input[type=range]{width:84px;margin:0;accent-color:var(--green);cursor:pointer}
+@media(max-width:900px){.cameraControls .tiltControl{padding:5px 8px}.cameraControls .tiltControl input[type=range]{width:64px}}
