@@ -62,7 +62,10 @@ function serve(root, port, host = '127.0.0.1') {
         res.writeHead(404).end();
         return;
       }
-      res.writeHead(200, { 'Content-Type': TYPES[path.extname(file).toLowerCase()], 'Cache-Control': 'no-cache' });
+      res.writeHead(200, {
+        'Content-Type': TYPES[path.extname(file).toLowerCase()],
+        'Cache-Control': 'no-cache',
+      });
       fs.createReadStream(file).pipe(res);
     });
   });

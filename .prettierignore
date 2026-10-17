@@ -1,0 +1,13 @@
+node_modules/
+dist/
+.dsh-reports/
+
+# 朋友提供的发布包解压目录，不是我们的源码，不参与格式化
+生态花园-ecogarden-v0.8/
+
+# 第三方库原文
+vendor/
+
+# 生成物与素材
+assets/
+docs/

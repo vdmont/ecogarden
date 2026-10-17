@@ -1,7 +1,23 @@
-GardenModels.registry['deer']=function({a,part,phase,t,i}){const drawPart=part;
+GardenModels.registry['deer'] = function ({ a, part, phase, t, i }) {
+  const drawPart = part;
 
-     part(0,.68,0,.43,.37,.8,0xad8057);part(0,.61,.18,.28,.2,.36,0xe1caa3);for(let side of [-1,1])for(let dz of [-.28,.28]){part(side*.16,.29,dz,.08,.58,.09,0x9a6d48);part(side*.16,.075,dz,.1,.12,.11,0x52483b);}
-     part(0,1.03,.29,.19,.64,.23,0xbb9066);part(0,1.33,.42,.31,.3,.38,0xc5a174);part(0,1.24,.65,.21,.13,.21,0xdfc5a1);part(0,1.27,.77,.09,.065,.045,0x493f36);
-     for(let side of [-1,1]){part(side*.15,1.37,.54,.045,.06,.07,0x363c31);part(side*.24,1.43,.38,.2,.09,.14,0xbb9066);part(side*.1,1.63,.36,.07,.48,.07,0x7a5d3f);part(side*.2,1.75,.36,.25,.06,.06,0x7a5d3f);part(side*.29,1.85,.36,.055,.24,.055,0x8a6b49);}part(0,.77,-.47,.14,.17,.2,0xe4cbaa);
-    
+  part(0, 0.68, 0, 0.43, 0.37, 0.8, 0xad8057);
+  part(0, 0.61, 0.18, 0.28, 0.2, 0.36, 0xe1caa3);
+  for (let side of [-1, 1])
+    for (let dz of [-0.28, 0.28]) {
+      part(side * 0.16, 0.29, dz, 0.08, 0.58, 0.09, 0x9a6d48);
+      part(side * 0.16, 0.075, dz, 0.1, 0.12, 0.11, 0x52483b);
+    }
+  part(0, 1.03, 0.29, 0.19, 0.64, 0.23, 0xbb9066);
+  part(0, 1.33, 0.42, 0.31, 0.3, 0.38, 0xc5a174);
+  part(0, 1.24, 0.65, 0.21, 0.13, 0.21, 0xdfc5a1);
+  part(0, 1.27, 0.77, 0.09, 0.065, 0.045, 0x493f36);
+  for (let side of [-1, 1]) {
+    part(side * 0.15, 1.37, 0.54, 0.045, 0.06, 0.07, 0x363c31);
+    part(side * 0.24, 1.43, 0.38, 0.2, 0.09, 0.14, 0xbb9066);
+    part(side * 0.1, 1.63, 0.36, 0.07, 0.48, 0.07, 0x7a5d3f);
+    part(side * 0.2, 1.75, 0.36, 0.25, 0.06, 0.06, 0x7a5d3f);
+    part(side * 0.29, 1.85, 0.36, 0.055, 0.24, 0.055, 0x8a6b49);
+  }
+  part(0, 0.77, -0.47, 0.14, 0.17, 0.2, 0xe4cbaa);
 };

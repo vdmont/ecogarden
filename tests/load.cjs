@@ -1,1 +1,30 @@
-const path=require('node:path');for(const f of ["src/data/text.js","src/data/species.js","src/data/levels.js","src/data/achievements.js","src/data/copy.js","src/data/palette.js","src/sim/core.js","src/state/save.js","src/state/slots.js","src/render/models/plants.js","src/render/models/animals.js","src/render/models/bug.js","src/render/models/bird.js","src/render/models/butterfly.js","src/render/models/rabbit.js","src/render/models/deer.js","src/render/models/fox-wolf.js","src/render/models/bee.js","src/render/models/chicken.js","src/render/models/frog.js","src/render/models/hedgehog.js","src/render/models/squirrel.js","src/render/models/boar.js","src/render/models/sheep-alpaca.js","src/render/models/visitors.js","src/render/scene.js"])require(path.resolve(__dirname,'..',f));
+const path = require('node:path');
+for (const f of [
+  'src/data/text.js',
+  'src/data/species.js',
+  'src/data/levels.js',
+  'src/data/achievements.js',
+  'src/data/copy.js',
+  'src/data/palette.js',
+  'src/sim/core.js',
+  'src/state/save.js',
+  'src/state/slots.js',
+  'src/render/models/plants.js',
+  'src/render/models/animals.js',
+  'src/render/models/bug.js',
+  'src/render/models/bird.js',
+  'src/render/models/butterfly.js',
+  'src/render/models/rabbit.js',
+  'src/render/models/deer.js',
+  'src/render/models/fox-wolf.js',
+  'src/render/models/bee.js',
+  'src/render/models/chicken.js',
+  'src/render/models/frog.js',
+  'src/render/models/hedgehog.js',
+  'src/render/models/squirrel.js',
+  'src/render/models/boar.js',
+  'src/render/models/sheep-alpaca.js',
+  'src/render/models/visitors.js',
+  'src/render/scene.js',
+])
+  require(path.resolve(__dirname, '..', f));

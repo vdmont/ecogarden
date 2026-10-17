@@ -24,8 +24,11 @@ const declared = [...html.matchAll(/<script src="([^"]+)"><\/script>/g)].map((m)
 if (declared.length !== scripts.length || declared.some((f, i) => f !== scripts[i])) {
   throw new Error(
     'index.html 的 script 列表与 scripts/files.json 不一致（顺序或内容）\n' +
-      '  index.html : ' + JSON.stringify(declared) + '\n' +
-      '  files.json : ' + JSON.stringify(scripts)
+      '  index.html : ' +
+      JSON.stringify(declared) +
+      '\n' +
+      '  files.json : ' +
+      JSON.stringify(scripts),
   );
 }
 
@@ -33,28 +36,45 @@ let replaced = 0;
 // 所有替换都走这个函数：要求恰好命中一次，否则报错（避免标记写错却仍然构建"成功"）
 const replaceOnce = (needle, make) => {
   const hit = html.split(needle).length - 1;
-  if (hit !== 1) throw new Error('index.html 中 "' + needle + '" 出现 ' + hit + ' 次，预期恰好 1 次');
+  if (hit !== 1)
+    throw new Error('index.html 中 "' + needle + '" 出现 ' + hit + ' 次，预期恰好 1 次');
   html = html.replace(needle, make);
   replaced++;
 };
 
 // 1) 内联样式
-replaceOnce('<link rel="stylesheet" href="src/ui/style.css">', () => '<style>' + fs.readFileSync(path.join(base, 'src/ui/style.css'), 'utf8') + '</style>');
+replaceOnce(
+  '<link rel="stylesheet" href="src/ui/style.css">',
+  () => '<style>' + fs.readFileSync(path.join(base, 'src/ui/style.css'), 'utf8') + '</style>',
+);
 
 // 2) 按 files.json 的顺序内联脚本，并逐个做语法检查
 for (const file of scripts) {
   const code = fs.readFileSync(path.join(base, file), 'utf8');
   new vm.Script(code, { filename: file });
-  replaceOnce('<script src="' + file + '"></script>', () => '<script>' + code.replace(/<\/script/gi, '<\\/script') + '</script>');
+  replaceOnce(
+    '<script src="' + file + '"></script>',
+    () => '<script>' + code.replace(/<\/script/gi, '<\\/script') + '</script>',
+  );
 }
 
 // 3) 收尾校验：内联数量与外部引用
 if (replaced !== scripts.length + 1) {
-  throw new Error('内联 ' + replaced + ' 处，预期 ' + (scripts.length + 1) + ' 处（' + scripts.length + ' 个脚本 + 1 个样式）');
+  throw new Error(
+    '内联 ' +
+      replaced +
+      ' 处，预期 ' +
+      (scripts.length + 1) +
+      ' 处（' +
+      scripts.length +
+      ' 个脚本 + 1 个样式）',
+  );
 }
 const leftover = html.match(/<script[^>]+src=|<link[^>]+stylesheet/g);
 if (leftover) throw new Error('构建产物仍存在外部引用：' + leftover.join(', '));
 
 fs.mkdirSync(out, { recursive: true });
 fs.writeFileSync(path.join(out, 'index.html'), html);
-console.log('Built offline game ' + Buffer.byteLength(html) + ' bytes → ' + path.join(out, 'index.html'));
+console.log(
+  'Built offline game ' + Buffer.byteLength(html) + ' bytes → ' + path.join(out, 'index.html'),
+);
