@@ -12,9 +12,6 @@ dist/
 试玩-*.png
 从头开始-新存档.json
 
-# 本地临时协作报告（Lead/teammate 使用，不是工程内容）
-.dsh-reports/
-
 # 压缩包
 *.zip
 
@@ -28,7 +25,14 @@ Thumbs.db
 .env
 .vscode/
 .idea/
-.codex/
-.dsh/
+
+# AI 助手 / 代理留下的本地临时目录
+# 这些是各工具的中间产物，不是工程内容，不要上传。
+# 新旧目录名都留着：不同工具版本用的名字不一样。
 .claude/
+.codex/
+.minimax/
+.dsh/
+.dsh-reports/
 .workbuddy/
+.workbuddy-ai/
