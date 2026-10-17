@@ -24,6 +24,7 @@ const TYPES = {
   '.ico': 'image/x-icon',
   '.svg': 'image/svg+xml',
   '.woff2': 'font/woff2',
+  '.ttf': 'font/ttf',
 };
 
 // root: 要对外提供的目录（绝对路径）；port: 监听端口；host: 仅本机

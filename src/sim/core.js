@@ -154,9 +154,9 @@ function place(s,tool,i,p,replace=false){
  if(tool==='fire'){c.fire=10;c.plant=null;count(s,'burned',1,p);note(s,'firstFire',T.m226,T.m227,i);}
  if(['lake','mountain','forest'].includes(tool)){
   if(['seed','grass','flower'].includes(c.plant))c.plant=null;
-  const waterLevel=c.elevation||0;const reach=tool==='forest'?4.6:tool==='lake'?3.7:3.1;const spots=[i,...nearby(s,i,Math.ceil(reach))].filter(j=>{const d=Math.hypot(j%s.w-i%s.w,Math.floor(j/s.w)-Math.floor(i/s.w));return d<=reach*(.74+.5*fbm(j%s.w*.5,Math.floor(j/s.w)*.5,s.seed+17,2));});for(const j of spots){let d=s.cells[j];if(!isLand(d)||d.animal||d.fire||d.ash>0||['tree','bush'].includes(d.plant))continue;d.plant=null;
+  const waterLevel=c.elevation||0;const reach=tool==='forest'?4.6:tool==='lake'?3.7:2.8;const spots=[i,...nearby(s,i,Math.ceil(reach))].filter(j=>{const d=Math.hypot(j%s.w-i%s.w,Math.floor(j/s.w)-Math.floor(i/s.w));return d<=reach*(.74+.5*fbm(j%s.w*.5,Math.floor(j/s.w)*.5,s.seed+17,2));});for(const j of spots){let d=s.cells[j];if(!isLand(d)||d.animal||d.fire||d.ash>0||['tree','bush'].includes(d.plant))continue;d.plant=null;
    if(tool==='lake'){d.ground=j===i?'spring':'water';d.elevation=waterLevel;d.waterAge=0;}
-   if(tool==='mountain'){const dist=Math.hypot(j%s.w-i%s.w,Math.floor(j/s.w)-Math.floor(i/s.w));d.ground='mountain';d.elevation=Math.round((1.45+4.05*Math.max(0,1-Math.pow(dist/3.4,1.65))+.18*(fbm(j%s.w*.6,Math.floor(j/s.w)*.6,s.seed+31,2)-.5))*100)/100;}
+   if(tool==='mountain'){const dist=Math.hypot(j%s.w-i%s.w,Math.floor(j/s.w)-Math.floor(i/s.w));d.ground='mountain';d.elevation=Math.round((1.45+4.05*Math.max(0,1-Math.pow(dist/3.4,1.3))+.18*(fbm(j%s.w*.6,Math.floor(j/s.w)*.6,s.seed+31,2)-.5))*100)/100;}
    if(tool==='forest'){d.plant=j===i||rand(s)<.55?'tree':'grass';d.age=0;d.plantLife=0;}
   }count(s,tool+'Placed',1,p);
  }
@@ -227,7 +227,7 @@ function step(s,p){
   if(c.plant&&++c.plantLife>=PLANT_LIFE[c.plant]){const was=c.plant;c.plant=s.level>=3&&c.moist>0?'seed':null;c.plantLife=0;c.age=0;c.fert=Math.min(3,c.fert+.2);if(was==='tree'||was==='bush')note(s,'plantCycle',T.m232,T.m233,i);}
   if(c.ground==='water'&&++c.waterAge>700&&rand(s)<.0008&&!n.some(j=>s.cells[j].ground==='spring'))c.ground='soil';
   if(c.fire){if(c.animal){c.animal=null;c.fert=Math.min(3,c.fert+.3);}c.fire--;for(const j of n){if(Math.abs(j%s.w-x)+Math.abs(Math.floor(j/s.w)-y)!==1)continue;let d=s.cells[j];if(['grass','flower','tree','bush'].includes(d.plant)&&!d.fire&&rand(s)<.16){d.fire=10;d.plant=null;count(s,'burned',1,p);}}
-   if(!c.fire){c.ground='ash';c.ash=30;c.age=0;c.recovery=180;c.fert=Math.min(3,c.fert+.6*Math.pow(.65,c.burns));c.burns++;}continue;
+   if(!c.fire){c.ground='ash';c.ash=30;c.age=0;c.recovery=180;c.fert=Math.min(3,c.fert+.9*Math.pow(.65,c.burns));c.burns++;note(s,'ashNutrients','灰烬滋养土壤','冷却后补水种植，肥力促进发芽与开花。反复燃烧的收益会递减。',i);}continue;
   }
   if(c.ash>0)c.ash--;
   if(WATERY.includes(c.ground))ensureFlow(s,i);   // 有落差的水自己就会流，不必等动物踩上去
@@ -235,11 +235,11 @@ function step(s,p){
    c.plant='grass';c.age=0;c.plantLife=0;c.ground='soil';count(s,'reborn',1,p);combo(s,T.m234);award(p,'fire',s,typeof i==='number'?i:-1);note(s,'regrowth',T.m116,T.m235,i);
   }
   if(s.level>=3&&!c.plant&&isLand(c)&&!c.ash&&c.moist>=.6&&c.fert>0&&rand(s)<.012){c.plant='seed';c.age=0;c.plantLife=0;}
-  if(c.plant==='seed'&&c.age>=8&&c.moist>=.6&&rand(s)<.14*(1+c.fert*.2)){c.plant='grass';c.age=0;c.plantLife=0;count(s,'sprouted',1,p);note(s,'firstSprout',T.m236,T.m237,i);}
+  if(c.plant==='seed'&&c.age>=8&&c.moist>=.6&&rand(s)<.14*(1+c.fert*.2)){c.plant='grass';c.age=0;c.plantLife=0;c.fert=Math.max(0,c.fert-.08);count(s,'sprouted',1,p);note(s,'firstSprout',T.m236,T.m237,i);}
   else if(c.plant==='grass'){
    if(c.moist>=.6&&rand(s)<.027){let choices=n.filter(j=>{let d=s.cells[j];return d.ground==='soil'&&!d.plant&&!d.fire&&!d.ash});if(choices.length){let d=s.cells[choices[Math.floor(rand(s)*choices.length)]];d.plant='seed';d.age=0;d.plantLife=0;}}
    if(c.age>80&&!c.recovery&&rand(s)<(s.level===0?.004:s.level>=3?.001:.016)*(1+c.moist)){c.plant='tree';c.age=0;c.plantLife=0;note(s,'tree',T.m238,T.m239,i);}
-   else if(c.age>40&&rand(s)<.012){c.plant='flower';c.age=0;c.plantLife=0;}
+   else if(c.age>40&&rand(s)<.012*(1+Math.min(3,c.fert)*.3)){c.fert=Math.max(0,c.fert-.05);c.plant='flower';c.age=0;c.plantLife=0;}
   }else if(c.plant==='flower'&&s.level>=1&&c.age>100&&rand(s)<.004&&!c.animal&&(population.butterfly||0)<Math.max(3,plants/25)){c.animal=animal('butterfly');c.plant='grass';c.age=0;c.plantLife=0;note(s,'butterfly',T.m240,T.m241,i);}
   else if(c.plant==='tree'&&c.age>100&&s.tick%12===0&&rand(s)<.25){let empty=n.filter(j=>s.cells[j].ground==='soil'&&!s.cells[j].plant);if(empty.length){let j=empty[Math.floor(rand(s)*empty.length)];s.cells[j].plant='seed';s.cells[j].age=0;s.cells[j].plantLife=0;}}
   else if(c.plant==='bush'&&c.age===150){note(s,'ferment',T.m242,T.m243,i);}

@@ -39,7 +39,7 @@ const replaceOnce = (needle, make) => {
 };
 
 // 1) 内联样式
-replaceOnce('<link rel="stylesheet" href="src/ui/style.css">', () => '<style>' + fs.readFileSync(path.join(base, 'src/ui/style.css'), 'utf8') + '</style>');
+replaceOnce('<link rel="stylesheet" href="src/ui/style.css">', () => '<style>' + fs.readFileSync(path.join(base, 'src/ui/style.css'), 'utf8').replace("../../assets/fonts/LXGWWenKai-Medium.ttf", 'data:font/ttf;base64,' + fs.readFileSync(path.join(base,'assets/fonts/LXGWWenKai-Medium.ttf')).toString('base64')) + '</style>');
 
 // 2) 按 files.json 的顺序内联脚本，并逐个做语法检查
 for (const file of scripts) {
@@ -56,5 +56,5 @@ const leftover = html.match(/<script[^>]+src=|<link[^>]+stylesheet/g);
 if (leftover) throw new Error('构建产物仍存在外部引用：' + leftover.join(', '));
 
 fs.mkdirSync(out, { recursive: true });
-fs.writeFileSync(path.join(out, 'index.html'), html);
+const fontLicense=fs.readFileSync(path.join(base,'assets/fonts/OFL.txt'),'utf8');html=html.replace('</body>', '<script type="text/plain" id="font-license">'+fontLicense+'</script></body>');fs.writeFileSync(path.join(out,'FONT-LICENSE.txt'),fontLicense);fs.writeFileSync(path.join(out, 'index.html'), html);
 console.log('Built offline game ' + Buffer.byteLength(html) + ' bytes → ' + path.join(out, 'index.html'));

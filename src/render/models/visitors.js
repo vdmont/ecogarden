@@ -1,7 +1,7 @@
 // Shared silhouettes with species-specific markings; all coordinates use the animal's local frame.
 for(const [type,[name,kind,color]] of Object.entries(EcoData.VISITORS))GardenModels.registry[type]=function({a,part,phase}){
  const scale=a.age<0?.68:1,rest=a.sleep>0||a.habit===2?.62:a.habit===4?.55:1;
- const p=(x,y,z,w,h,d,c,tilt=0)=>part(x*scale,y*scale*rest,z*scale,w*scale,h*scale,d*scale,c,tilt);
+ const p=(x,y,z,w,h,d,c,tilt=0)=>part(x*scale*(type==='abyssinian'?.76:1),y*scale*rest,z*scale,w*scale*(type==='abyssinian'?.76:1),h*scale,d*scale,c,tilt);
  const eye=(y,z)=>{for(const side of [-1,1])p(side*.115,y,z,.045,.05,.035,type==='ragdoll'?0x609dc1:0x253633);};
  if(kind==='bird'){
   const tall=type==='flamingo'||type==='nightHeron',y=tall?.95:.54;
