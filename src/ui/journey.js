@@ -1,12 +1,12 @@
 (function(root){
 'use strict';
 const intro=[
- ['第一滴水','这座花园送给你！我来陪你试试怎么打理它，先从水边种点绿开始。'],
+ ['第一滴水','放置消耗能量，能量随时间恢复。发芽、进食和新生增加生态值。完成左上角任务即可进入下一关。'],
  ['谁来吃虫？','草养幼虫，幼虫养飞鸟。这次，我们接上一条食物链。'],
  ['火后的花园','留一圈石头，再点一小片火。给灰烬留些时间。'],
  ['林间来客','食物链共生需要：至少 15 格植物，同时有幼虫、一种草食动物（如羊、羊驼、兔子）和一种食虫动物（如鸟、鸡、青蛙）。保持这些邻居共存，累计 30 秒；还需 4 种动物和 12 次进食。'],
  ['一座完整的岛','湖泊 300、森林 650、山脉 1000 生态解锁。完整生态需同时满足：15 格植物、幼虫＋草食动物＋食虫动物、8 种元素（含植物/动物/地形）、曾发生捕食，以及 12 格水域、12 棵树、5 格山地。全部满足才连续计时 60 秒，缺任一项会重新计时；本关另需 6 次自然新生。'],
- ['把时间交给花园','能量无限，地形仍靠本岛生态值解锁。慢慢建一座自己的花园。']
+ ['自由建造','能量无限，地形仍靠本岛生态值解锁。慢慢建一座自己的花园。']
 ];
 function nextStep(s,p){
  const m=s.metrics,done=p.tutorial||{};
@@ -14,23 +14,41 @@ function nextStep(s,p){
  const choose=(id,tool,title,body)=>done[id]?null:{id,tool,title,body};
  if(s.level===0){
   if(m.sprouted<12)return choose('sow','seed','把种子带到水边','白框是种子。拖到箭头处，或选中后在湿地上划一划。让 12 颗种子发芽。');
-  if(m.bugMeals<4)return choose('feedBug','bug','给草地请一位小客人','把幼虫拖到草上。它吃过 4 次，这一关就完成了。');
+  if(m.bugMeals<4)return choose('feedBug','bug','放置幼虫','把幼虫拖到草上。它吃过 4 次，这一关就完成了。');
  }
  if(s.level===1){
-  if(m.bushPlaced<4)return choose('berries','bush','给邻居种点浆果','在空地种下 4 丛浆果。图标下面的小数字，是每次放置花掉的能量。');
-  if(!s.cells.some(c=>c?.animal?.type==='bug')&&m.birdMeals<3)return {id:'food',tool:'bug',title:'飞鸟的午餐还没来',body:'先把幼虫放到草地。食物够了，再请飞鸟。'};
+  if(m.bushPlaced<4)return choose('berries','bush','种植浆果','在空地种下 4 丛浆果。图标下面的小数字，是每次放置花掉的能量。');
+  if(!s.cells.some(c=>c?.animal?.type==='bug')&&m.birdMeals<3)return {id:'food',tool:'bug',title:'准备食物',body:'先把幼虫放到草地。食物够了，再请飞鸟。'};
   if(m.birdMeals<3)return choose('birds','bird','让食物链接起来','在幼虫附近放一只飞鸟，观察 3 次捕食。任务一直在左上角。');
  }
  if(s.level===2){if(m.rocksPlaced<6)return choose('rocks','rock','先留一道防火边','放下 6 块石头，把准备燃烧的草地围开。');if(m.burned<8)return choose('fire','fire','只点一小片火','火也会伤害动物。选一片远离动物的草地，留意左上角的恢复任务。');return {id:'recover',title:'等土地缓一缓',body:'灰烬冷却后，在旁边补水。任务需要 4 次火后新生。'};}
- if(s.level===3)return choose('neighbors','animal','留出食物，再请邻居','种草和浆果，邀请 4 种动物。让它们进食并共同生活；不必一直放新动物。');
- if(s.level>=4){const next=Object.entries(Eco.TERRAIN_UNLOCK).find(([k,n])=>s.score<n);return next?{id:'terrain',tool:'seed',title:'先让小生命长起来',body:'发芽、进食和新生命都会增加生态值。下一项：'+Eco.TOOL[next[0]].name+' · '+next[1]+' 生态。'}:{id:'island',tool:s.metrics.lakeArea<12?'lake':s.metrics.forestArea<12?'forest':s.metrics.mountainArea<5?'mountain':null,title:'把山林和湖泊连起来',body:'左上角记录湖面、山地、森林、新生与持续生态。创造完，去观察模式看看它们。'};}
+ if(s.level===3)return choose('neighbors','animal','引入动物','种草和浆果，邀请 4 种动物。让它们进食并共同生活；不必一直放新动物。');
+ if(s.level>=4){const next=Object.entries(Eco.TERRAIN_UNLOCK).find(([k,n])=>s.score<n);return next?{id:'terrain',tool:'seed',title:'提升生态',body:'发芽、进食和新生命都会增加生态值。下一项：'+Eco.TOOL[next[0]].name+' · '+next[1]+' 生态。'}:{id:'island',tool:s.metrics.lakeArea<12?'lake':s.metrics.forestArea<12?'forest':s.metrics.mountainArea<5?'mountain':null,title:'完善生态',body:'左上角记录湖面、山地、森林、新生与持续生态。创造完，去观察模式看看它们。'};}
  return null;
 }
 function plan(s,p){const step=nextStep(s,p);return step&&!p.tutorial?.['dismiss'+s.level+'_'+step.id]&&(p.tutorialCounts?.[step.tool||step.id]||0)<2?step:null;}
 function learned(p,step){if(!step)return;p.tutorialCounts??={};const key=step.tool||step.id;p.tutorialCounts[key]=Math.min(2,(p.tutorialCounts[key]||0)+1);}
+
+function mountCover(home){
+ const canvas=home.querySelector('#coverModels');let renderer;
+ try{renderer=new THREE.WebGLRenderer({canvas,alpha:true,antialias:true});}catch{return;}
+ renderer.setPixelRatio(Math.min(devicePixelRatio||1,2));
+ const scene=new THREE.Scene(),camera=new THREE.OrthographicCamera(),geometry=new THREE.BoxGeometry(1,1,1),materials=new Map(),figures=[];
+ scene.add(new THREE.HemisphereLight(0xfffbeb,0x849477,.8));const light=new THREE.DirectionalLight(0xfff2d9,.45);light.position.set(-5,12,14);scene.add(light);
+ function part(g,x,y,z,w,h,d,c,tilt=0){if(!materials.has(c))materials.set(c,new THREE.MeshLambertMaterial({color:c}));const mesh=new THREE.Mesh(geometry,materials.get(c));mesh.position.set(x,y,z);mesh.scale.set(w,h,d);mesh.rotation.z=tilt;g.add(mesh);}
+ const types=['alpaca','orangeCat','tree','ragdoll','capybara','mountain','rabbit','tabby','bush','samoyed','deer','abyssinian'];
+ types.forEach((type,i)=>{const group=new THREE.Group();scene.add(group);figures.push(group);part(group,0,-.13,0,1.7,.24,1.4,0xc0c99a);part(group,0,-.3,0,1.6,.14,1.3,0xc3b18a);
+ if(type==='mountain'){for(let k=0;k<4;k++)part(group,0,.17+k*.34,0,1.5-k*.24,.35,1.3-k*.2,[0x879384,0x99a28e,0xb1b9a1,0xdbdfcc][k]);}
+ else if(type==='tree'||type==='bush'){GardenModels.plants({b:(...args)=>part(group,...args),c:{plant:type,age:160,variant:i%5},i,x:0,z:0,variant:i%5,wet:false,labelList:[]});}
+ else GardenModels.animals({a:{type,age:100,habit:0},part:(...args)=>part(group,...args),phase:0,t:0,i,labelList:[]});group.rotation.y=(i%3-1)*.22;
+ });
+ function resize(){const w=home.clientWidth,h=home.clientHeight;if(!w||!h)return;renderer.setSize(w,h,false);const height=16,width=height*w/h;camera.left=-width/2;camera.right=width/2;camera.top=height/2;camera.bottom=-height/2;camera.near=.1;camera.far=100;camera.position.set(0,8,22);camera.lookAt(0,0,0);camera.updateProjectionMatrix();figures.forEach((g,i)=>{const angle=2*Math.PI*(i+.5)/figures.length;g.position.set(Math.cos(angle)*width*.39,Math.sin(angle)*5.7-.45,0);g.scale.setScalar(Math.min(1.3,width/11));});renderer.render(scene,camera);}
+ const observer=new ResizeObserver(resize);observer.observe(home);resize();
+}
+
 function mount(api){
  const $=id=>document.getElementById(id),game=$('game');let started=false,mode='create',chapter=-1,drag=null,lastGuide=0;
- const home=document.createElement('div');home.id='welcome';home.innerHTML='<div class="welcome-art">🌱</div><p class="overline">朋友送来的一座花园</p><h1>生态花园</h1><p class="welcome-copy">送你一个大花园！<br>种一点绿，等一位邻居，<br>让生命慢慢接上生命。</p><div class="welcome-rules"><p><b>⚡ 能量</b> 放置会消耗，时间会补充。</p><p><b>✦ 生态</b> 发芽、进食、新生让它增加。</p><p><b>✓ 任务</b> 看左上角，全部完成后去下一关。</p></div><button id="enterGarden" class="primary">接过这座花园 →</button>';game.append(home);
+ const home=document.createElement('div');home.id='welcome';home.innerHTML='<canvas id="coverModels" aria-hidden="true"></canvas><div class="coverTitle"><h1>生态花园</h1><p>Ecogarden</p><button id="enterGarden" class="primary">开始打造</button></div>';game.append(home);mountCover(home);
  const bar=document.createElement('div');bar.id='modeBar';bar.innerHTML='<button id="createMode" aria-pressed="true">✿ 创造</button><button id="observeMode" aria-pressed="false">⌕ 观察</button><button id="gardenMenu">☰ 菜单</button>';document.querySelector('header').append(bar);
  const menu=document.createElement('dialog');menu.id='gardenMenuPanel';menu.innerHTML='<div class="dialogHead"><h2>歇一会儿</h2><button id="closeGardenMenu">返回花园</button></div><div class="menuGrid"></div>';game.append(menu);
  for(const id of ['chapterBtn','achieveBtn','helpBtn','saveBtn'])menu.querySelector('.menuGrid').append($(id));

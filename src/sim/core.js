@@ -48,7 +48,7 @@ function shapeTerrain(s,level){
   c.elevation=Math.max(0,Math.round(e*(.16+.84*margin)*100)/100);}
  // 2) 山脊：取本局最高的那一小撮（小岛也保证有 3 格），所以每局的岛都有山、比例也稳定
  const want=Math.max(3,Math.round(land.length*.05)),byElev=land.slice().sort((a,b)=>s.cells[b].elevation-s.cells[a].elevation),spread=level<2?1.6:4.2;
- byElev.slice(0,want).forEach((idx,k)=>{const c=s.cells[idx],t=1-k/Math.max(1,want-1);c.ground='mountain';c.elevation=Math.round((2.4+t*spread)*100)/100;});
+ byElev.slice(0,want).forEach((idx,k)=>{const c=s.cells[idx],t=1-k/Math.max(1,want-1);c.ground='mountain';c.elevation=Math.round((2.4+t*spread)*.92*100)/100;});
  // 3) 湖：从内陆最低处挖一片不规则水面
  if(level>=2){const inner=land.filter(i=>s.cells[i].ground==='soil'&&islandRadius(i%w,Math.floor(i/w),w,h)<.66);
   if(inner.length){const low=inner.reduce((a,b)=>s.cells[a].elevation<=s.cells[b].elevation?a:b),rad=level>=4?3.6:2.6,lx=low%w,ly=Math.floor(low/w),floorElev=s.cells[low].elevation;
@@ -156,7 +156,7 @@ function place(s,tool,i,p,replace=false){
   if(['seed','grass','flower'].includes(c.plant))c.plant=null;
   const waterLevel=c.elevation||0;const reach=tool==='forest'?4.6:tool==='lake'?3.7:3.1;const spots=[i,...nearby(s,i,Math.ceil(reach))].filter(j=>{const d=Math.hypot(j%s.w-i%s.w,Math.floor(j/s.w)-Math.floor(i/s.w));return d<=reach*(.74+.5*fbm(j%s.w*.5,Math.floor(j/s.w)*.5,s.seed+17,2));});for(const j of spots){let d=s.cells[j];if(!isLand(d)||d.animal||d.fire||d.ash>0||['tree','bush'].includes(d.plant))continue;d.plant=null;
    if(tool==='lake'){d.ground=j===i?'spring':'water';d.elevation=waterLevel;d.waterAge=0;}
-   if(tool==='mountain'){const dist=Math.hypot(j%s.w-i%s.w,Math.floor(j/s.w)-Math.floor(i/s.w));d.ground='mountain';d.elevation=dist<.6?7:dist<1.5?5.4:dist<2.4?3.2:1.6;}
+   if(tool==='mountain'){const dist=Math.hypot(j%s.w-i%s.w,Math.floor(j/s.w)-Math.floor(i/s.w));d.ground='mountain';d.elevation=Math.round((1.45+4.05*Math.max(0,1-Math.pow(dist/3.4,1.65))+.18*(fbm(j%s.w*.6,Math.floor(j/s.w)*.6,s.seed+31,2)-.5))*100)/100;}
    if(tool==='forest'){d.plant=j===i||rand(s)<.55?'tree':'grass';d.age=0;d.plantLife=0;}
   }count(s,tool+'Placed',1,p);
  }

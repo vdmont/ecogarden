@@ -17,9 +17,9 @@ for(const [type,[name,kind,color]] of Object.entries(EcoData.VISITORS))GardenMod
  }
  const cat=kind==='cat',dog=kind==='dog',capy=kind==='capy',myth=kind==='myth',fluffy=['ragdoll','samoyed','baize'].includes(type),body=fluffy?.58:.46;
  p(0,.45,0,.48,body,.66,color);for(const x of [-.16,.16])for(const z of [-.23,.23])p(x,.17,z,.11,.3,.12,color);
- const hy=capy?.57:.76,hz=.34;p(0,hy,hz,capy?.4:.37,.33,capy?.44:.33,color);p(0,hy-.08,hz+.21,.23,.15,capy?.26:.16,capy?color:0xe8dcc5);eye(hy+.03,hz+.18);
- p(0,hy-.04,hz+(capy?.36:.31),.07,.05,.035,0x41433b);
- for(const side of [-1,1])p(side*.14,hy+(cat||myth?.24:.13),hz-.04,cat?.1:.13,cat||myth?.2:.17,.12,type==='ragdoll'?0x746b63:color);
+ const hy=capy?.57:cat?.82:.76,hz=.34;p(0,hy,hz,capy?.4:.37,.33,capy?.44:.33,color);p(0,hy-.08,hz+(cat?.165:.21),cat?.21:.23,cat?.1:.15,capy?.26:cat?.055:.16,capy?color:0xe8dcc5);eye(hy+.03,hz+.18);
+ p(0,hy-.04,hz+(capy?.36:cat?.205:.31),.07,.05,.035,0x41433b);
+ for(const side of [-1,1]){if(cat){for(let tier=0;tier<4;tier++){const width=.16-tier*.038;p(side*.135,hy+.19+tier*.047,hz-.015,width,.052,.11,type==='ragdoll'?0x746b63:color);if(tier<3)p(side*.135,hy+.19+tier*.047,hz+.043,width*.5,.04,.012,0xd4a093);}for(const dy of [-.025,.025])p(side*.215,hy-.055+dy,hz+.18,.12,.015,.02,0xeee4cc);}else p(side*.14,hy+(myth?.24:.13),hz-.04,.13,myth?.2:.17,.12,color);}
  if(!capy)p(.08,.55,-.49,.1,cat?.46:.23,.12,color,Math.sin(phase)*.08);
  if(type==='tabby'||type==='orangeCat')for(let j=0;j<3;j++)p(0,.45+body/2+.006,-.22+j*.18,.48,.025,.045,type==='tabby'?0x494b40:0xb77a42);
  if(type==='borderCollie'){p(0,.69,.12,.3,.13,.25,0xf0ebdf);p(0,hy+.04,hz+.175,.09,.26,.018,0xf0ebdf);}
