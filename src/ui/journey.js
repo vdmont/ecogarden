@@ -4,8 +4,8 @@ const intro=[
  ['第一滴水','这座花园送给你！我来陪你试试怎么打理它，先从水边种点绿开始。'],
  ['谁来吃虫？','草养幼虫，幼虫养飞鸟。这次，我们接上一条食物链。'],
  ['火后的花园','留一圈石头，再点一小片火。给灰烬留些时间。'],
- ['林间来客','准备草地和浆果，邀请不同的邻居住进来。'],
- ['一座完整的岛','先养活小生命。生态值达到 300、650、1000，就能依次造湖、种森林、堆山。'],
+ ['林间来客','食物链共生需要：至少 15 格植物，同时有幼虫、一种草食动物（如羊、羊驼、兔子）和一种食虫动物（如鸟、鸡、青蛙）。保持这些邻居共存，累计 30 秒；还需 4 种动物和 12 次进食。'],
+ ['一座完整的岛','湖泊 300、森林 650、山脉 1000 生态解锁。完整生态需同时满足：15 格植物、幼虫＋草食动物＋食虫动物、8 种元素（含植物/动物/地形）、曾发生捕食，以及 12 格水域、12 棵树、5 格山地。全部满足才连续计时 60 秒，缺任一项会重新计时；本关另需 6 次自然新生。'],
  ['把时间交给花园','能量无限，地形仍靠本岛生态值解锁。慢慢建一座自己的花园。']
 ];
 function nextStep(s,p){
@@ -26,7 +26,7 @@ function nextStep(s,p){
  if(s.level>=4){const next=Object.entries(Eco.TERRAIN_UNLOCK).find(([k,n])=>s.score<n);return next?{id:'terrain',tool:'seed',title:'先让小生命长起来',body:'发芽、进食和新生命都会增加生态值。下一项：'+Eco.TOOL[next[0]].name+' · '+next[1]+' 生态。'}:{id:'island',tool:s.metrics.lakeArea<12?'lake':s.metrics.forestArea<12?'forest':s.metrics.mountainArea<5?'mountain':null,title:'把山林和湖泊连起来',body:'左上角记录湖面、山地、森林、新生与持续生态。创造完，去观察模式看看它们。'};}
  return null;
 }
-function plan(s,p){const step=nextStep(s,p);return step&&(p.tutorialCounts?.[step.tool||step.id]||0)<2?step:null;}
+function plan(s,p){const step=nextStep(s,p);return step&&!p.tutorial?.['dismiss'+s.level+'_'+step.id]&&(p.tutorialCounts?.[step.tool||step.id]||0)<2?step:null;}
 function learned(p,step){if(!step)return;p.tutorialCounts??={};const key=step.tool||step.id;p.tutorialCounts[key]=Math.min(2,(p.tutorialCounts[key]||0)+1);}
 function mount(api){
  const $=id=>document.getElementById(id),game=$('game');let started=false,mode='create',chapter=-1,drag=null,lastGuide=0;
@@ -40,23 +40,22 @@ function mount(api){
  const setMode=m=>{mode=m;game.dataset.mode=m;$('createMode').setAttribute('aria-pressed',m==='create');$('observeMode').setAttribute('aria-pressed',m==='observe');api.choose(m==='observe'?'inspect':'seed');api.view.panMode=false;$('panToggle').setAttribute('aria-pressed','false');api.view.resize();};
  $('createMode').onclick=()=>setMode('create');$('observeMode').onclick=()=>setMode('observe');
  $('enterGarden').onclick=()=>{started=true;home.hidden=true;api.view.resize();};
- $('guideOK').onclick=()=>{const p=api.profile();p.tutorial??={};p.tutorial['intro'+api.world().level]=true;api.save();};
+ $('guideOK').onclick=()=>{const p=api.profile(),s=api.world(),step=plan(s,p);p.tutorial??={};p.tutorial['intro'+s.level]=true;if(step)p.tutorial['dismiss'+s.level+'_'+step.id]=true;guide.hidden=true;svg.style.display='none';api.save();};const taskHelp=document.createElement('button');taskHelp.id='taskHelp';taskHelp.className='textBtn';taskHelp.textContent='任务说明';document.querySelector('.mission').append(taskHelp);taskHelp.onclick=()=>{if(api.world().level===5)return;api.profile().tutorial['intro'+api.world().level]=false;lastGuide=0;update();};
  const canvas=$('garden');canvas.addEventListener('dblclick',e=>{if(mode==='observe'){const i=api.view.pick(e.clientX,e.clientY);if(i>=0)api.focus(i);}});
  let tap=null;canvas.addEventListener('pointerup',e=>{if(mode!=='observe'||e.pointerType!=='touch')return;const now=performance.now();if(tap&&now-tap.t<320&&Math.hypot(e.clientX-tap.x,e.clientY-tap.y)<15){api.focus(api.view.pick(e.clientX,e.clientY));tap=null;}else tap={t:now,x:e.clientX,y:e.clientY};});
  $('toolbar').addEventListener('pointerdown',e=>{const b=e.target.closest('[data-tool]');if(!b||b.disabled||mode!=='create')return;drag={tool:b.dataset.tool,x:e.clientX,y:e.clientY};});
  window.addEventListener('pointerup',e=>{if(!drag)return;const d=drag;drag=null;if(Math.hypot(e.clientX-d.x,e.clientY-d.y)<12)return;const r=canvas.getBoundingClientRect();if(e.clientX<r.left||e.clientX>r.right||e.clientY<r.top||e.clientY>r.bottom)return;api.choose(d.tool);api.pick(api.view.pick(e.clientX,e.clientY));});window.addEventListener('pointercancel',()=>drag=null);
  function update(){const now=performance.now();if(now-lastGuide<80)return;lastGuide=now;const s=api.world(),p=api.profile();if(!s)return;p.tutorial??={};
-  if(chapter!==s.level){chapter=s.level;setMode('create');}
+  $('taskHelp').hidden=s.level===5;if(chapter!==s.level){chapter=s.level;setMode('create');}
   if(s.metrics.sprouted>=12)p.tutorial.sow=true;if(s.metrics.bugMeals>=4)p.tutorial.feedBug=true;if(s.level===1&&s.metrics.bushPlaced>=4)p.tutorial.berries=true;if(s.level===1&&s.metrics.birdMeals>=3)p.tutorial.birds=true;if(s.level===2&&s.metrics.rocksPlaced>=6)p.tutorial.rocks=true;if(s.level===2&&s.metrics.burned>=8)p.tutorial.fire=true;if(s.level===3&&s.metrics.animalKinds>=4&&s.metrics.meals>=12)p.tutorial.neighbors=true;if(s.complete)p.tutorial['chapter'+s.level]=true;
   document.querySelectorAll('.guide-lit').forEach(b=>b.classList.remove('guide-lit'));svg.style.display='none';
   const hidden=s.level===5||!started||!!document.querySelector('dialog[open]')||mode==='observe';guide.hidden=hidden;if(hidden)return;
-  if(!p.tutorial['intro'+s.level]){$('guideTitle').textContent='朋友的小纸条 · '+intro[s.level][0];$('guideBody').textContent=intro[s.level][1];$('guideOK').hidden=false;return;}
-  const step=plan(s,p);guide.hidden=!step;$('guideOK').hidden=true;if(!step)return;$('guideTitle').textContent=step.title;$('guideBody').textContent=step.body;
+  const step=plan(s,p),opening=!p.tutorial['intro'+s.level];guide.hidden=!opening&&!step;$('guideOK').hidden=false;if(guide.hidden)return;$('guideTitle').textContent=opening?'朋友的小纸条 · '+intro[s.level][0]:step.title;$('guideBody').textContent=opening?intro[s.level][1]+(s.level<3&&step?' '+step.body:''):step.body;if(!step)return;
   if(!step.tool)return;const b=document.querySelector('[data-tool="'+step.tool+'"]');if(!b)return;b.classList.add('guide-lit');
-  let candidates=s.cells.map((c,i)=>({c,i})).filter(({c,i})=>c&&!Eco.allow(s,step.tool,i,p));if(step.tool==='seed')candidates=candidates.filter(({c})=>c.moist>=.6);if(step.tool==='bird')candidates.sort((a,b)=>Eco.nearby(s,b.i,2).filter(i=>s.cells[i].animal?.type==='bug').length-Eco.nearby(s,a.i,2).filter(i=>s.cells[i].animal?.type==='bug').length);
-  if(!candidates.length)return;const target=api.view.screenCell(candidates[Math.floor(step.tool==='bird'?0:candidates.length/2)].i),r=b.getBoundingClientRect(),cr=canvas.getBoundingClientRect();if(!target||target.x<cr.left||target.x>cr.right||target.y<cr.top||target.y>cr.bottom)return;const x=r.left+r.width/2,y=r.top;svg.style.display='block';svg.setAttribute('viewBox','0 0 '+innerWidth+' '+innerHeight);$('guideLine').setAttribute('d',`M ${x} ${y} Q ${x-50} ${target.y+50} ${target.x} ${target.y+24}`);$('guideTarget').setAttribute('cx',target.x);$('guideTarget').setAttribute('cy',target.y);
+  let candidates=s.cells.map((c,i)=>({c,i})).filter(({c,i})=>c&&!Eco.allow(s,step.tool,i,p));if(step.tool==='seed'){candidates=candidates.filter(({c})=>c.moist>=.6);candidates.sort((a,b)=>Eco.nearby(s,b.i).filter(j=>['water','spring'].includes(s.cells[j]?.ground)).length-Eco.nearby(s,a.i).filter(j=>['water','spring'].includes(s.cells[j]?.ground)).length);}if(step.tool==='bug')candidates=candidates.filter(({c})=>c.plant==='grass');if(step.tool==='bird')candidates.sort((a,b)=>Eco.nearby(s,b.i,2).filter(i=>s.cells[i].animal?.type==='bug').length-Eco.nearby(s,a.i,2).filter(i=>s.cells[i].animal?.type==='bug').length);
+  if(!candidates.length)return;const cr=canvas.getBoundingClientRect(),gr=guide.getBoundingClientRect();const visible=candidates.map(v=>api.view.screenCell(v.i)).filter(v=>v&&v.x>cr.left+25&&v.x<cr.right-25&&v.y>cr.top+25&&v.y<cr.bottom-25&&!(v.x>gr.left-24&&v.x<gr.right+24&&v.y>gr.top-24&&v.y<gr.bottom+24));const target=visible[0],r=b.getBoundingClientRect();if(!target||target.x<cr.left||target.x>cr.right||target.y<cr.top||target.y>cr.bottom)return;const x=r.left+r.width/2,y=r.top;svg.style.display='block';svg.setAttribute('viewBox','0 0 '+innerWidth+' '+innerHeight);$('guideLine').setAttribute('d',`M ${x} ${y} Q ${x-50} ${target.y+50} ${target.x} ${target.y+24}`);$('guideTarget').setAttribute('cx',target.x);$('guideTarget').setAttribute('cy',target.y);
  }
- game.dataset.mode='create';return{update,placed:tool=>{const step=plan(api.world(),api.profile());if(step?.tool===tool)learned(api.profile(),step);},active:()=>started,observe:()=>{if(mode!=='observe')setMode('observe');}};
+ game.dataset.mode='create';return{update,reset:()=>{chapter=-1;started=false;home.hidden=false;guide.hidden=true;svg.style.display='none';lastGuide=0;setMode('create');},placed:tool=>{const step=plan(api.world(),api.profile());if(step?.tool===tool)learned(api.profile(),step);},active:()=>started,observe:()=>{if(mode!=='observe')setMode('observe');}};
 }
 root.GardenJourney={plan,learned,mount};
 })(globalThis);

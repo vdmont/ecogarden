@@ -33,9 +33,22 @@ const TRAITS={
  alpaca:{move:'walk',mass:3.6,climb:3,diet:'plant',plants:[['grass',12],'flower',['bush',80]]},
  deer:{move:'walk',mass:3,climb:3,diet:'plant',plants:[['grass',12],'flower',['bush',80]]},
  boar:{move:'walk',mass:6,climb:2,diet:'plant',plants:[['grass',12],'flower',['bush',80]]}};
+
+const VISITORS={
+ abyssinian:['阿比西尼亚猫','cat',0xb98553,'沙色的小精灵'],ragdoll:['布偶猫','cat',0xe9e2d7,'蓝眼睛的拥抱'],tabby:['狸花猫','cat',0x817766,'小老虎也爱你'],orangeCat:['橘猫','cat',0xe7a350,'橘色的好心情'],
+ borderCollie:['边牧','dog',0x383d3c,'聪明的朋友'],golden:['金毛','dog',0xd6ad65,'金色的陪伴'],samoyed:['萨摩耶','dog',0xf2eee3,'会笑的云朵'],capybara:['卡皮巴拉','capy',0x9d805e,'一起发呆吧'],
+ nightHeron:['夜鹭','bird',0x596779,'夜色里的邻居'],redstart:['红尾水鸲','bird',0x435f76,'一抹红尾巴'],longtail:['北长尾山雀','bird',0xeee9dc,'雪团停在手心'],wren:['冬鹪鹩','bird',0x997654,'小小的歌声'],flamingo:['火烈鸟','bird',0xef9d9e,'粉色的来信'],
+ dragon:['龙','dragon',0x68998b,'龙也喜欢摸摸'],pixiu:['貔貅','myth',0xd1af68,'小岛有福了'],baize:['白泽','myth',0xe7e5cf,'白泽知我心']};
+const POOLS={animal:WEIGHTS,rare:{abyssinian:8,ragdoll:8,tabby:9,orangeCat:9,borderCollie:8,golden:8,samoyed:8,capybara:10,nightHeron:6,redstart:7,longtail:7,wren:7,flamingo:5},legend:{dragon:1,pixiu:49,baize:50}};
+for(const [k,[name,kind,color,title]] of Object.entries(VISITORS)){
+ ANIMAL_NAMES[k]=name;PET_TITLES[k]=title;LIFE[k]=kind==='bird'?380:kind==='dragon'?900:600;
+ TRAITS[k]=kind==='bird'?{move:'fly',mass:.7,climb:0,diet:'insect',plants:['seed',['bush',60]],eats:['bug','bee']}:{move:kind==='dragon'?'fly':kind==='capy'?'swim':'walk',mass:kind==='dragon'?8:3,climb:3,diet:'plant',plants:[['grass',12],'flower',['bush',60]]};
+ if(kind==='cat'||kind==='dog')TRAITS[k]={move:'walk',mass:kind==='cat'?1.8:3,climb:kind==='cat'?3:2,diet:'meat',plants:[['bush',60]],eats:kind==='cat'?['bug','squirrel']:['rabbit']};
+ BREED[k]={cool:kind==='dragon'?1600:600,food:5,space:90,limit:kind==='dragon'?2:5};
+}
 const byDiet=d=>Object.keys(TRAITS).filter(k=>TRAITS[k].diet===d);
 const HERBS=byDiet('plant'), HUNTERS=byDiet('insect'), POLLINATORS=byDiet('nectar');
 const PREY={};
 for(const[type,t]of Object.entries(TRAITS))if(t.eats&&t.eats.length)PREY[type]=t.eats;
 
-Object.assign(globalThis.EcoData??={}, {VERSION,STEP_MS,LIFE,ANIMAL_NAMES,WEIGHTS,HERBS,HUNTERS,POLLINATORS,PREY,EXTRA_METRICS,PET_TITLES,PLANT_LIFE,BREED,TRAITS});})();
+Object.assign(globalThis.EcoData??={}, {VISITORS,POOLS,VERSION,STEP_MS,LIFE,ANIMAL_NAMES,WEIGHTS,HERBS,HUNTERS,POLLINATORS,PREY,EXTRA_METRICS,PET_TITLES,PLANT_LIFE,BREED,TRAITS});})();
