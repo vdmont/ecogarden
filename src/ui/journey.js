@@ -1,11 +1,11 @@
 (function(root){
 'use strict';
 const intro=[
- ['第一滴水','放置消耗能量，能量随时间恢复。发芽、进食和新生增加生态值。完成左上角任务即可进入下一关。'],
- ['谁来吃虫？','草养幼虫，幼虫养飞鸟。这次，我们接上一条食物链。'],
- ['火后的花园','留一圈石头，再点一小片火。给灰烬留些时间。'],
- ['林间来客','食物链共生需要：至少 15 格植物，同时有幼虫、一种草食动物（如羊、羊驼、兔子）和一种食虫动物（如鸟、鸡、青蛙）。保持这些邻居共存，累计 30 秒；还需 4 种动物和 12 次进食。'],
- ['一座完整的岛','湖泊 300、森林 650、山脉 1000 生态解锁。完整生态需同时满足：15 格植物、幼虫＋草食动物＋食虫动物、8 种元素（含植物/动物/地形）、曾发生捕食，以及 12 格水域、12 棵树、5 格山地。全部满足才连续计时 60 秒，缺任一项会重新计时；本关另需 6 次自然新生。'],
+ ['送你一座小岛','我是团团，这是绒绒！这座岛送给你，我们一起打理吧。放置需要能量，等一会儿就会恢复；植物发芽、动物进食和新生都会增加生态值。完成左上角任务，就能去下一关啦。'],
+ ['谁来吃虫？','汪，我是绒绒！你种的草长得真好。再放些幼虫和飞鸟吧：草养幼虫，幼虫养飞鸟，这就是食物链。'],
+ ['火后的花园','团团陪你试试用火。先围一圈石头，再点燃一小片草地。别靠近动物哦，烧过的土地也需要休息。'],
+ ['林间来客','绒绒带新朋友来啦！想让大家住下来，需要：至少 15 格植物，同时有幼虫、一种草食动物（如羊、羊驼、兔子）和一种食虫动物（如鸟、鸡、青蛙）。保持这些邻居共存，累计 30 秒；还需 4 种动物和 12 次进食。'],
+ ['一座完整的岛','小岛热闹起来啦！团团陪你把山林和湖泊连起来。湖泊 300、森林 650、山脉 1000 生态解锁。完整生态需同时满足：15 格植物、幼虫＋草食动物＋食虫动物、8 种元素（含植物/动物/地形）、曾发生捕食，以及 12 格水域、12 棵树、5 格山地。全部满足才连续计时 60 秒，缺任一项会重新计时；本关另需 6 次自然新生。'],
  ['自由建造','能量无限，地形仍靠本岛生态值解锁。慢慢建一座自己的花园。']
 ];
 function nextStep(s,p){
@@ -13,8 +13,8 @@ function nextStep(s,p){
  if(s.level===5||s.complete||done['chapter'+s.level])return null;
  const choose=(id,tool,title,body)=>done[id]?null:{id,tool,title,body};
  if(s.level===0){
-  if(m.sprouted<12)return choose('sow','seed','把种子带到水边','白框是种子。拖到箭头处，或选中后在湿地上划一划。让 12 颗种子发芽。');
-  if(m.bugMeals<4)return choose('feedBug','bug','放置幼虫','把幼虫拖到草上。它吃过 4 次，这一关就完成了。');
+  if(m.sprouted<12)return choose('sow','seed','把种子带到水边','跟我试试：选中白框里的种子，拖到箭头指着的水边。让 12 颗种子发芽吧！');
+  if(m.bugMeals<4)return choose('feedBug','bug','放置幼虫','给草地添一只幼虫吧！把它拖到草上，等它吃过 4 次就完成啦。');
  }
  if(s.level===1){
   if(m.bushPlaced<4)return choose('berries','bush','种植浆果','在空地种下 4 丛浆果。图标下面的小数字，是每次放置花掉的能量。');
@@ -29,31 +29,35 @@ function nextStep(s,p){
 function plan(s,p){const step=nextStep(s,p);return step&&!p.tutorial?.['dismiss'+s.level+'_'+step.id]&&(p.tutorialCounts?.[step.tool||step.id]||0)<2?step:null;}
 function learned(p,step){if(!step)return;p.tutorialCounts??={};const key=step.tool||step.id;p.tutorialCounts[key]=Math.min(2,(p.tutorialCounts[key]||0)+1);}
 
-function mountCover(home){
- const canvas=home.querySelector('#coverModels');let renderer;
- try{renderer=new THREE.WebGLRenderer({canvas,alpha:true,antialias:true});}catch{return;}
+function mountCover(home,portrait=false){
+ const canvas=home.querySelector(portrait?'#friendModels':'#coverModels');let renderer;
+ try{renderer=new THREE.WebGLRenderer({canvas,alpha:true,antialias:true,preserveDrawingBuffer:portrait});}catch{return;}
  renderer.setPixelRatio(Math.min(devicePixelRatio||1,2));
  const scene=new THREE.Scene(),camera=new THREE.OrthographicCamera(),geometry=new THREE.BoxGeometry(1,1,1),materials=new Map(),figures=[];
  scene.add(new THREE.HemisphereLight(0xfffbeb,0x849477,.8));const light=new THREE.DirectionalLight(0xfff2d9,.45);light.position.set(-5,12,14);scene.add(light);
  function part(g,x,y,z,w,h,d,c,tilt=0){if(!materials.has(c))materials.set(c,new THREE.MeshLambertMaterial({color:c}));const mesh=new THREE.Mesh(geometry,materials.get(c));mesh.position.set(x,y,z);mesh.scale.set(w,h,d);mesh.rotation.z=tilt;g.add(mesh);}
- const types=['alpaca','orangeCat','tree','ragdoll','capybara','mountain','rabbit','tabby','bush','samoyed','deer','abyssinian'];
- types.forEach((type,i)=>{const group=new THREE.Group();scene.add(group);figures.push(group);part(group,0,-.13,0,1.7,.24,1.4,0xc0c99a);part(group,0,-.3,0,1.6,.14,1.3,0xc3b18a);
+ const types=portrait?['alpaca','samoyed']:Object.keys(EcoData.LIFE);
+ types.forEach((type,i)=>{const group=new THREE.Group();scene.add(group);figures.push(group);
  if(type==='mountain'){for(let k=0;k<4;k++)part(group,0,.17+k*.34,0,1.5-k*.24,.35,1.3-k*.2,[0x879384,0x99a28e,0xb1b9a1,0xdbdfcc][k]);}
  else if(type==='tree'||type==='bush'){GardenModels.plants({b:(...args)=>part(group,...args),c:{plant:type,age:160,variant:i%5},i,x:0,z:0,variant:i%5,wet:false,labelList:[]});}
  else GardenModels.animals({a:{type,age:100,habit:0},part:(...args)=>part(group,...args),phase:0,t:0,i,labelList:[]});group.rotation.y=(i%3-1)*.22;
  });
- function resize(){const w=home.clientWidth,h=home.clientHeight;if(!w||!h)return;renderer.setSize(w,h,false);const height=16,width=height*w/h;camera.left=-width/2;camera.right=width/2;camera.top=height/2;camera.bottom=-height/2;camera.near=.1;camera.far=100;camera.position.set(0,8,22);camera.lookAt(0,0,0);camera.updateProjectionMatrix();figures.forEach((g,i)=>{const angle=2*Math.PI*(i+.5)/figures.length;g.position.set(Math.cos(angle)*width*.39,Math.sin(angle)*5.7-.45,0);g.scale.setScalar(Math.min(1.3,width/11));});renderer.render(scene,camera);}
- const observer=new ResizeObserver(resize);observer.observe(home);resize();
+
+ if(!portrait)for(let i=0;i<18;i++){const g=new THREE.Group();scene.add(g);g.userData.flower=true;figures.push(g);GardenModels.plants({b:(...args)=>part(g,...args),c:{plant:i%3?'flower':'grass',age:160,variant:i%5},i,x:0,z:0,variant:i%5,wet:false,labelList:[]});}
+ function ringAngle(f,rx,ry){const samples=[0];let length=0;for(let k=1;k<=360;k++){const a=(k-1)*Math.PI/180,b=k*Math.PI/180;length+=Math.hypot(rx*(Math.cos(b)-Math.cos(a)),ry*(Math.sin(b)-Math.sin(a)));samples.push(length);}const goal=f*length;let k=1;while(samples[k]<goal)k++;return (k-1+(goal-samples[k-1])/(samples[k]-samples[k-1]))*Math.PI/180;}
+ function resize(){const w=portrait?320:home.clientWidth,h=portrait?230:home.clientHeight;if(!w||!h)return;renderer.setSize(w,h,false);const height=portrait?2.7:16,width=height*w/h;camera.left=-width/2;camera.right=width/2;camera.top=height/2;camera.bottom=-height/2;camera.near=.1;camera.far=100;camera.position.set(0,0,22);camera.lookAt(0,0,0);camera.updateProjectionMatrix();figures.forEach((g,i)=>{if(portrait){g.position.set(i? .85:-.85,-.95,0);g.scale.set(1.55,1.05,1.25);g.rotation.y=i?-.18:.18;return;}const decor=i>=31,n=decor?i-31:i,count=decor?18:31,angle=ringAngle((n+.5)/count,width*.45,7.2);g.position.set(Math.cos(angle)*width*(decor?.47:.45),Math.sin(angle)*(decor?7.65:7.2),decor?-.6:0);const small=['bug','bee','butterfly','frog'].includes(types[i]);g.rotation.x=decor?Math.PI/2:0;const scale=Math.min(1.65,width/7.8)*(decor?.7:small?1.45:1);g.scale.setScalar(scale);g.rotation.z=angle+Math.PI/2;});renderer.render(scene,camera);}
+ if(portrait){resize();const img=document.createElement('img');img.src=canvas.toDataURL('image/png');img.alt='送你小岛的两位朋友：胖羊驼与胖萨摩耶';canvas.replaceWith(img);renderer.dispose();geometry.dispose();materials.forEach(m=>m.dispose());}else{const observer=new ResizeObserver(resize);observer.observe(home);resize();}
+
 }
 
 function mount(api){
  const $=id=>document.getElementById(id),game=$('game');let started=false,mode='create',chapter=-1,drag=null,lastGuide=0;
  const home=document.createElement('div');home.id='welcome';home.innerHTML='<canvas id="coverModels" aria-hidden="true"></canvas><div class="coverTitle"><h1>生态花园</h1><p>Ecogarden</p><button id="enterGarden" class="primary">开始打造</button></div>';game.append(home);mountCover(home);
  const bar=document.createElement('div');bar.id='modeBar';bar.innerHTML='<button id="createMode" aria-pressed="true">✿ 创造</button><button id="observeMode" aria-pressed="false">⌕ 观察</button><button id="gardenMenu">☰ 菜单</button>';document.querySelector('header').append(bar);
- const menu=document.createElement('dialog');menu.id='gardenMenuPanel';menu.innerHTML='<div class="dialogHead"><h2>歇一会儿</h2><button id="closeGardenMenu">返回花园</button></div><div class="menuGrid"></div>';game.append(menu);
+ const menu=document.createElement('dialog');menu.id='gardenMenuPanel';menu.innerHTML='<div class="dialogHead"><h2>菜单</h2><button id="closeGardenMenu">返回花园</button></div><div class="menuGrid"></div>';game.append(menu);
  for(const id of ['chapterBtn','achieveBtn','helpBtn','saveBtn'])menu.querySelector('.menuGrid').append($(id));
  $('gardenMenu').onclick=()=>menu.showModal();$('closeGardenMenu').onclick=()=>menu.close();menu.querySelectorAll('.menuGrid button').forEach(b=>b.addEventListener('click',()=>menu.close()));
- const guide=document.createElement('section');guide.id='gardenerGuide';guide.innerHTML='<span class="gardener-avatar">✿</span><div><b id="guideTitle"></b><p id="guideBody"></p><button id="guideOK">知道啦</button></div>';game.append(guide);
+ const guide=document.createElement('section');guide.id='gardenerGuide';guide.innerHTML='<div class="guideFriends"><canvas id="friendModels"></canvas><span>羊驼团团 · 萨摩耶绒绒</span></div><div class="guideWords"><b id="guideTitle"></b><p id="guideBody"></p><button id="guideOK">知道啦</button></div>';game.append(guide);mountCover(guide,true);
  const svg=document.createElementNS('http://www.w3.org/2000/svg','svg');svg.id='guideArrow';svg.innerHTML='<defs><marker id="arrowTip" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8" fill="white"/></marker></defs><path id="guideLine" fill="none" stroke="white" stroke-width="4" marker-end="url(#arrowTip)"/><circle id="guideTarget" r="19" fill="none" stroke="white" stroke-width="3"/>';game.append(svg);
  const setMode=m=>{mode=m;game.dataset.mode=m;$('createMode').setAttribute('aria-pressed',m==='create');$('observeMode').setAttribute('aria-pressed',m==='observe');api.choose(m==='observe'?'inspect':'seed');api.view.panMode=false;$('panToggle').setAttribute('aria-pressed','false');api.view.resize();};
  $('createMode').onclick=()=>setMode('create');$('observeMode').onclick=()=>setMode('observe');
@@ -68,7 +72,7 @@ function mount(api){
   if(s.metrics.sprouted>=12)p.tutorial.sow=true;if(s.metrics.bugMeals>=4)p.tutorial.feedBug=true;if(s.level===1&&s.metrics.bushPlaced>=4)p.tutorial.berries=true;if(s.level===1&&s.metrics.birdMeals>=3)p.tutorial.birds=true;if(s.level===2&&s.metrics.rocksPlaced>=6)p.tutorial.rocks=true;if(s.level===2&&s.metrics.burned>=8)p.tutorial.fire=true;if(s.level===3&&s.metrics.animalKinds>=4&&s.metrics.meals>=12)p.tutorial.neighbors=true;if(s.complete)p.tutorial['chapter'+s.level]=true;
   document.querySelectorAll('.guide-lit').forEach(b=>b.classList.remove('guide-lit'));svg.style.display='none';
   const hidden=s.level===5||!started||!!document.querySelector('dialog[open]')||mode==='observe';guide.hidden=hidden;if(hidden)return;
-  const step=plan(s,p),opening=!p.tutorial['intro'+s.level];guide.hidden=!opening&&!step;$('guideOK').hidden=false;if(guide.hidden)return;$('guideTitle').textContent=opening?'朋友的小纸条 · '+intro[s.level][0]:step.title;$('guideBody').textContent=opening?intro[s.level][1]+(s.level<3&&step?' '+step.body:''):step.body;if(!step)return;
+  const step=plan(s,p),opening=!p.tutorial['intro'+s.level];guide.hidden=!opening&&!step;$('guideOK').hidden=false;if(guide.hidden)return;$('guideTitle').textContent=opening?(s.level%2?'绒绒':'团团')+' · '+intro[s.level][0]:step.title;$('guideBody').textContent=opening?intro[s.level][1]+(s.level<3&&step?' '+step.body:''):step.body;if(!step)return;
   if(!step.tool)return;const b=document.querySelector('[data-tool="'+step.tool+'"]');if(!b)return;b.classList.add('guide-lit');
   let candidates=s.cells.map((c,i)=>({c,i})).filter(({c,i})=>c&&!Eco.allow(s,step.tool,i,p));if(step.tool==='seed'){candidates=candidates.filter(({c})=>c.moist>=.6);candidates.sort((a,b)=>Eco.nearby(s,b.i).filter(j=>['water','spring'].includes(s.cells[j]?.ground)).length-Eco.nearby(s,a.i).filter(j=>['water','spring'].includes(s.cells[j]?.ground)).length);}if(step.tool==='bug')candidates=candidates.filter(({c})=>c.plant==='grass');if(step.tool==='bird')candidates.sort((a,b)=>Eco.nearby(s,b.i,2).filter(i=>s.cells[i].animal?.type==='bug').length-Eco.nearby(s,a.i,2).filter(i=>s.cells[i].animal?.type==='bug').length);
   if(!candidates.length)return;const cr=canvas.getBoundingClientRect(),gr=guide.getBoundingClientRect();const visible=candidates.map(v=>api.view.screenCell(v.i)).filter(v=>v&&v.x>cr.left+25&&v.x<cr.right-25&&v.y>cr.top+25&&v.y<cr.bottom-25&&!(v.x>gr.left-24&&v.x<gr.right+24&&v.y>gr.top-24&&v.y<gr.bottom+24));const target=visible[0],r=b.getBoundingClientRect();if(!target||target.x<cr.left||target.x>cr.right||target.y<cr.top||target.y>cr.bottom)return;const x=r.left+r.width/2,y=r.top;svg.style.display='block';svg.setAttribute('viewBox','0 0 '+innerWidth+' '+innerHeight);$('guideLine').setAttribute('d',`M ${x} ${y} Q ${x-50} ${target.y+50} ${target.x} ${target.y+24}`);$('guideTarget').setAttribute('cx',target.x);$('guideTarget').setAttribute('cy',target.y);
