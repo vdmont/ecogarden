@@ -291,6 +291,12 @@
       limit: kind === 'dragon' ? 2 : 5,
     };
   }
+  // 步行速度（格/秒）。和体重分开：野猪比羊重、但走得不慢；鸟快、羊驼慢。
+  const SPEED = {"bug":1.4,"butterfly":2.6,"bee":2.8,"bird":3,"chicken":1.3,"frog":1.5,"hedgehog":1.1,"fox":2,"wolf":2.4,"rabbit":2.2,"squirrel":2.2,"sheep":1.2,"alpaca":1,"deer":1.8,"boar":1.1};
+  for (const k of Object.keys(TRAITS)) {
+    const t = TRAITS[k];
+    t.speed = SPEED[k] != null ? SPEED[k] : t.move === 'fly' ? 2.8 : t.move === 'swim' ? 1.5 : 1.2;
+  }
   const byDiet = (d) => Object.keys(TRAITS).filter((k) => TRAITS[k].diet === d);
   const HERBS = byDiet('plant'),
     HUNTERS = byDiet('insect'),

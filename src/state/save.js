@@ -186,6 +186,21 @@
           b.habit = a.habit ?? 0;
           b.drift = a.drift ?? 0;
           b.driftDir = a.driftDir ?? -1;
+          // 连续位置与行程（C1）：老存档没有这些字段，按「站在格心、不在走路」处理
+          if (a.x !== undefined && a.x !== null && !finite(a.x, -1, 1e4)) throw Error(T.m271);
+          if (a.z !== undefined && a.z !== null && !finite(a.z, -1, 1e4)) throw Error(T.m271);
+          if (a.phase !== undefined && a.phase !== null && !finite(a.phase, 0, 1e9))
+            throw Error(T.m271);
+          if (a.tcell !== undefined && !Number.isInteger(a.tcell) && a.tcell !== -1)
+            throw Error(T.m271);
+          if (a.state !== undefined && !['idle', 'walk'].includes(a.state)) throw Error(T.m271);
+          b.x = a.x ?? null;
+          b.z = a.z ?? null;
+          b.tx = finite(a.tx, 0, 1e4) ? a.tx : 0;
+          b.tz = finite(a.tz, 0, 1e4) ? a.tz : 0;
+          b.phase = a.phase ?? 0;
+          b.tcell = Number.isInteger(a.tcell) ? a.tcell : -1;
+          b.state = a.state === 'walk' ? 'walk' : 'idle';
           d.animal = b;
         }
         copy.cells[i] = d;

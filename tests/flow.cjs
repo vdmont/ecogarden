@@ -179,47 +179,63 @@ test('still water stays still', () => {
 });
 
 // ---------- 3. 属性相撞：走兽被冲走，会飞的不会 ----------
+// 动物现在会自己走动，所以这里每拍把它按回活水格（只测「水推动物」这一条规则）
+function keepInWater(s, a, wet) {
+  const at = s.cells.findIndex((c) => c && c.animal === a);
+  if (at !== wet) {
+    if (at >= 0) s.cells[at].animal = null;
+    s.cells[wet].animal = a;
+  }
+  a.state = 'idle';
+  a.tcell = -1;
+}
 test('walkers get washed downstream, flyers do not', () => {
-  // 机制：站在活水上的走兽，位移值会被水推起来（drift>0），或被直接冲走
+  // 机制：站在活水上的走兽会被推起来（drift>0），或被直接冲走
   {
     const { p, s, path } = streamWorld();
     E.step(s, p);
     const wet = path.find((i) => s.cells[i].flow > 0);
-    s.cells[wet].animal = E.animal('rabbit');
+    const rab = E.animal('rabbit');
+    s.cells[wet].animal = rab;
     let pushed = false;
-    for (let t = 0; t < 40 && !pushed; t++) {
-      E.step(s, p);
-      const at = s.cells.findIndex((c) => c && c.animal && c.animal.type === 'rabbit');
-      if (at < 0) {
-        pushed = true;
-        break;
-      } // 已经被冲下岛
-      const c = s.cells[at];
-      if (c.flow > 0 && c.animal.drift > 0) pushed = true; // 正被水推着走
+    for (let k = 0; k < 80 && !pushed; k++) {
+      E.tick(s, p);
+      if (rab.drift > 0) pushed = true;
+      else if (!s.cells.some((c) => c && c.animal === rab)) pushed = s.metrics.washed > 0;
+      else keepInWater(s, rab, wet);
     }
     assert(pushed, '走兽站在活水上应该被推着走（drift>0），或者直接被冲走');
   }
-  // 结果：走兽一路冲到岛外就消失（放在靠近岛外的水道格上，几步之内就会被冲下去）
+  // 结果：一直泡在水里，最终被冲下岛
   {
     const { p, s, path } = streamWorld();
-    s.cells[path[path.length - 2]].animal = E.animal('rabbit');
-    for (let t = 0; t < 300; t++) E.step(s, p);
+    E.step(s, p);
+    const wet = path[path.length - 2];
+    const rab = E.animal('rabbit');
+    s.cells[wet].animal = rab;
+    let gone = false;
+    for (let k = 0; k < 400 && !gone; k++) {
+      E.tick(s, p);
+      gone = s.metrics.washed > 0 || !s.cells.some((c) => c && c.animal === rab);
+      if (!gone) keepInWater(s, rab, wet);
+    }
+    assert(s.metrics.washed >= 1, '水道里的兔子最终应该被冲下岛（washed=' + s.metrics.washed + '）');
     assert(
-      s.metrics.washed >= 1,
-      '水道里的兔子最终应该被冲下岛（washed=' + s.metrics.washed + '）',
-    );
-    assert(
-      Object.keys(s.notified).some((k) => k.startsWith('washed')),
+      Object.keys(s.notified).some((key) => key.startsWith('washed')),
       '应该留下一条「被水冲走」的记录',
     );
   }
-  // 会飞的：同样泡在水里，一拍都不会被推动
+  // 会飞的：同样泡在水里，永远推不动
   {
     const { p, s, path } = streamWorld();
+    E.step(s, p);
+    const wet = path[path.length - 2];
     const fly = E.animal('bird');
-    s.cells[path[path.length - 2]].animal = fly;
-    for (let t = 0; t < 300; t++) E.step(s, p);
-    // 别的动物可能自己游荡进水里被冲走，但鸟绝不会
+    s.cells[wet].animal = fly;
+    for (let k = 0; k < 200; k++) {
+      E.tick(s, p);
+      keepInWater(s, fly, wet);
+    }
     assert(!s.notified.washedbird, '会飞的鸟不该被冲走');
     assert(
       s.cells.some((c) => c && c.animal === fly),

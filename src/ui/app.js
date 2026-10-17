@@ -1172,17 +1172,29 @@
   }
   lockFooterHeight();
   window.addEventListener('resize', () => setTimeout(lockFooterHeight, 300));
+  const MICRO_MS = 50;
+  let simAcc = 0;
   function frame(t) {
     const dt = last ? Math.min(t - last, 250) : 0;
     last = t;
     const paused = document.hidden || !journey.active() || !!strokeSnapshot;
     if (!paused) {
       acc += dt * speed;
-      while (acc >= E.STEP_MS) {
-        E.step(world, profile);
-        acc -= E.STEP_MS;
+      // 固定 50ms 微步：E.advance 只推进位置，E.step 仍是 500ms 一拍做决策与生态。
+      // 不用「这一帧的 dt」推进，存档在任何帧率下才都能复现。
+      while (acc >= MICRO_MS) {
+        E.advance(world, MICRO_MS);
+        acc -= MICRO_MS;
+        simAcc += MICRO_MS;
+        if (simAcc >= E.STEP_MS) {
+          E.tick(world, profile); // 只做决策与生态，运动由上面的 advance 推进
+          simAcc -= E.STEP_MS;
+        }
       }
-    } else acc = 0;
+    } else {
+      acc = 0;
+      simAcc = 0;
+    }
     if (!document.hidden) view.render(t);
     journey.update();
     if (t - lastUI > 400) {

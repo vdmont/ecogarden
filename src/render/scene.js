@@ -565,7 +565,22 @@
       this.dirty = false;
       this.lastTick = s.tick;
     }
-    drawAnimals(t) {
+    // 脚底高度：周围四格双线性插值，走坡/上台阶时是斜坡而不是瞬间抬升
+  groundAt(s, ax, az) {
+    const x0 = Math.max(0, Math.min(s.w - 2, Math.floor(ax - 0.5)));
+    const z0 = Math.max(0, Math.min(s.h - 2, Math.floor(az - 0.5)));
+    const fx = Math.max(0, Math.min(1, ax - 0.5 - x0));
+    const fz = Math.max(0, Math.min(1, az - 0.5 - z0));
+    const h = (x, z) => {
+      const c = s.cells[z * s.w + x];
+      return c ? Eco.surfaceHeight(c) : 0;
+    };
+    return (
+      (h(x0, z0) * (1 - fx) + h(x0 + 1, z0) * fx) * (1 - fz) +
+      (h(x0, z0 + 1) * (1 - fx) + h(x0 + 1, z0 + 1) * fx) * fz
+    );
+  }
+  drawAnimals(t) {
       if (!this.world) return;
       const s = this.world,
         m = this.animals;
@@ -577,8 +592,11 @@
       this.lastAnimalFrame = t;
       s.cells.forEach((c, i) => {
         if (!c?.animal) return;
-        let x = (i % s.w) - s.w / 2 + 0.5,
-          z = Math.floor(i / s.w) - s.h / 2 + 0.5,
+        // 模拟给的是格内连续坐标（格心在整数 + 0.5），这里只换成以岛心为原点
+        const ax = c.animal.x ?? (i % s.w) + 0.5,
+          az = c.animal.z ?? Math.floor(i / s.w) + 0.5;
+        let x = ax - s.w / 2,
+          z = az - s.h / 2,
           phase = Math.sin(t * 0.005 + (c.animal.variant || 0) * 1.3);
         if (c.animal) {
           let a = c.animal,
@@ -595,11 +613,14 @@
             };
             this.motion.set(a, state);
           }
-          const distance = Math.hypot(x - state.x, z - state.z);
-          state.y += (Eco.surfaceHeight(c) - state.y) * blend;
+          // 位置本身已经连续：正常只用 35ms 跟随（几乎不滞后，脚不会滑）；
+          // 被水冲走/刚生成这种 1 格以上的跳变才用 130ms 慢平滑
+          const jump = Math.hypot(x - state.x, z - state.z);
+          const follow = 1 - Math.exp(-dt / (jump > 2.5 ? 130 : 35));
+          state.y += (this.groundAt(s, ax, az) - state.y) * (1 - Math.exp(-dt / 90));
           state.phase += dt * 0.004;
-          state.x += (x - state.x) * blend;
-          state.z += (z - state.z) * blend;
+          state.x += (x - state.x) * follow;
+          state.z += (z - state.z) * follow;
           let turn = (a.dir || 0) - state.yaw;
           turn = Math.atan2(Math.sin(turn), Math.cos(turn));
           state.yaw += turn * blend;
