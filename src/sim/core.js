@@ -281,7 +281,7 @@ function step(s,p){
    if(j!==undefined){let baby=animal(a.type);baby.age=-20;baby.variant=(a.variant+1)%5;baby.moved=s.tick;s.cells[j].animal=baby;a.full=0;a.bred=s.tick;population[a.type]=(population[a.type]||0)+1;count(s,'births',1,p);if(a.type==='sheep')award(p,'baby',s,typeof i==='number'?i:-1);if(a.type==='rabbit')award(p,'rabbit',s,typeof i==='number'?i:-1);}
   }
   const behavior=habit(s,i,a);a.habit=behavior.rest?behavior.kind:0;
-  if(!behavior.rest&&!a.drunk&&!a.sleep&&a.petUntil<=s.tick&&rand(s)<(a.type==='bug'?.18:pollinator||a.type==='bird'?.42:.3)){
+  if(!behavior.rest&&!a.drunk&&!a.sleep&&a.petUntil<=s.tick&&rand(s)<(a.type==='bug'?.15:pollinator||a.type==='bird'?.34:.24)){
    let choices=n.filter(j=>canWalk(s.cells[j],a,c)&&!s.cells[j].animal);
    if(choices.length){const scores=choices.map(j=>{let nn=[j,...nearby(s,j)];return[j,habitScore(s,j,behavior)+habitat(s,j,a.type)+(predator?nn.filter(k=>PREY[a.type].includes(s.cells[k].animal?.type)).length*5+eatPlants(s,j,a).length*.15:eatPlants(s,j,a).reduce((sum,k)=>sum+(s.cells[k].plant==='bush'?4:1),0))];});
     let target=rand(s)<.65?scores.sort((a,b)=>b[1]-a[1])[0][0]:choices[Math.floor(rand(s)*choices.length)];
