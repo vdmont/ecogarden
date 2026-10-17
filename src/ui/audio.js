@@ -957,7 +957,13 @@
   // 曲子是真的音频文件（assets/bgm/），不再实时合成 —— 合成出来的东西太"出戏"。
   // 每首末尾都做了 4 秒淡出，所以放完直接换下一首不会突兀；
   // 换曲时避开刚放完的那首，免得连着两首一样。
-  const MUSIC_TRACKS = ['bgm/track-1.mp3', 'bgm/track-2.mp3', 'bgm/track-3.mp3'];
+  // 路径写成 assets/bgm/… 是为了让开发模式与离线版用同一个相对路径：
+  // 开发时页面在仓库根，离线时构建会把同一批文件拷到 dist/assets/bgm/。
+  const MUSIC_TRACKS = [
+    'assets/bgm/track-1.mp3',
+    'assets/bgm/track-2.mp3',
+    'assets/bgm/track-3.mp3',
+  ];
   const MUSIC_VOLUME = 0.45;
   let bgm = null,
     bgmLast = -1,

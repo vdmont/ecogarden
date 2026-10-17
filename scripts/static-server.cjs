@@ -24,6 +24,15 @@ const TYPES = {
   '.ico': 'image/x-icon',
   '.svg': 'image/svg+xml',
   '.woff2': 'font/woff2',
+  // 音频：背景音乐与动物叫声都在仓库里，不加这几行的话服务器会一律 404，
+  // 本地试玩和 npm run preview 就都听不到声音。
+  '.mp3': 'audio/mpeg',
+  '.ogg': 'audio/ogg',
+  '.oga': 'audio/ogg',
+  '.wav': 'audio/wav',
+  '.m4a': 'audio/mp4',
+  '.aac': 'audio/aac',
+  '.flac': 'audio/flac',
 };
 
 // root: 要对外提供的目录（绝对路径）；port: 监听端口；host: 仅本机

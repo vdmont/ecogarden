@@ -82,18 +82,19 @@ fs.mkdirSync(out, { recursive: true });
 fs.writeFileSync(path.join(out, 'index.html'), html);
 
 // 4) 背景音乐：按 src/ui/audio.js 里的 MUSIC_TRACKS 逐个拷到 dist/ 下同名相对路径。
-//    曲库直接从代码里读，构建因此能守住一条不变式：代码要的那几首一定被拷过去了。
+//    曲库里的路径是相对仓库根的（开发时页面就在仓库根，所以两边能共用同一个路径），
+//    这里原样搬过去，产物里的相对引用因此不需要改一个字。
 //    缺一个就直接报错，而不是构建出一个「打开游戏一片安静」的离线版。
 const audioSrc = fs.readFileSync(path.join(base, 'src/ui/audio.js'), 'utf8');
-const listMatch = audioSrc.match(/MUSIC_TRACKS\s*=\s*\[([^\]]*)\]/);
+const listMatch = audioSrc.match(/MUSIC_TRACKS\s*=\s*\[([\s\S]*?)\]/);
 if (!listMatch) throw new Error('src/ui/audio.js 里找不到 MUSIC_TRACKS');
 const tracks = [...listMatch[1].matchAll(/'([^']+)'/g)].map((m) => m[1]);
 if (!tracks.length) throw new Error('src/ui/audio.js 里的 MUSIC_TRACKS 是空的');
 
 let musicBytes = 0;
 for (const t of tracks) {
-  const from = path.join(base, 'assets', t);
-  if (!fs.existsSync(from)) throw new Error('曲库里的音频不存在：assets/' + t);
+  const from = path.join(base, t);
+  if (!fs.existsSync(from)) throw new Error('曲库里的音频不存在：' + t);
   const to = path.join(out, t);
   fs.mkdirSync(path.dirname(to), { recursive: true });
   fs.copyFileSync(from, to);

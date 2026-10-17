@@ -102,8 +102,9 @@ require('../src/ui/audio.js');
 // ══════════════ 背景音乐：三首真实录音，随机连播 ══════════════
 const TRACKS = GardenAudio.MUSIC_TRACKS;
 assert(TRACKS.length >= 2, '曲库少于两首，没法「随机循环」');
+const assetOf = (t) => path.resolve(__dirname, '..', t);
 for (const t of TRACKS) {
-  const p = path.resolve(__dirname, '../assets', t);
+  const p = assetOf(t);
   assert(fs.existsSync(p), '曲库里的文件不存在: ' + t);
   assert(
     fs.statSync(p).size > 200 * 1024,
@@ -147,7 +148,7 @@ assert.equal(
 assert.equal(players.length, 1, '取不到曲子时新建了播放器');
 console.log(
   `PASS 背景音乐：${TRACKS.length} 首真实录音随机连播、静音开关有效、` +
-    `60 次换曲无重复、缺文件会跳过（共 ${TRACKS.reduce((s, t) => s + Math.round(fs.statSync(path.resolve(__dirname, '../assets', t)).size / 1024), 0)} KB）`,
+    `60 次换曲无重复、缺文件会跳过（共 ${TRACKS.reduce((s, t) => s + Math.round(fs.statSync(assetOf(t)).size / 1024), 0)} KB）`,
 );
 
 // ══════════════ 动物叫声：仍然实时合成 ══════════════
