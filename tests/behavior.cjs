@@ -310,7 +310,7 @@ test('score achievements without a location do not stop the animation loop', () 
   const code = fs.readFileSync(path.resolve(__dirname, '../src/ui/app.js'), 'utf8');
   let snippet = code.slice(
     code.indexOf('function locateAchievement('),
-    code.indexOf('function renderHelp'),
+    code.indexOf('function renderResidents'),
   );
   const [p, world] = setup();
   const locate = Function('profile', 'world', snippet + ';return locateAchievement;')(p, world);

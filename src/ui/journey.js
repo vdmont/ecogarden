@@ -155,7 +155,7 @@
     menu.innerHTML =
       '<div class="dialogHead"><h2>歇一会儿</h2><button id="closeGardenMenu">返回花园</button></div><div class="menuGrid"></div>';
     game.append(menu);
-    for (const id of ['chapterBtn', 'achieveBtn', 'helpBtn', 'saveBtn'])
+    for (const id of ['chapterBtn', 'achieveBtn', 'saveBtn'])
       menu.querySelector('.menuGrid').append($(id));
     $('gardenMenu').onclick = () => menu.showModal();
     $('closeGardenMenu').onclick = () => menu.close();

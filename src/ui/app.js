@@ -227,7 +227,7 @@
     sheep: T.m301,
     alpaca: T.m302,
     rabbit: T.m303,
-    deer: T.m203,
+    deer: T.m334,
     fox: T.m304,
     lake: T.m305,
     mountain: T.m306,
@@ -546,7 +546,6 @@
     inspect();
   }
   function open(id) {
-    if (id === 'help') renderHelp();
     if (id === 'residents') renderResidents(true);
     if (id === 'chapters') renderChapters();
     if (id === 'achievements') renderAchievements();
@@ -680,25 +679,6 @@
     );
     if (i >= 0) return { i, animal: world.cells[i].animal };
     return null;
-  }
-  function renderHelp() {
-    const body = $('helpBody');
-    body.replaceChildren();
-    for (const section of GardenCopy.help) {
-      if (section.level > profile.unlocked || (section.seen && !profile.seen?.[section.seen]))
-        continue;
-      const card = el('section', 'guideSection');
-      card.append(el('h3', '', section.title), el('p', '', section.body));
-      body.append(card);
-    }
-    const seen = Object.keys(E.WEIGHTS).filter((k) => profile.seen?.[k]);
-    if (seen.length) {
-      const card = el('section', 'guideSection');
-      card.append(el('h3', '', GardenCopy.fieldGuide));
-      for (const k of seen)
-        card.append(el('p', '', E.ANIMAL_NAMES[k] + ' · ' + GardenCopy.animals[k]));
-      body.append(card);
-    }
   }
   function renderResidents(force = false) {
     const rawCounts = E.census(world),
@@ -842,7 +822,6 @@
   $('chapterBtn').onclick = () => open('chapters');
   $('nextChapter').onclick = () => open('chapters');
   $('achieveBtn').onclick = () => open('achievements');
-  $('helpBtn').onclick = () => open('help');
   $('saveBtn').onclick = () => open('saves');
   $('logBtn').onclick = () => open('logs');
   document
@@ -1053,7 +1032,6 @@
       panel.showModal();
     };
     $('closeSettings').onclick = () => panel.close();
-    $('helpBtn').remove();
     const auto = el('label', 'setting');
     auto.innerHTML = '<span>自动存档 · 每 10 秒</span><input type="checkbox" id="autosaveToggle">';
     $('saves').insertBefore(auto, $('saves').querySelector('.saveActions'));
