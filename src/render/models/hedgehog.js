@@ -17,8 +17,8 @@ GardenModels.registry['hedgehog'] = function ({ a, part, phase, t, i }) {
       h,
       d,
       col,
-      tilt + P.earTilt + P.tilt + H.pitch,
-      pitch,
+      tilt + P.earTilt + P.tilt,
+      H.pitch + pitch,
     );
   };
   const eye = (dx, y, dz, w, h, d, col) => {
@@ -42,10 +42,16 @@ GardenModels.registry['hedgehog'] = function ({ a, part, phase, t, i }) {
       p(dx, 0.48 + (0.2 - Math.abs(dx)) * 0.25, dz - 0.08, 0.1, 0.16, 0.11, 0xd0bd97, 0.18);
   face(0, 0.23, 0.29, 0.29, 0.21, 0.23, 0xc8b28b);
   face(0, 0.21, 0.44, 0.11, 0.08, 0.1, 0x443f34);
-  for (let side of [-1, 1]) {
+  for (let side of [-1, 1])
     eye(side * 0.1, 0.29, 0.37, 0.045, 0.045, 0.04, 0x333b30);
-    // 刺猬腿短，睡着了整只往下一缩，腿基本收进肚子底下
-    const L = P.place(P.legGroup(side, side < 0), 0.155, 0, 0.13);
-    part(side * 0.19, L.y, L.z, 0.1, L.len, 0.12, 0x68533e, P.tilt, L.pitch);
-  }
+  // 刺猬是四足，前后各一对。之前只画了一对、而且两条都摆在身体中段（dz=0），
+  // 走起路来是两脚交替，怎么看都不像刺猬。躯干 d=0.52 居中在 z=−0.04
+  // （也就是 z 从 −0.30 到 0.22），所以前腿摆在 z=0.10、后腿摆在 z=−0.18。
+  // legGroup(side, front) 自动把「前左+后右」「前右+后左」分成两组，对角同步。
+  for (let dx of [-0.19, 0.19])
+    for (let dz of [0.1, -0.18]) {
+      // 腿短，睡着了整只往下一缩、腿基本收进肚子底下（P.place 自己按 asleep 处理）
+      const L = P.place(P.legGroup(dx < 0 ? -1 : 1, dz > 0), 0.155, dz, 0.13);
+      part(dx, L.y, L.z, 0.1, L.len, 0.12, 0x68533e, P.tilt, L.pitch);
+    }
 };
