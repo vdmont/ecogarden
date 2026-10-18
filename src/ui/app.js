@@ -906,8 +906,8 @@
   }
   function syncSettings() {
     GardenAudio.configure(profile.settings);
-    view.setTimeOfDay(profile.settings.timeOfDay || 'dawn');
-    if ($('timeSelect')) $('timeSelect').value = profile.settings.timeOfDay || 'dawn';
+    view.setTimeOfDay(profile.settings.timeOfDay || 'dynamic');
+    if ($('timeSelect')) $('timeSelect').value = profile.settings.timeOfDay || 'dynamic';
     view.showLabels = profile.settings.labels;
     view.dirty = true;
     for (const [id, key] of [
@@ -1046,14 +1046,15 @@
     timeRow.className = 'setting';
     timeRow.innerHTML =
       '<span>光影时段</span><select id="timeSelect">' +
-      '<option value="dawn">清晨</option>' +
-      '<option value="afternoon" disabled>午后（待定）</option>' +
-      '<option value="dusk" disabled>黄昏（待定）</option>' +
-      '<option value="night" disabled>夜晚（待定）</option>' +
+      '<option value="dynamic">动态（4 分钟一轮）</option>' +
+      '<option value="dawn">定格 · 清晨</option>' +
+      '<option value="afternoon">定格 · 午后</option>' +
+      '<option value="dusk">定格 · 黄昏</option>' +
+      '<option value="night">定格 · 夜晚</option>' +
       '</select>';
     panel.append(timeRow);
     const prefs = () => {
-      $('timeSelect').value = profile.settings.timeOfDay || 'dawn';
+      $('timeSelect').value = profile.settings.timeOfDay || 'dynamic';
       $('musicToggle').checked = profile.settings.music !== false;
       $('autosaveToggle').checked = profile.settings.autosave !== false;
     };

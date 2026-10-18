@@ -10,10 +10,11 @@
     fireCores: 4500,
     waterfalls: 10000,
   };
-  // 时段光影预设：太阳方位/颜色、天空与地面反射光、曝光、投影范围、舞台背景。
-  // 清晨＝低角度暖阳 + 偏冷的补光，影子拉长。
-  const TIME_PRESETS = {
-    dawn: {
+  // 昼夜四个关键帧（phase 0=清晨、0.25=正午、0.5=黄昏、0.75=夜晚）。
+  // 动态模式会在它们之间平滑插值；也可以定格到某一档。
+  const DAY_KEYS = [
+    {
+      at: 0,
       sunColor: 0xffd9a8,
       sunIntensity: 1.05,
       sunPos: [-30, 13, 22],
@@ -21,44 +22,93 @@
       groundColor: 0x6e6353,
       hemiIntensity: 0.58,
       exposure: 1.08,
-      shadowSpan: 46,
-      sky: 'radial-gradient(ellipse at 50% 20%, #fff7e9 0%, #f8e8d2 52%, #e6d2b6 100%)',
+      shadowSpan: 40,
+      skyTop: 0xfff7e9,
+      skyBottom: 0xe6d2b6,
     },
-    // ↓ 以下三档尚未按观感调整，界面上暂不开放
-    afternoon: {
-      sunColor: 0xfff4dc,
-      sunIntensity: 1.15,
-      sunPos: [-8, 34, 16],
-      skyColor: 0xeaf6ff,
-      groundColor: 0x6c6654,
-      hemiIntensity: 0.8,
-      exposure: 1.0,
-      shadowSpan: 34,
-      sky: 'radial-gradient(ellipse at 50% 26%, #f8fcff 0%, #eaf2ec 60%, #dae7d8 100%)',
+    {
+      at: 0.25,
+      sunColor: 0xfff6e0,
+      sunIntensity: 1.18,
+      sunPos: [-6, 36, 14],
+      skyColor: 0xf2fbff,
+      groundColor: 0x77806a,
+      hemiIntensity: 0.82,
+      exposure: 1.02,
+      shadowSpan: 30,
+      skyTop: 0xfbfdff,
+      skyBottom: 0xdbe7d6,
     },
-    dusk: {
+    {
+      at: 0.5,
       sunColor: 0xff9d6b,
       sunIntensity: 1.0,
-      sunPos: [28, 9, 18],
+      sunPos: [30, 10, 16],
       skyColor: 0xffc9a8,
       groundColor: 0x5b4a44,
       hemiIntensity: 0.5,
       exposure: 1.05,
-      shadowSpan: 48,
-      sky: 'radial-gradient(ellipse at 50% 22%, #ffe2c2 0%, #f3c3a8 50%, #c99a9c 100%)',
+      shadowSpan: 44,
+      skyTop: 0xffe2c2,
+      skyBottom: 0xc99a9c,
     },
-    night: {
-      sunColor: 0x9fb4d8,
-      sunIntensity: 0.25,
-      sunPos: [-22, 26, 20],
-      skyColor: 0x3d4a66,
-      groundColor: 0x2b2f38,
-      hemiIntensity: 0.5,
+    {
+      at: 0.75,
+      sunColor: 0x8fa8d8,
+      sunIntensity: 0.34,
+      sunPos: [-14, 30, 20],
+      skyColor: 0x40506e,
+      groundColor: 0x232833,
+      hemiIntensity: 0.42,
       exposure: 0.95,
       shadowSpan: 34,
-      sky: 'radial-gradient(ellipse at 50% 30%, #39465f 0%, #2a3448 60%, #1e2532 100%)',
+      skyTop: 0x3b4863,
+      skyBottom: 0x1c2331,
     },
-  };
+  ];
+  // 定格用的四档（名称 → 关键帧下标）
+  const TIME_PRESETS = { dawn: 0, afternoon: 1, dusk: 2, night: 3 };
+
+  function lerpNum(a, b, t) {
+    return a + (b - a) * t;
+  }
+  function lerpHex(a, b, t) {
+    const ch = (hex, sh) => (hex >> sh) & 255;
+    const r = Math.round(lerpNum(ch(a, 16), ch(b, 16), t));
+    const g = Math.round(lerpNum(ch(a, 8), ch(b, 8), t));
+    const bl = Math.round(lerpNum(ch(a, 0), ch(b, 0), t));
+    return (r << 16) | (g << 8) | bl;
+  }
+  // 按相位（0~1）解析出这一刻的光影参数
+  function resolvePhase(phase) {
+    const p = ((phase % 1) + 1) % 1;
+    let i = DAY_KEYS.length - 1;
+    for (let k = 0; k < DAY_KEYS.length; k++) if (p >= DAY_KEYS[k].at) i = k;
+    const a = DAY_KEYS[i],
+      b = DAY_KEYS[(i + 1) % DAY_KEYS.length];
+    const span = (b.at - a.at + 1) % 1 || 1;
+    const t = Math.min(1, Math.max(0, ((p - a.at + 1) % 1) / span));
+    return {
+      sunColor: lerpHex(a.sunColor, b.sunColor, t),
+      sunIntensity: lerpNum(a.sunIntensity, b.sunIntensity, t),
+      sunPos: [
+        lerpNum(a.sunPos[0], b.sunPos[0], t),
+        lerpNum(a.sunPos[1], b.sunPos[1], t),
+        lerpNum(a.sunPos[2], b.sunPos[2], t),
+      ],
+      skyColor: lerpHex(a.skyColor, b.skyColor, t),
+      groundColor: lerpHex(a.groundColor, b.groundColor, t),
+      hemiIntensity: lerpNum(a.hemiIntensity, b.hemiIntensity, t),
+      exposure: lerpNum(a.exposure, b.exposure, t),
+      shadowSpan: lerpNum(a.shadowSpan, b.shadowSpan, t),
+      sky:
+        'radial-gradient(ellipse at 50% 22%, #' +
+        lerpHex(a.skyTop, b.skyTop, t).toString(16).padStart(6, '0') +
+        ' 0%, #' +
+        lerpHex(a.skyBottom, b.skyBottom, t).toString(16).padStart(6, '0') +
+        ' 100%)',
+    };
+  }
   // 把一个十六进制颜色按系数调暗（用于贴图里的环境光遮蔽）
   function shadeHex(hex, k) {
     const r = Math.max(0, Math.min(255, Math.round(((hex >> 16) & 255) * k)));
@@ -182,7 +232,12 @@
       this.labelRoot = document.getElementById('worldLabels');
       this.pointers = new Map();
       this.bind();
-      this.setTimeOfDay('dawn');
+      this.dayPhase = 0.02; // 从清晨稍后一点开始
+      this.dayLengthMs = 240000; // 一昼夜 4 分钟
+      this.dayCycle = true;
+      this.lastDayT = 0;
+      this.lastDayApply = -1e9;
+      this.setTimeOfDay('dynamic');
       this.resize();
       window.addEventListener('resize', () => this.resize());
       // 页面布局会变（切到观察模式时页脚被隐藏、打开对话框、手机转屏），必须跟着重新测量画布，
@@ -274,11 +329,8 @@
       this.resize();
       this.draw(0);
     }
-    // 时段预设。目前只有「清晨」是按效果调过的；其余三档只是占位，
-    // 等所有者确认清晨的观感后再逐档调（不要拿它们当成品）。
-    setTimeOfDay(name) {
-      const p = TIME_PRESETS[name] || TIME_PRESETS.dawn;
-      this.timeOfDay = TIME_PRESETS[name] ? name : 'dawn';
+    // 光影应用：太阳/半球光/曝光/阴影范围/画布天空底色
+    applyLighting(p) {
       this.sun.color.setHex(p.sunColor);
       this.sun.intensity = p.sunIntensity;
       this.sun.position.set(p.sunPos[0], p.sunPos[1], p.sunPos[2]);
@@ -296,10 +348,21 @@
         far: 200,
       });
       this.sun.shadow.camera.updateProjectionMatrix();
-      // 合并说明：新界面把 #stage 当相纸用（纸纹 + 留白 + 胶带），
-      // 天空底色不能盖掉整张纸，只能铺在照片内容区（画布）里。
       if (this.canvas) this.canvas.style.background = p.sky;
       this.dirty = true;
+    }
+    // 时段：'dynamic' 走 4 分钟一轮的昼夜循环；其余名字定格到那一档
+    setTimeOfDay(name) {
+      if (name === 'dynamic') {
+        this.timeOfDay = 'dynamic';
+        this.dayCycle = true;
+        this.applyLighting(resolvePhase(this.dayPhase || 0));
+        return;
+      }
+      if (!(name in TIME_PRESETS)) name = 'dawn';
+      this.timeOfDay = name;
+      this.dayCycle = false;
+      this.applyLighting(resolvePhase(DAY_KEYS[TIME_PRESETS[name]].at));
     }
     resize() {
       let w = Math.max(1, this.canvas.clientWidth),
@@ -918,6 +981,16 @@
       for (const label of this.labels) label.hidden = true;
     }
     render(t) {
+      if (this.dayCycle) {
+        const dt = this.lastDayT ? Math.min(t - this.lastDayT, 250) : 0;
+        this.lastDayT = t;
+        this.dayPhase = (this.dayPhase + dt / this.dayLengthMs) % 1;
+        // 每 160ms 重算一次光影（每帧重设 CSS 背景会白白重排）
+        if (t - this.lastDayApply > 160) {
+          this.lastDayApply = t;
+          this.applyLighting(resolvePhase(this.dayPhase));
+        }
+      }
       if (!this.world) return;
       // 每帧顺手核对一次画布尺寸：布局变化（切模式、开关对话框、转屏）后如果显示尺寸和绘制尺寸不一致，
       // 画面会被拉伸——看起来就像"视角变了"。这里不依赖 ResizeObserver，自己发现就重新测量。

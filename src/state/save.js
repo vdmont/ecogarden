@@ -107,7 +107,7 @@
         if (typeof input.settings[k] === 'boolean') out.settings[k] = input.settings[k];
       if (['auto', 'low', 'high'].includes(input.settings.quality))
         out.settings.quality = input.settings.quality;
-      if (['dawn', 'afternoon', 'dusk', 'night'].includes(input.settings.timeOfDay))
+      if (['dynamic', 'dawn', 'afternoon', 'dusk', 'night'].includes(input.settings.timeOfDay))
         out.settings.timeOfDay = input.settings.timeOfDay;
     }
     for (const [key, s] of Object.entries(input.worlds)) {
