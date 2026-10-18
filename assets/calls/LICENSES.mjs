@@ -12,24 +12,7 @@
 //   modified     素材包对它做了什么（裁切、降噪、限幅……改了就是演绎）
 //   sha1         我们这份 mp3 的哈希，任何人拿它都能复核"台账里这条就是这条"
 //
-// 本批 80 条的许可分布：{"CC0 1.0":35,"CC BY 4.0":34,"CC BY-NC 4.0":10,"CC BY-SA 4.0":1}
-
-// ── 非商业素材（10 条，将来收费必须删）──────────────────────────────
-// 项目所有者 2026-10-18 决定：先全用。本项目完全非商业（免费、无广告、无内购），
-// NC 在这个前提下合法。但 NC 是单向门——一旦收费就是违约，且删不回来。
-// 要商业化时，从 music/sfx-map.json 删掉下面这些 key，然后依次跑：
-//   node scripts\gen-sfxmap.cjs && node scripts\gen-licenses.cjs && npm run build
-//
-// capybara_076
-// capybara_078
-// cat_067
-// dog_073
-// flamingo_124
-// frog_084
-// longtail_112
-// nightHeron_101
-// nightHeron_102
-// squirrel_049
+// 本批 70 条的许可分布：{"CC0 1.0":35,"CC BY 4.0":34,"CC BY-SA 4.0":1}
 
 const ASSET_LICENSES = [
   {
@@ -313,46 +296,6 @@ const ASSET_LICENSES = [
     "sha1": "2bf1163366819b8f099e7c40721d8715a2ac0ea4"
   },
   {
-    "file": "calls/capybara_076.mp3",
-    "usedBy": [
-      "capybara"
-    ],
-    "label": "卡皮巴拉",
-    "title": "Carpincho",
-    "license": "CC BY-NC 4.0",
-    "licenseUrl": "https://creativecommons.org/licenses/by-nc/4.0/",
-    "author": "Malena Maroli",
-    "source": "iNaturalist",
-    "sourceUrl": "https://www.inaturalist.org/observations/399708700",
-    "modified": "48kHz/16bit/单声道；LUFS 归一化；真峰值 ≤ −3.2 dBTP；首尾淡化",
-    "durSec": 2,
-    "lufs": -19.1,
-    "truePeakDb": -3.2,
-    "noiseFloorDb": -48.8,
-    "snrDb": 30.48,
-    "sha1": "befce4fc6e529f128286b45a86103be788368437"
-  },
-  {
-    "file": "calls/capybara_078.mp3",
-    "usedBy": [
-      "capybara"
-    ],
-    "label": "卡皮巴拉",
-    "title": "Capybara",
-    "license": "CC BY-NC 4.0",
-    "licenseUrl": "https://creativecommons.org/licenses/by-nc/4.0/",
-    "author": "Pablo Alejandro Pla",
-    "source": "iNaturalist",
-    "sourceUrl": "https://www.inaturalist.org/observations/147566645",
-    "modified": "48kHz/16bit/单声道；LUFS 归一化；真峰值 ≤ −3.2 dBTP；首尾淡化",
-    "durSec": 2,
-    "lufs": -18.01,
-    "truePeakDb": -4.19,
-    "noiseFloorDb": -41.39,
-    "snrDb": 24.54,
-    "sha1": "8207b06d2ae6905ab35220a3b24dac250336c696"
-  },
-  {
     "file": "calls/capybara_079.mp3",
     "usedBy": [
       "capybara"
@@ -451,26 +394,6 @@ const ASSET_LICENSES = [
     "noiseFloorDb": -34.98,
     "snrDb": 19.21,
     "sha1": "580fd6fea7d524d20fcb14261a74b668486737ab"
-  },
-  {
-    "file": "calls/cat_067.mp3",
-    "usedBy": [
-      "abyssinian"
-    ],
-    "label": "猫",
-    "title": "Domestic Cat",
-    "license": "CC BY-NC 4.0",
-    "licenseUrl": "https://creativecommons.org/licenses/by-nc/4.0/",
-    "author": "Misha Zitser",
-    "source": "iNaturalist",
-    "sourceUrl": "https://www.inaturalist.org/observations/307429196",
-    "modified": "48kHz/16bit/单声道；LUFS 归一化；真峰值 ≤ −3.2 dBTP；首尾淡化",
-    "durSec": 1.5,
-    "lufs": -24.46,
-    "truePeakDb": -3.2,
-    "noiseFloorDb": -36.75,
-    "snrDb": 19.59,
-    "sha1": "dcf48efce9b9e65962ba8007ac1e2856d5aa14c7"
   },
   {
     "file": "calls/chicken_001.mp3",
@@ -673,26 +596,6 @@ const ASSET_LICENSES = [
     "sha1": "e448fa49b580116edb900f8b85a633748b2763eb"
   },
   {
-    "file": "calls/dog_073.mp3",
-    "usedBy": [
-      "samoyed"
-    ],
-    "label": "狗",
-    "title": "Domestic Dog",
-    "license": "CC BY-NC 4.0",
-    "licenseUrl": "https://creativecommons.org/licenses/by-nc/4.0/",
-    "author": "Ajay Malik.",
-    "source": "iNaturalist",
-    "sourceUrl": "https://www.inaturalist.org/observations/332995861",
-    "modified": "48kHz/16bit/单声道；LUFS 归一化；真峰值 ≤ −3.2 dBTP；首尾淡化",
-    "durSec": 0.8,
-    "lufs": -17.98,
-    "truePeakDb": -6.7,
-    "noiseFloorDb": -37.35,
-    "snrDb": 19.09,
-    "sha1": "73a1f19f974c5671ca0d527d1780a276a5dae3e8"
-  },
-  {
     "file": "calls/dog_074.mp3",
     "usedBy": [
       "borderCollie"
@@ -835,26 +738,6 @@ const ASSET_LICENSES = [
     "noiseFloorDb": -30.96,
     "snrDb": 12.16,
     "sha1": "8667617e4567bbe6ff815c0c39648e219910b63a"
-  },
-  {
-    "file": "calls/flamingo_124.mp3",
-    "usedBy": [
-      "flamingo"
-    ],
-    "label": "火烈鸟",
-    "title": "Rosaflamingo",
-    "license": "CC BY-NC 4.0",
-    "licenseUrl": "https://creativecommons.org/licenses/by-nc/4.0/",
-    "author": "Παναγιώτης Ραφαηλίδης",
-    "source": "iNaturalist",
-    "sourceUrl": "https://www.inaturalist.org/observations/104482453",
-    "modified": "48kHz/16bit/单声道；LUFS 归一化；真峰值 ≤ −3.2 dBTP；首尾淡化",
-    "durSec": 2,
-    "lufs": -18.85,
-    "truePeakDb": -3.2,
-    "noiseFloorDb": -24.41,
-    "snrDb": 10.62,
-    "sha1": "d29557850d90138587f0934a0f4d01e7f059fd3c"
   },
   {
     "file": "calls/fox_033.mp3",
@@ -1017,26 +900,6 @@ const ASSET_LICENSES = [
     "sha1": "0619a2325c678e57ecdc8845834bd0dc7be8bbeb"
   },
   {
-    "file": "calls/frog_084.mp3",
-    "usedBy": [
-      "frog"
-    ],
-    "label": "青蛙",
-    "title": "Butsnudet frø",
-    "license": "CC BY-NC 4.0",
-    "licenseUrl": "https://creativecommons.org/licenses/by-nc/4.0/",
-    "author": "petersc",
-    "source": "iNaturalist",
-    "sourceUrl": "https://www.inaturalist.org/observations/268026297",
-    "modified": "48kHz/16bit/单声道；LUFS 归一化；真峰值 ≤ −3.2 dBTP；首尾淡化",
-    "durSec": 0.9,
-    "lufs": -18.62,
-    "truePeakDb": -3.2,
-    "noiseFloorDb": -26.48,
-    "snrDb": 10.81,
-    "sha1": "069495f065a3fcec359688a3983903b0068c5853"
-  },
-  {
     "file": "calls/frog_085.mp3",
     "usedBy": [
       "frog"
@@ -1155,66 +1018,6 @@ const ASSET_LICENSES = [
     "noiseFloorDb": -35.18,
     "snrDb": 19.96,
     "sha1": "b94a8d84828996fb86e05a8996fc7de9095304f1"
-  },
-  {
-    "file": "calls/longtail_112.mp3",
-    "usedBy": [
-      "longtail"
-    ],
-    "label": "北长尾山雀",
-    "title": "Aegithalos caudatus caudatus",
-    "license": "CC BY-NC 4.0",
-    "licenseUrl": "https://creativecommons.org/licenses/by-nc/4.0/",
-    "author": "Maksymilian Wojtkiewicz",
-    "source": "iNaturalist",
-    "sourceUrl": "https://www.inaturalist.org/observations/146888741",
-    "modified": "48kHz/16bit/单声道；LUFS 归一化；真峰值 ≤ −3.2 dBTP；首尾淡化",
-    "durSec": 1.8,
-    "lufs": -18.22,
-    "truePeakDb": -3.2,
-    "noiseFloorDb": -27.95,
-    "snrDb": 12.38,
-    "sha1": "09bf419715d4215933a3a8fed1d89e0b01a0022b"
-  },
-  {
-    "file": "calls/nightHeron_101.mp3",
-    "usedBy": [
-      "nightHeron"
-    ],
-    "label": "夜鹭",
-    "title": "Nitticora",
-    "license": "CC BY-NC 4.0",
-    "licenseUrl": "https://creativecommons.org/licenses/by-nc/4.0/",
-    "author": "mauro_fioretto",
-    "source": "iNaturalist",
-    "sourceUrl": "https://www.inaturalist.org/observations/266361769",
-    "modified": "48kHz/16bit/单声道；LUFS 归一化；真峰值 ≤ −3.2 dBTP；首尾淡化",
-    "durSec": 2.2,
-    "lufs": -18.03,
-    "truePeakDb": -6.79,
-    "noiseFloorDb": -49.3,
-    "snrDb": 30.4,
-    "sha1": "94dc130c712beea04e825c4a318bbfaed0e69cf6"
-  },
-  {
-    "file": "calls/nightHeron_102.mp3",
-    "usedBy": [
-      "nightHeron"
-    ],
-    "label": "夜鹭",
-    "title": "Black-crowned Night Heron",
-    "license": "CC BY-NC 4.0",
-    "licenseUrl": "https://creativecommons.org/licenses/by-nc/4.0/",
-    "author": "eleggua",
-    "source": "iNaturalist",
-    "sourceUrl": "https://www.inaturalist.org/observations/263036346",
-    "modified": "48kHz/16bit/单声道；LUFS 归一化；真峰值 ≤ −3.2 dBTP；首尾淡化",
-    "durSec": 2.2,
-    "lufs": -18.56,
-    "truePeakDb": -3.2,
-    "noiseFloorDb": -29.52,
-    "snrDb": 13.41,
-    "sha1": "8238d97cc4bc31aea05716d5979f3afa85c6dd05"
   },
   {
     "file": "calls/nightHeron_103.mp3",
@@ -1497,26 +1300,6 @@ const ASSET_LICENSES = [
     "sha1": "c0bc8e069ad05079685f198e3a2ec2ecef53e4d5"
   },
   {
-    "file": "calls/squirrel_049.mp3",
-    "usedBy": [
-      "squirrel"
-    ],
-    "label": "松鼠",
-    "title": "欧亚红松鼠-东北亚种",
-    "license": "CC BY-NC 4.0",
-    "licenseUrl": "https://creativecommons.org/licenses/by-nc/4.0/",
-    "author": "xiaopt",
-    "source": "iNaturalist",
-    "sourceUrl": "https://www.inaturalist.org/observations/90544559",
-    "modified": "48kHz/16bit/单声道；LUFS 归一化；真峰值 ≤ −3.2 dBTP；首尾淡化",
-    "durSec": 2.5,
-    "lufs": -18.55,
-    "truePeakDb": -3.2,
-    "noiseFloorDb": -82.47,
-    "snrDb": 64.17,
-    "sha1": "3b7b09529f888ba8a4a2c4ff5fd99375da92f41e"
-  },
-  {
     "file": "calls/wolf_040.mp3",
     "usedBy": [
       "wolf"
@@ -1639,5 +1422,5 @@ const ASSET_LICENSES = [
 ];
 
 // 一眼能查的两件事：哪条是 NC（将来要删）、哪条要署名。
-const NON_COMMERCIAL = ["capybara_076","capybara_078","cat_067","dog_073","flamingo_124","frog_084","longtail_112","nightHeron_101","nightHeron_102","squirrel_049"];
-const ATTRIBUTION_REQUIRED = ["calls/bee_089.mp3","calls/bird_006.mp3","calls/bird_007.mp3","calls/boar_050.mp3","calls/boar_051.mp3","calls/boar_052.mp3","calls/butterfly_095.mp3","calls/capybara_075.mp3","calls/capybara_076.mp3","calls/capybara_078.mp3","calls/capybara_079.mp3","calls/cat_066.mp3","calls/cat_067.mp3","calls/chicken_003.mp3","calls/dog_070.mp3","calls/dog_072.mp3","calls/dog_073.mp3","calls/flamingo_121.mp3","calls/flamingo_122.mp3","calls/flamingo_123.mp3","calls/flamingo_124.mp3","calls/fox_033.mp3","calls/fox_037.mp3","calls/frog_082.mp3","calls/frog_083.mp3","calls/frog_084.mp3","calls/hedgehog_056.mp3","calls/hedgehog_057.mp3","calls/longtail_109.mp3","calls/longtail_110.mp3","calls/longtail_112.mp3","calls/nightHeron_101.mp3","calls/nightHeron_102.mp3","calls/nightHeron_103.mp3","calls/rabbit_024.mp3","calls/redstart_104.mp3","calls/redstart_107.mp3","calls/sheep_013.mp3","calls/sheep_014.mp3","calls/squirrel_046.mp3","calls/squirrel_049.mp3","calls/wolf_040.mp3","calls/wren_115.mp3","calls/wren_116.mp3","calls/wren_118.mp3"];
+const NON_COMMERCIAL = [];
+const ATTRIBUTION_REQUIRED = ["calls/bee_089.mp3","calls/bird_006.mp3","calls/bird_007.mp3","calls/boar_050.mp3","calls/boar_051.mp3","calls/boar_052.mp3","calls/butterfly_095.mp3","calls/capybara_075.mp3","calls/capybara_079.mp3","calls/cat_066.mp3","calls/chicken_003.mp3","calls/dog_070.mp3","calls/dog_072.mp3","calls/flamingo_121.mp3","calls/flamingo_122.mp3","calls/flamingo_123.mp3","calls/fox_033.mp3","calls/fox_037.mp3","calls/frog_082.mp3","calls/frog_083.mp3","calls/hedgehog_056.mp3","calls/hedgehog_057.mp3","calls/longtail_109.mp3","calls/longtail_110.mp3","calls/nightHeron_103.mp3","calls/rabbit_024.mp3","calls/redstart_104.mp3","calls/redstart_107.mp3","calls/sheep_013.mp3","calls/sheep_014.mp3","calls/squirrel_046.mp3","calls/wolf_040.mp3","calls/wren_115.mp3","calls/wren_116.mp3","calls/wren_118.mp3"];

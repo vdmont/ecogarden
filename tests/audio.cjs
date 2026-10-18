@@ -384,13 +384,22 @@ console.log(
 }
 console.log('PASS 音量滑杆：静音生效、比例生效、越界被夹住、开关优先于滑杆、老存档回默认');
 
-// ══════════════ 素材包映射：每个物种都有录音，多条的要能随机 ══════════════
+// ══════════════ 素材包映射：有录音的逐条核对，没有的必须在例外名单里 ══════════════
+//
+// 2026-10-19 起，库里 10 条 CC BY-NC 素材被全部删掉（项目所有者决定），
+// 萨摩耶因此归零——它只有 dog_073 一条。
+// 例外名单是**双向**的：名单里的物种一旦补上素材，测试会反过来报
+// 「已经有录音了，把这条从名单里删掉」，不会悄悄放过。
+const NO_RECORDING = new Set(['samoyed']);
 {
   const S = GardenAudio.CALL_FILES;
   const M = GardenAudio.CALL_META;
   const types = [...Object.keys(Eco.LIFE), ...Object.keys(EcoData.VISITORS)];
   for (const type of types) {
-    assert(S[type] && S[type].length > 0, type + ' 在素材映射里没有录音');
+    if (!S[type] || !S[type].length) {
+      assert(NO_RECORDING.has(type), type + ' 在素材映射里没有录音');
+      continue; // 没有录音就没有播放参数，下面几条无从谈起
+    }
     assert(M[type], type + ' 缺播放参数');
     assert(M[type].rate > 0.5 && M[type].rate < 2, type + ' 的变调倍率离谱：' + M[type].rate);
     assert(M[type].voices >= 1, type + ' 的同物种并发上限是 0，等于永远不叫');
@@ -421,9 +430,24 @@ console.log('PASS 音量滑杆：静音生效、比例生效、越界被夹住�
       t + ' 的随机挑选 400 次只取到 ' + seenFiles.size + '/' + list.length + ' 个变体',
     );
   }
+  // 名单要双向自证：补上素材的物种不能继续留在例外名单里，
+  // 否则名单会越积越长、最后什么异常都盖得住。
+  for (const t of NO_RECORDING)
+    assert(!S[t] || !S[t].length, t + ' 现在已经有录音了，把它从 NO_RECORDING 名单里删掉');
+  const withRec = types.length - NO_RECORDING.size;
+  const multi2 = multi.length;
   console.log(
-    `PASS ${types.length} 个物种都有录音且文件在盘上；` +
-      `${multi.length} 个物种有多个变体可随机；4 种猫变调互不相同（${catRates.join('/')}）`,
+    'PASS ' +
+      withRec +
+      ' 个物种有录音且文件都在盘上（' +
+      NO_RECORDING.size +
+      ' 个例外：' +
+      [...NO_RECORDING].join('、') +
+      '，走实时合成叫）；' +
+      multi2 +
+      ' 个物种有多个变体可随机；4 种猫变调互不相同（' +
+      catRates.join('/') +
+      '）',
   );
 }
 

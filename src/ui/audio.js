@@ -1808,7 +1808,7 @@
   //
   // 抬完不会爆：主输出那层有 0.8 的 master，再后面还有一道限幅器
   // （阈值 −3 dB、20:1）。实测音乐文件峰值见 .dsh-reports 的探针输出。
-  const MUSIC_VOLUME = 0.45; // 反向自证用：下一条提交把它抬到 0.9
+  const MUSIC_VOLUME = 0.9;
   let bgm = null,
     bgmLast = -1,
     bgmMisses = 0,

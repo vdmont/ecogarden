@@ -102,8 +102,7 @@
                 "files": [
                       "assets/calls/squirrel_046.mp3",
                       "assets/calls/squirrel_047.mp3",
-                      "assets/calls/squirrel_048.mp3",
-                      "assets/calls/squirrel_049.mp3"
+                      "assets/calls/squirrel_048.mp3"
                 ],
                 "rate": 1,
                 "gain": 1,
@@ -135,8 +134,6 @@
           "capybara": {
                 "files": [
                       "assets/calls/capybara_075.mp3",
-                      "assets/calls/capybara_076.mp3",
-                      "assets/calls/capybara_078.mp3",
                       "assets/calls/capybara_079.mp3"
                 ],
                 "rate": 1,
@@ -150,7 +147,6 @@
                       "assets/calls/frog_081.mp3",
                       "assets/calls/frog_082.mp3",
                       "assets/calls/frog_083.mp3",
-                      "assets/calls/frog_084.mp3",
                       "assets/calls/frog_085.mp3"
                 ],
                 "rate": 1,
@@ -184,8 +180,6 @@
           },
           "nightHeron": {
                 "files": [
-                      "assets/calls/nightHeron_101.mp3",
-                      "assets/calls/nightHeron_102.mp3",
                       "assets/calls/nightHeron_103.mp3"
                 ],
                 "rate": 1,
@@ -207,8 +201,7 @@
           "longtail": {
                 "files": [
                       "assets/calls/longtail_109.mp3",
-                      "assets/calls/longtail_110.mp3",
-                      "assets/calls/longtail_112.mp3"
+                      "assets/calls/longtail_110.mp3"
                 ],
                 "rate": 1,
                 "gain": 1,
@@ -232,8 +225,7 @@
                 "files": [
                       "assets/calls/flamingo_121.mp3",
                       "assets/calls/flamingo_122.mp3",
-                      "assets/calls/flamingo_123.mp3",
-                      "assets/calls/flamingo_124.mp3"
+                      "assets/calls/flamingo_123.mp3"
                 ],
                 "rate": 1,
                 "gain": 1,
@@ -258,8 +250,7 @@
           },
           "abyssinian": {
                 "files": [
-                      "assets/calls/cat_063.mp3",
-                      "assets/calls/cat_067.mp3"
+                      "assets/calls/cat_063.mp3"
                 ],
                 "rate": 1.12,
                 "gain": 1,
@@ -308,15 +299,6 @@
                       "assets/calls/dog_072.mp3"
                 ],
                 "rate": 0.92,
-                "gain": 1,
-                "voices": 2,
-                "loops": []
-          },
-          "samoyed": {
-                "files": [
-                      "assets/calls/dog_073.mp3"
-                ],
-                "rate": 1.15,
                 "gain": 1,
                 "voices": 2,
                 "loops": []
@@ -537,32 +519,6 @@
                 "noise": -45.92,
                 "snr": 24.77
           },
-          "capybara_076": {
-                "license": "CC BY-NC 4.0",
-                "licenseUrl": "https://creativecommons.org/licenses/by-nc/4.0/",
-                "author": "Malena Maroli",
-                "title": "Carpincho",
-                "source": "iNaturalist",
-                "sourceUrl": "https://www.inaturalist.org/observations/399708700",
-                "dur": 2,
-                "lufs": -19.1,
-                "truePeak": -3.2,
-                "noise": -48.8,
-                "snr": 30.48
-          },
-          "capybara_078": {
-                "license": "CC BY-NC 4.0",
-                "licenseUrl": "https://creativecommons.org/licenses/by-nc/4.0/",
-                "author": "Pablo Alejandro Pla",
-                "title": "Capybara",
-                "source": "iNaturalist",
-                "sourceUrl": "https://www.inaturalist.org/observations/147566645",
-                "dur": 2,
-                "lufs": -18.01,
-                "truePeak": -4.19,
-                "noise": -41.39,
-                "snr": 24.54
-          },
           "capybara_079": {
                 "license": "CC BY-SA 4.0",
                 "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0/",
@@ -627,19 +583,6 @@
                 "truePeak": -3.2,
                 "noise": -34.98,
                 "snr": 19.21
-          },
-          "cat_067": {
-                "license": "CC BY-NC 4.0",
-                "licenseUrl": "https://creativecommons.org/licenses/by-nc/4.0/",
-                "author": "Misha Zitser",
-                "title": "Domestic Cat",
-                "source": "iNaturalist",
-                "sourceUrl": "https://www.inaturalist.org/observations/307429196",
-                "dur": 1.5,
-                "lufs": -24.46,
-                "truePeak": -3.2,
-                "noise": -36.75,
-                "snr": 19.59
           },
           "chicken_001": {
                 "license": "CC0 1.0",
@@ -771,19 +714,6 @@
                 "noise": -55.92,
                 "snr": 38.63
           },
-          "dog_073": {
-                "license": "CC BY-NC 4.0",
-                "licenseUrl": "https://creativecommons.org/licenses/by-nc/4.0/",
-                "author": "Ajay Malik.",
-                "title": "Domestic Dog",
-                "source": "iNaturalist",
-                "sourceUrl": "https://www.inaturalist.org/observations/332995861",
-                "dur": 0.8,
-                "lufs": -17.98,
-                "truePeak": -6.7,
-                "noise": -37.35,
-                "snr": 19.09
-          },
           "dog_074": {
                 "license": "CC0 1.0",
                 "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
@@ -874,19 +804,6 @@
                 "truePeak": -3.2,
                 "noise": -30.96,
                 "snr": 12.16
-          },
-          "flamingo_124": {
-                "license": "CC BY-NC 4.0",
-                "licenseUrl": "https://creativecommons.org/licenses/by-nc/4.0/",
-                "author": "Παναγιώτης Ραφαηλίδης",
-                "title": "Rosaflamingo",
-                "source": "iNaturalist",
-                "sourceUrl": "https://www.inaturalist.org/observations/104482453",
-                "dur": 2,
-                "lufs": -18.85,
-                "truePeak": -3.2,
-                "noise": -24.41,
-                "snr": 10.62
           },
           "fox_033": {
                 "license": "CC BY 4.0",
@@ -992,19 +909,6 @@
                 "noise": -54.19,
                 "snr": 35.83
           },
-          "frog_084": {
-                "license": "CC BY-NC 4.0",
-                "licenseUrl": "https://creativecommons.org/licenses/by-nc/4.0/",
-                "author": "petersc",
-                "title": "Butsnudet frø",
-                "source": "iNaturalist",
-                "sourceUrl": "https://www.inaturalist.org/observations/268026297",
-                "dur": 0.9,
-                "lufs": -18.62,
-                "truePeak": -3.2,
-                "noise": -26.48,
-                "snr": 10.81
-          },
           "frog_085": {
                 "license": "CC0 1.0",
                 "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
@@ -1082,45 +986,6 @@
                 "truePeak": -3.2,
                 "noise": -35.18,
                 "snr": 19.96
-          },
-          "longtail_112": {
-                "license": "CC BY-NC 4.0",
-                "licenseUrl": "https://creativecommons.org/licenses/by-nc/4.0/",
-                "author": "Maksymilian Wojtkiewicz",
-                "title": "Aegithalos caudatus caudatus",
-                "source": "iNaturalist",
-                "sourceUrl": "https://www.inaturalist.org/observations/146888741",
-                "dur": 1.8,
-                "lufs": -18.22,
-                "truePeak": -3.2,
-                "noise": -27.95,
-                "snr": 12.38
-          },
-          "nightHeron_101": {
-                "license": "CC BY-NC 4.0",
-                "licenseUrl": "https://creativecommons.org/licenses/by-nc/4.0/",
-                "author": "mauro_fioretto",
-                "title": "Nitticora",
-                "source": "iNaturalist",
-                "sourceUrl": "https://www.inaturalist.org/observations/266361769",
-                "dur": 2.2,
-                "lufs": -18.03,
-                "truePeak": -6.79,
-                "noise": -49.3,
-                "snr": 30.4
-          },
-          "nightHeron_102": {
-                "license": "CC BY-NC 4.0",
-                "licenseUrl": "https://creativecommons.org/licenses/by-nc/4.0/",
-                "author": "eleggua",
-                "title": "Black-crowned Night Heron",
-                "source": "iNaturalist",
-                "sourceUrl": "https://www.inaturalist.org/observations/263036346",
-                "dur": 2.2,
-                "lufs": -18.56,
-                "truePeak": -3.2,
-                "noise": -29.52,
-                "snr": 13.41
           },
           "nightHeron_103": {
                 "license": "CC BY 4.0",
@@ -1303,19 +1168,6 @@
                 "truePeak": -5.16,
                 "noise": -45.21,
                 "snr": 25.24
-          },
-          "squirrel_049": {
-                "license": "CC BY-NC 4.0",
-                "licenseUrl": "https://creativecommons.org/licenses/by-nc/4.0/",
-                "author": "xiaopt",
-                "title": "欧亚红松鼠-东北亚种",
-                "source": "iNaturalist",
-                "sourceUrl": "https://www.inaturalist.org/observations/90544559",
-                "dur": 2.5,
-                "lufs": -18.55,
-                "truePeak": -3.2,
-                "noise": -82.47,
-                "snr": 64.17
           },
           "wolf_040": {
                 "license": "CC BY 4.0",
