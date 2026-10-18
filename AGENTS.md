@@ -83,8 +83,8 @@
 
 ```bash
 npm run dev          # 本地试玩 http://127.0.0.1:8877/
-npm test             # 全部自动检查（当前 50 项）
-npm run build        # 生成离线版 dist/index.html + dist/bgm/*.mp3
+npm test             # 全部自动检查（当前 62 项；以后会随测试增加变化，以 npm test 实际输出的 PASS 行数为准）
+npm run build        # 生成单文件离线版 dist/index.html（音乐与字体内联）
 npm run preview      # 预览构建产物 http://127.0.0.1:4173/
 npm run demo:water   # 重新生成 docs/水流演示.json
 ```
