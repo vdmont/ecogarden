@@ -263,11 +263,14 @@
       const observer = new ResizeObserver(resize);
       observer.observe(home);
       resize();
+      // 封面是一段很慢的环境动画（一圈约 220 秒），不需要跟随「减少动画」偏好停下：
+      // 停下来就变成一张静态封面，看起来像坏了（实测这台机器的浏览器就报 reduce）。
+      // 若系统开了「减少动画」，这里改为半速飘动，幅度不变。
       const reduced = matchMedia('(prefers-reduced-motion: reduce)');
       function frame(t) {
         if (!home.isConnected) return;
-        if (!home.hidden && !document.hidden && !reduced.matches) {
-          elapsed += last ? Math.min((t - last) / 1000, 0.05) : 0;
+        if (!home.hidden && !document.hidden) {
+          elapsed += (last ? Math.min((t - last) / 1000, 0.05) : 0) * (reduced.matches ? 0.5 : 1);
           layout();
           renderer.render(scene, camera);
         }
