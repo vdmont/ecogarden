@@ -680,6 +680,10 @@
     master,
     settings = {},
     active = false;
+  // 合成声的输出节点。默认等于 master，但环境声混音会把某些属的合成叫
+  // 改道到该属的总线上（见 pet()），所以这里做成可切换的一层。
+  let synthOut = null;
+  const sink = () => synthOut || master;
   // 包络：入参是 GainNode（不是它的 .gain）。所有调用点传的都是节点。
   function gnode(node, t, d, v, atk) {
     const g = node.gain;
@@ -733,7 +737,7 @@
     gnode(g, t, d, v, 0.008);
     src.connect(f);
     f.connect(g);
-    g.connect(master);
+    g.connect(sink());
     src.start(t);
     src.stop(t + d + 0.02);
     src.onended = () => {
@@ -758,7 +762,7 @@
     mg.connect(c.frequency);
     gnode(g, t, d, v, 0.012);
     c.connect(g);
-    g.connect(master);
+    g.connect(sink());
     const parts = [c, g, m, mg];
     if (br) {
       const n = Math.max(64, Math.ceil(ctx.sampleRate * d) + 64);
@@ -772,7 +776,7 @@
       gnode(bg, t, d, v * (br.b || 0.3), 0.01);
       src.connect(f);
       f.connect(bg);
-      bg.connect(master);
+      bg.connect(sink());
       src.start(t);
       src.stop(t + d + 0.02);
       src.onended = () => {
@@ -823,7 +827,7 @@
       g.connect(f);
       tail = f;
     }
-    tail.connect(master);
+    tail.connect(sink());
     src.start(t);
     l.start(t);
     src.stop(t + d + 0.02);
@@ -852,7 +856,7 @@
       fg.gain.value = gv;
       src.connect(fl);
       fl.connect(fg);
-      fg.connect(master);
+      fg.connect(sink());
       parts.push(fl, fg);
     }
     // 颤音：嚎叫与拉弦的标志
@@ -881,7 +885,7 @@
       gnode(bg, t, d, v * br, 0.02);
       s.connect(fl);
       fl.connect(bg);
-      bg.connect(master);
+      bg.connect(sink());
       s.start(t);
       s.stop(t + d + 0.03);
       parts.push(s, fl, bg);
@@ -890,7 +894,7 @@
     const env = ctx.createGain();
     gnode(env, t, d, v, 0.014);
     src.connect(env);
-    env.connect(master);
+    env.connect(sink());
     parts.push(env, src);
     src.start(t);
     src.stop(t + d + 0.03);
@@ -915,7 +919,7 @@
   // 背景音乐是录好的文件（assets/bgm/），不再实时合成，所以这里只渲染叫声。
   async function renderOffline(kind, opt) {
     const o = Object.assign({ slot: 1.4 }, opt || {});
-    const saved = { ctx, master };
+    const saved = { ctx, master, synthOut };
     try {
       const all = [...new Set([...Object.keys(EcoData.LIFE), ...Object.keys(EcoData.VISITORS)])];
       const total = all.length * o.slot + 1;
@@ -924,6 +928,9 @@
       master = oc.createGain();
       master.gain.value = 0.8;
       master.connect(oc.destination);
+      // 离线渲染必须走 master：这里渲染的是"干声 + 混响"，
+      // 若沿用实时的 synthOut（某个属的总线）就会把混响绕开。
+      synthOut = null;
       // 简易混响：让声音「在空间里」而不是在耳朵里，是「像真的」一大半
       const irLen = Math.floor(oc.sampleRate * 0.75),
         ir = oc.createBuffer(2, irLen, oc.sampleRate);
@@ -950,10 +957,370 @@
     } finally {
       ctx = saved.ctx;
       master = saved.master;
+      synthOut = saved.synthOut;
     }
   }
 
-  // ══════════════════════ 背景音乐：真实录音随机连播 ══════════════════════
+  // ══════════════════════ 属级分组：哪几个物种共用一段声音 ══════════════════════
+  // 粒度是**分类学上的属**，不是随手合并的大类（项目所有者明确要求的）：
+  //   狼 *Canis lupus* 与家犬 *Canis lupus familiaris* 同属 Canis → 共用；
+  //   狐狸 *Vulpes*、刺猬 *Erinaceus*、松鼠 *Sciurus* 属各不相同 → 必须分开。
+  // 没有真实录音的属继续用实时合成（AGENTS.md 第 9 节：缺素材不硬凑）。
+  const GENUS = {
+    bird: 'bird',
+    nightHeron: 'nightHeron',
+    redstart: 'redstart',
+    longtail: 'longtail',
+    wren: 'wren',
+    flamingo: 'flamingo',
+    sheep: 'sheep',
+    chicken: 'chicken',
+    rabbit: 'rabbit',
+    deer: 'deer',
+    fox: 'fox',
+    wolf: 'canis', // 与家犬同属 Canis
+    boar: 'boar',
+    squirrel: 'squirrel',
+    capybara: 'capybara',
+    hedgehog: 'hedgehog',
+    frog: 'frog',
+    bee: 'bee',
+    // 常驻 15 种
+    alpaca: 'alpaca', // 无真实录音，保留合成（*Vicugna* 与羊 *Ovis* 不同属，不共用）
+    bug: 'bug',
+    butterfly: 'butterfly',
+    // 访客按 VISITORS[type][1] 的 kind 分派
+    kindCat: 'cat', // 4 种猫，同属 *Felis*
+    kindDog: 'canis', // 3 种家犬
+    kindCapy: 'capybara',
+    kindDragon: 'dragon',
+    kindMyth: 'pixiu', // pixiu / baize 同类
+  };
+
+  // 真实录音。文件在 assets/calls/，来源与许可登记在同目录的 LICENSES.mjs。
+  // 没有条目的属一律走实时合成，不用这一层。
+  const CALL_FILES = {
+    bird: ['assets/calls/bird-0.mp3'],
+    nightHeron: ['assets/calls/nightHeron-0.mp3'],
+    redstart: ['assets/calls/redstart-0.mp3'],
+    longtail: ['assets/calls/longtail-0.mp3', 'assets/calls/longtail-1.mp3'],
+    wren: ['assets/calls/wren-0.mp3'],
+    flamingo: ['assets/calls/flamingo-0.mp3'],
+    sheep: ['assets/calls/sheep-0.mp3', 'assets/calls/sheep-1.mp3', 'assets/calls/sheep-2.mp3'],
+    chicken: ['assets/calls/chicken-0.mp3', 'assets/calls/chicken-1.mp3'],
+    rabbit: ['assets/calls/rabbit-0.mp3'],
+    deer: ['assets/calls/deer-0.mp3'],
+    fox: ['assets/calls/fox-0.mp3'],
+    canis: ['assets/calls/canis-0.mp3'],
+    cat: [
+      'assets/calls/cat-0.mp3',
+      'assets/calls/cat-1.mp3',
+      'assets/calls/cat-2.mp3',
+      'assets/calls/cat-3.mp3',
+      'assets/calls/cat-4.mp3',
+    ],
+    squirrel: [
+      'assets/calls/squirrel-0.mp3',
+      'assets/calls/squirrel-1.mp3',
+      'assets/calls/squirrel-2.mp3',
+    ],
+    hedgehog: ['assets/calls/hedgehog-0.mp3'],
+    frog: ['assets/calls/frog-0.mp3'],
+    bee: ['assets/calls/bee-0.mp3'],
+  };
+
+  // species key（访客是 visitor key，常驻是物种 key）→ 属
+  function genusOf(type) {
+    const k = EcoData.VISITORS?.[type]?.[1];
+    if (k === 'cat') return GENUS.kindCat;
+    if (k === 'dog') return GENUS.kindDog;
+    if (k === 'capy') return GENUS.kindCapy;
+    if (k === 'dragon') return GENUS.kindDragon;
+    if (k === 'myth') return type === 'pixiu' ? 'pixiu' : GENUS.kindMyth;
+    return GENUS[type] || type;
+  }
+
+  // ══════════════════════ 环境声混音：按远近与聚焦动态调整 ══════════════════════
+  // 需求（项目所有者）：全局看时动物声压到只有 BGM 的 0.2 能量；拉近某只动物时，
+  // 它的属线性升到 0.4、其他属同时线性压到 0.1。相机缩放做整体远近，
+  // 聚焦做个体加权。
+  //
+  // 三个必须说清的实现选择：
+  //  1. 0.2 / 0.4 / 0.1 是**能量（功率）比**，不是振幅比，所以落到增益上要开根号：
+  //     0.2 → 0.447、0.4 → 0.632、0.1 → 0.316。差 7 dB，听感差别很明显。
+  //  2. 能量比是相对 BGM 的，所以两边都要测：bgmAnalyser 与 ambAnalyser 各挂一个
+  //     AnalyserNode 取滑动平均 RMS，再用一个**很慢且每步钳位**的修正回路把环境声
+  //     拉到目标能量。太快会听到音量呼吸（泵动），所以宁可慢。
+  //  3. 不改 scene.js / app.js（朋友正在 rebase 那两个文件），而是在这里包一层
+  //     GardenView.prototype.render 拿到视图实例，逐帧读 zoom 与 followAnimal。
+  //     等 rebase 完成后，应该改成 app.js 显式调 GardenAudio.setMix()。
+  const MIX = {
+    base: 0.2, // 全局视角：动物声能量 / BGM 能量
+    focusK: 2.0, // 聚焦的那个属 ×2 → 0.2 × 2 = 0.4
+    otherK: 0.5, // 其他属 ×0.5 → 0.2 × 0.5 = 0.1
+    zoomBoost: 1.5, // 拉到最近时整体再抬这么多倍（即最多 ×2.5）
+    ceiling: 0.85, // 能量比上限，防止拉满后盖过背景音乐
+    rampSec: 1.2, // 线性过渡时长
+    agcMs: 250, // 能量修正回路步进
+    agcMaxDb: 1.5, // 每步最多修正 1.5 dB
+    minConcurrent: 3, // 环境声同时在响的只数下限
+    maxConcurrent: 5, // 上限
+    gapMs: [4000, 22000], // 两次发声之间的随机间隔
+  };
+
+  let ambientBus = null,
+    ambAnalyser = null,
+    bgmAnalyser = null,
+    bgmGain = null;
+  const genusBus = {}; // genus → GainNode
+  const mixLog = []; // 最近几次 applyMix 的「想要多少 / 实际多少」，诊断用
+  const LOG_MAX = 12;
+  const buffers = {}; // path → AudioBuffer（加载后按 RMS 归一到 1.0）
+  const loading = {}; // path → Promise，避免并发重复加载
+  let mixRamp = null; // 当前这轮线性过渡的起点/终点
+  let agcScale = 1; // 能量修正回路累计出来的整体缩放
+  let mixCalls = 0; // applyMix 被调了几次（诊断用：反复调用会把线性过渡一次次重启）
+  let observeCalls = 0; // observeView 被调了几次（应该等于渲染帧数）
+  let view = null; // GardenView 实例（由包一层 render 拿到）
+  let viewHooked = false;
+  let focusGenus = '';
+  let zoomT = 0; // 0 = 最远，1 = 最近
+  let ambTargetEnergy = MIX.base;
+  let ambMeasured = 0;
+  let bgmMeasured = 0;
+
+  function ensureBuses() {
+    if (!ctx || !master) return false;
+    if (!ambientBus) {
+      ambientBus = ctx.createGain();
+      ambAnalyser = ctx.createAnalyser();
+      ambAnalyser.fftSize = 1024;
+      ambientBus.connect(ambAnalyser);
+      // 这条固定连 master：ambientBus 是整层的出口，不能跟着 synthOut 走。
+      ambAnalyser.connect(master);
+    }
+    return true;
+  }
+
+  function busFor(genus) {
+    if (!ensureBuses()) return null;
+    let g = genusBus[genus];
+    if (!g) {
+      g = ctx.createGain();
+      g.connect(ambientBus);
+      genusBus[genus] = g;
+    }
+    return g;
+  }
+
+  // 加载并解码录音。解码后在**内存里**按 RMS 归一到 1.0——这样属总线的增益
+  // 直接就是输出能量，不用再为每条素材的不同响度单独打补丁（文件本身已归一过）。
+  function loadBuffer(path) {
+    if (buffers[path]) return Promise.resolve(buffers[path]);
+    if (loading[path]) return loading[path];
+    const p = (async () => {
+      try {
+        const r = await fetch(path);
+        if (!r.ok) throw new Error('HTTP ' + r.status);
+        const raw = await r.arrayBuffer();
+        const buf = await ctx.decodeAudioData(raw);
+        normalizeBuffer(buf);
+        buffers[path] = buf;
+        return buf;
+      } catch (e) {
+        delete CALL_FILES[Object.keys(CALL_FILES).find((k) => CALL_FILES[k].includes(path)) || ''];
+        return null;
+      } finally {
+        delete loading[path];
+      }
+    })();
+    loading[path] = p;
+    return p;
+  }
+
+  function normalizeBuffer(buf) {
+    let sum = 0,
+      n = 0;
+    for (let c = 0; c < buf.numberOfChannels; c++) {
+      const d = buf.getChannelData(c);
+      for (let i = 0; i < d.length; i++) sum += d[i] * d[i];
+      n += d.length;
+    }
+    const rms = Math.sqrt(sum / Math.max(n, 1));
+    if (!(rms > 1e-6)) return;
+    const k = 1 / rms;
+    for (let c = 0; c < buf.numberOfChannels; c++) {
+      const d = buf.getChannelData(c);
+      for (let i = 0; i < d.length; i++) d[i] *= k;
+    }
+  }
+
+  function pickFile(genus) {
+    const list = CALL_FILES[genus];
+    if (!list || !list.length) return null;
+    return list[Math.floor(Math.random() * list.length)];
+  }
+
+  // 放一段录音。走属总线，所以聚焦/远近的混音对它同样生效。
+  //
+  // ambPlaying 的增减**只在这里做**，调用方一律不许碰。踩过的坑：原来
+  // playRecord 自己加一、scheduleAmbient 又加一，而结束时只减一次；pet() 那条路
+  // 更是只加不减。计数器只涨不涨，涨过 maxConcurrent 之后调度被永久挡死——
+  // 表现是开场几声鸟叫之后再也不响。真实浏览器里量到的 ambPlaying 恒为 9、
+  // 30 秒 recordPlays 零增长，就是这个。
+  // 计数时机取"源真的开始发声"，而不是"决定要发声"：加载失败的那次不该占位。
+  function playRecord(genus, extraDb) {
+    const bus = busFor(genus);
+    if (!bus) return null;
+    const path = pickFile(genus);
+    if (!path) return null;
+    recordPlays++;
+    return loadBuffer(path).then((buf) => {
+      if (!buf) return null;
+      const src = ctx.createBufferSource();
+      src.buffer = buf;
+      // 同一属多条素材随机变调播放，免得重复听得出来。±8% 是听不出明显失真的范围。
+      src.playbackRate.value = 0.92 + Math.random() * 0.16;
+      const g = ctx.createGain();
+      g.gain.value = Math.pow(10, (extraDb || 0) / 20);
+      src.connect(g);
+      g.connect(bus);
+      ambPlaying++;
+      src.onended = () => {
+        ambPlaying--;
+        try {
+          src.disconnect();
+          g.disconnect();
+        } catch {}
+      };
+      src.start();
+      return src;
+    });
+  }
+
+  let ambPlaying = 0;
+  let recordPlays = 0;
+  let ambTimer = 0;
+  const ambCooldown = {}; // genus → 下次可发声的时间戳
+
+  // 场上真的有的属。羊都迁走了就不该再咩咩叫。
+  function liveGenera() {
+    const out = new Set();
+    const w = view?.world;
+    if (!w || !w.cells) return [...Object.keys(GENUS)];
+    for (const c of w.cells) {
+      const a = c && c.animal;
+      if (a && a.type) out.add(genusOf(a.type));
+    }
+    return [...out];
+  }
+
+  // 调度：维持 3–5 只在响，每次随机挑一个冷却过的属。
+  function scheduleAmbient() {
+    if (!ambientBus || !active || settings.sound === false) return;
+    const now = performance.now();
+    const want =
+      MIX.minConcurrent + Math.floor(Math.random() * (MIX.maxConcurrent - MIX.minConcurrent + 1));
+    if (ambPlaying >= want) return;
+    const pool = liveGenera().filter((g) => CALL_FILES[g] && (ambCooldown[g] || 0) < now);
+    if (!pool.length) return;
+    const g = pool[Math.floor(Math.random() * pool.length)];
+    ambCooldown[g] = now + MIX.gapMs[0] + Math.random() * (MIX.gapMs[1] - MIX.gapMs[0]);
+    playRecord(g, -3); // ambPlaying 由 playRecord 自己管，这里不要再加减
+  }
+
+  // 能量修正回路：把环境声的实际能量慢慢拉到目标（相对 BGM）。
+  // 每步只允许修 ±1.5 dB，快了会泵动。
+  function agcStep() {
+    if (!ambAnalyser || !bgmAnalyser) return;
+    ambMeasured = readRms(ambAnalyser);
+    bgmMeasured = readRms(bgmAnalyser);
+    if (!(bgmMeasured > 1e-5) || !(ambMeasured > 1e-6)) return;
+    const want = ambTargetEnergy * bgmMeasured * bgmMeasured; // 目标能量（功率）
+    const have = ambMeasured * ambMeasured;
+    const errDb = 10 * Math.log10(want / have);
+    if (!isFinite(errDb) || Math.abs(errDb) < 0.5) return;
+    const step = Math.max(-MIX.agcMaxDb, Math.min(MIX.agcMaxDb, errDb));
+    agcScale *= Math.pow(10, step / 20);
+    agcScale = Math.max(0.02, Math.min(4, agcScale));
+  }
+
+  const rmsBuf = new Float32Array(1024);
+  function readRms(analyser) {
+    analyser.getFloatTimeDomainData(rmsBuf);
+    let s = 0;
+    for (let i = 0; i < rmsBuf.length; i++) s += rmsBuf[i] * rmsBuf[i];
+    return Math.sqrt(s / rmsBuf.length);
+  }
+
+  // 把每个属的增益从当前值线性过渡到目标值。
+  function applyMix(instant) {
+    if (!ambientBus || !ctx) return;
+    mixCalls++;
+    // 缩放做整体远近：最远 ×1，最近 ×(1 + zoomBoost)
+    const boost = 1 + MIX.zoomBoost * zoomT;
+    // 能量比 → 振幅比要开根号
+    const t = ctx.currentTime;
+    const ramp = instant ? 0.001 : MIX.rampSec;
+    const entry = {
+      t: +t.toFixed(2),
+      zoomT: +zoomT.toFixed(3),
+      focus: focusGenus || '-',
+      gen: {},
+      tgt: {},
+      was: {},
+    };
+    for (const g of Object.keys(genusBus)) {
+      const focused = focusGenus && g === focusGenus;
+      const k = focusGenus ? (focused ? MIX.focusK : MIX.otherK) : 1;
+      const energy = Math.min(MIX.ceiling, MIX.base * boost * k);
+      const target = Math.sqrt(energy);
+      const p = genusBus[g].gain;
+      entry.gen[g] = 1;
+      entry.tgt[g] = +target.toFixed(4);
+      entry.was[g] = +p.value.toFixed(4);
+      p.cancelScheduledValues(t);
+      p.setValueAtTime(p.value, t);
+      p.linearRampToValueAtTime(target, t + ramp);
+    }
+    mixLog.push(entry);
+    if (mixLog.length > LOG_MAX) mixLog.shift();
+    ambTargetEnergy = Math.min(MIX.ceiling, MIX.base * boost * (focusGenus ? MIX.otherK : 1));
+  }
+
+  // 逐帧读视图状态。只在这里读，不改 scene.js / app.js。
+  function observeView(v) {
+    view = v;
+    observeCalls++;
+    const tz = v.targetZoom || 1;
+    // zoom 0.14（最近）… 1.8（最远），用对数映射才有均匀的手感
+    const lo = Math.log(0.14),
+      hi = Math.log(1.8);
+    const t = Math.max(0, Math.min(1, (hi - Math.log(tz)) / (hi - lo)));
+    // 聚焦对象 → 它的属。followAnimal 是 visitor key 或常驻物种 key。
+    const fa = v.followAnimal;
+    const g = fa ? genusOf(fa) : '';
+    if (t !== zoomT || g !== focusGenus) {
+      zoomT = t;
+      focusGenus = g;
+      applyMix(false);
+    }
+  }
+
+  function hookView() {
+    if (viewHooked || !root.GardenView || !root.GardenView.prototype) return;
+    const proto = root.GardenView.prototype;
+    const orig = proto.render;
+    if (typeof orig !== 'function') return;
+    proto.render = function (...a) {
+      try {
+        observeView(this);
+      } catch {}
+      return orig.apply(this, a);
+    };
+    viewHooked = true;
+  }
+
   // 曲子是真的音频文件（assets/bgm/），不再实时合成 —— 合成出来的东西太"出戏"。
   // 每首末尾都做了 4 秒淡出，所以放完直接换下一首不会突兀；
   // 换曲时避开刚放完的那首，免得连着两首一样。
@@ -981,7 +1348,23 @@
     if (!bgm) {
       bgm = new Audio();
       bgm.preload = 'auto';
-      bgm.volume = MUSIC_VOLUME;
+      // 音量改由 WebAudio 里的 bgmGain 控制（要挂 AnalyserNode 测它的能量），
+      // 所以元素本身的音量必须保持 1，否则会被乘两次。
+      bgm.volume = 1;
+      try {
+        const src = ctx.createMediaElementSource(bgm);
+        bgmGain = ctx.createGain();
+        bgmGain.gain.value = MUSIC_VOLUME;
+        bgmAnalyser = ctx.createAnalyser();
+        bgmAnalyser.fftSize = 1024;
+        src.connect(bgmGain);
+        bgmGain.connect(bgmAnalyser);
+        bgmAnalyser.connect(master || ctx.destination);
+      } catch {
+        // createMediaElementSource 每个元素只能调用一次；失败就退回元素自身音量
+        bgm.volume = MUSIC_VOLUME;
+        bgmAnalyser = null;
+      }
     }
     // 换曲会让上一首的回调作废：用代号区分「这条回调属于哪一次起播」，
     // 否则一次 src 变更触发的 error 会把还没试过的曲子误判成取不到。
@@ -1025,8 +1408,37 @@
       ctx.resume();
     } catch {}
     try {
+      ensureBuses();
+      hookView();
+      applyMix(true);
+      startMixLoop();
+    } catch {}
+    try {
       playMusic();
     } catch {}
+  }
+
+  // 混音回路：能量修正（很慢）+ 环境声调度（更慢）。用 setInterval 而不是
+  // 挂在渲染循环上，这样页面切到后台 rAF 被节流时声音也不会停。
+  let mixTimer = 0;
+  function startMixLoop() {
+    if (mixTimer || !ctx) return;
+    mixTimer = setInterval(() => {
+      if (document.hidden || !active) return;
+      try {
+        agcStep();
+        if (ambientBus) ambientBus.gain.value = agcScale;
+        scheduleAmbient();
+      } catch {}
+    }, MIX.agcMs);
+  }
+
+  // 停掉混音回路。正常游戏里不主动调用（页面卸载时浏览器会回收），
+  // 但测试进程需要它才能退出——setInterval 会一直吊着。
+  function stopMixLoop() {
+    if (!mixTimer) return;
+    clearInterval(mixTimer);
+    mixTimer = 0;
   }
 
   function configure(s) {
@@ -1043,8 +1455,42 @@
   function pet(type, s) {
     unlock(s);
     if (!ctx || s.sound === false) return;
-    const t = ctx.currentTime + 0.02;
-    for (const ev of callEvents(type)) play(ev, t);
+    const g = genusOf(type);
+    // 有真实录音的属走文件，没有的走实时合成；两者都从属总线出去，
+    // 所以聚焦/远近的混音对它们一视同仁。
+    // 手动摸摸是明确的交互，给 +5 dB 让它从环境声里浮出来。
+    if (CALL_FILES[g]) {
+      playRecord(g, 5);
+      return;
+    }
+    const bus = busFor(g);
+    if (!bus) {
+      const t = ctx.currentTime + 0.02;
+      for (const ev of callEvents(type)) play(ev, t);
+      return;
+    }
+    synthOut = bus;
+    try {
+      const t = ctx.currentTime + 0.02;
+      for (const ev of callEvents(type)) play(ev, t);
+    } finally {
+      synthOut = null;
+    }
+  }
+
+  // 等 rebase 完成、app.js 可以改之后，应该由 app.js 显式调这个函数，
+  // 替掉现在「包一层 GardenView.prototype.render」的观察办法。
+  function setMix(state) {
+    if (!state) return;
+    const tz = state.zoom || 1;
+    const lo = Math.log(0.14),
+      hi = Math.log(1.8);
+    const t = Math.max(0, Math.min(1, (hi - Math.log(tz)) / (hi - lo)));
+    const g = state.focus ? genusOf(state.focus) : '';
+    if (t === zoomT && g === focusGenus) return;
+    zoomT = t;
+    focusGenus = g;
+    applyMix(false);
   }
 
   document.addEventListener('visibilitychange', () => configure(settings));
@@ -1052,9 +1498,50 @@
     unlock,
     configure,
     pet,
+    setMix,
+    stopMixLoop,
     callEvents,
     renderOffline,
+    GENUS,
+    CALL_FILES,
+    MIX,
+    genusOf,
     MUSIC_TRACKS,
     MUSIC_VOLUME,
+    // 音乐接进 WebAudio 之后，音量由节点控制而不是元素属性（否则会被乘两次）。
+    // 这里统一报出"实际生效的音量"，测试和调试都看这一个数。
+    musicLevel: () => (bgmGain ? bgmGain.gain.value : bgm ? bgm.volume : null),
+    // 背景音乐是否接进了音频图（接了才能被测量）
+    musicMetered: () => !!bgmAnalyser,
+    // 视图实例。混音在正式流程里是**逐帧读它**驱动的（observeView），不是靠
+    // setMix 推的——所以要验证真实行为就得改这里的 targetZoom / followAnimal。
+    // 只给测试和调试用，正常游戏代码不碰。
+    _view: () => view,
+    // 属总线上那个 AudioParam 的活对象（不是快照）。诊断用：
+    // 能拿它单独排一次过渡，就分得清「写法不对」和「这条图上的参数不跑」。
+    _busParam: (genus) => (genusBus[genus] ? genusBus[genus].gain : null),
+    // 调试用：读当前混音状态，验证线性过渡真的到位了
+    _mix: () => ({
+      zoomT,
+      focusGenus,
+      agcScale,
+      ambTargetEnergy,
+      ambMeasured,
+      bgmMeasured,
+      ambPlaying,
+      recordPlays,
+      viewHooked: !!view,
+      buffers: Object.keys(buffers).length,
+      mixCalls,
+      observeCalls,
+      mixLog: mixLog.slice(),
+      // 每个属总线的实际增益。上面那些是"算出来的意图"，这里是"节点上的真值"——
+      // 验证线性过渡有没有真的到位，只能看这个。
+      genusGains: Object.fromEntries(
+        Object.keys(genusBus).map((g) => [g, +genusBus[g].gain.value.toFixed(4)]),
+      ),
+      ctxState: ctx ? ctx.state : null,
+      ctxTime: ctx ? +ctx.currentTime.toFixed(3) : null,
+    }),
   };
 })(globalThis);
