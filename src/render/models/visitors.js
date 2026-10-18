@@ -208,20 +208,17 @@ for (const [type, [name, kind, color]] of Object.entries(EcoData.VISITORS))
     const chase = a.habit === 1,
       follow = a.habit === 3;
     if (!capy) {
+      // 三条姿态共用同一根尾巴：z 和厚度都一样，只有高度/长度不同。
+      // 这样「追蝴蝶 → 平常 → 跟随羊群」之间切换时是尾巴抬起来，不是换了一根。
+      // z=−0.34、厚 0.18：躯干 d=0.66 居中，后缘在 z=−0.33，所以尾巴前端埋进去
+      // 0.08 格、后端伸出 0.10 格。之前 z=−0.49、厚 0.12，前端只到 −0.43，
+      // 中间空 0.10 格，侧视角下就是「屁股后面贴了块浮板」。
       if (chase)
-        p(0, 0.6 * P.bodyY + P.lift, -0.38, 0.1, 0.54 * P.bodyY, 0.12, color);
+        p(0, 0.6 * P.bodyY + P.lift, -0.34, 0.1, 0.54 * P.bodyY, 0.18, color);
       else if (follow)
-        p(
-          Math.sin(a.phase * 5.2) * 0.15,
-          0.58 * P.bodyY + P.lift,
-          -0.36,
-          0.1,
-          0.46 * P.bodyY,
-          0.12,
-          color,
-        );
+        p(Math.sin(a.phase * 5.2) * 0.15, 0.58 * P.bodyY + P.lift, -0.34, 0.1, 0.46 * P.bodyY, 0.18, color);
       else
-        p(wag, 0.55 * P.bodyY + P.lift, -0.49, 0.1, (cat ? 0.46 : 0.23) * P.bodyY, 0.12, color);
+        p(wag, 0.55 * P.bodyY + P.lift, -0.34, 0.1, (cat ? 0.46 : 0.23) * P.bodyY, 0.18, color);
     }
     if (type === 'tabby' || type === 'orangeCat')
       for (let j = 0; j < 3; j++)
