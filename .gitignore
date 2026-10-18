@@ -26,6 +26,14 @@ Thumbs.db
 .vscode/
 .idea/
 
+# 背景音乐的候选素材（约 33 MB）：正式曲库是 assets/bgm/track-1..3.mp3，
+# 这些是按不同风格生成的备选，留在本地听感用，不进仓库。
+# 真要换曲时：把选中的那首改成 track-N.mp3（或写进 audio.js 的 MUSIC_TRACKS），
+# 再 git add -f 强制加进来即可。
+assets/bgm/bgm-*.mp3
+assets/bgm/bgm2-*.mp3
+assets/bgm/ace/
+
 # AI 助手 / 代理留下的本地临时目录
 # 这些是各工具的中间产物，不是工程内容，不要上传。
 # 新旧目录名都留着：不同工具版本用的名字不一样。
