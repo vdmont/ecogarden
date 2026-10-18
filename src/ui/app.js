@@ -136,9 +136,13 @@
   function overview() {
     view.overview();
     focused = false;
+    selected = -1;
+    selectedAnimal = null;
+    view.selected = -1;
     view.followAnimal = null;
     text('viewMode', T.m288);
     $('stage').classList.remove('closeup');
+    inspect();
   }
   function focus(i) {
     journey?.observe();
@@ -301,7 +305,7 @@
 
   function pick(i, batch = false) {
     if (i < 0) {
-      if (!batch) toast(T.m309);
+      if (!batch && (focused || selected >= 0)) overview();
       return;
     }
     selected = i;
@@ -495,12 +499,19 @@
       let v = Math.min(world.metrics[k], n),
         row = el('div', 'goal' + (v >= n ? ' done' : ''));
       const h = el('div', 'goalHeader');
-      h.append(el('span', '', (v >= n ? '✓ ' : '○ ') + label), el('b', '', `${v}/${n}`));
-      const meter = el('div', 'meter'),
-        fill = el('i');
-      fill.style.width = (v / n) * 100 + '%';
-      meter.append(fill);
-      row.append(h, meter);
+      h.append(el('span', '', label), el('b', '', `${v}/${n}`));
+      row.append(h);
+      if (n <= 16) {
+        const dots = el('div', 'dots');
+        for (let d = 0; d < n; d++) dots.append(el('i', 'dot' + (d < v ? ' on' : '')));
+        row.append(dots);
+      } else {
+        const meter = el('div', 'meter'),
+          fill = el('i');
+        fill.style.width = (v / n) * 100 + '%';
+        meter.append(fill);
+        row.append(meter);
+      }
       $('goals').append(row);
     }
     if (world.level === 5) $('goals').append(el('div', 'goal done', T.m349));
@@ -784,6 +795,13 @@
       strokeEnd,
     );
     view.setQuality(profile.settings.quality);
+    // 双击一格：如果有活物就锁定跟随，空地则交给正常放置。
+    view.onDoublePick = (i) => {
+      const c = i >= 0 ? world.cells[i] : null;
+      if (!c || (!c.animal && !c.plant)) return false;
+      focus(i);
+      return true;
+    };
   } catch (e) {
     text('cellTitle', T.m387);
     text('cellDesc', T.m388);
@@ -791,6 +809,9 @@
     $('toast').classList.add('show');
     return;
   }
+  // 观察卡跟着照片走：挂到舞台内，贴右下角
+  const sideRight = document.querySelector('.right');
+  if (sideRight) $('stage').append(sideRight);
   $('residentsBtn').onclick = () => open('residents');
   $('achievementFocus').onclick = () => {
     if (!achievementTarget) return;

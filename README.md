@@ -73,7 +73,7 @@ Windows 用户也可以直接双击 `开始试玩.cmd`，效果等同于 `npm ru
 │   │   └── models/         # 每种动物/植物一个文件的程序化模型
 │   └── ui/
 │       ├── app.js          # 界面交互与主循环
-│       ├── journey.js      # 迎宾页、创造/观察模式、分章引导与白框箭头
+│       ├── journey.js      # 迎宾页、统一手势（拖动旋转/滚轮缩放/双击跟随）、分章引导与白框箭头
 │       ├── mount.js        # 把 text.js 里的页面骨架挂到 DOM
 │       └── style.css
 ├── scripts/
@@ -167,4 +167,4 @@ npm run test:ecology  # 长时种群观察，输出 3 个种子的采样 JSON
 - [`legacy/README.md`](legacy/README.md) — 改造前的单文件基线说明
 - [`THIRD-PARTY-NOTICES.txt`](THIRD-PARTY-NOTICES.txt) — Three.js 许可
 
-新版主界面、创造/观察模式、引导、地形解锁与生态调整见 [v0.9 园丁引导](docs/v0.9-园丁引导.md)。
+新版主界面、统一手势（拖动旋转 / 滚轮缩放 / 双击跟随 / 点空白回全岛）、引导、地形解锁与生态调整见 [v0.9 园丁引导](docs/v0.9-园丁引导.md)。

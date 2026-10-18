@@ -344,7 +344,7 @@ globalThis.GardenText = {
     m382: '尚未发现',
     m383: ' 种 · ',
     m384: ' 只',
-    m385: '⌕ 找一只',
+    m385: '找一只',
     m386: '还没有故事。先在水边播下一颗种子。',
     m387: '暂时无法开启 3D 场景',
     m388: '请用支持 WebGL 的浏览器，并开启硬件加速后刷新。存档不会被修改。',
@@ -427,7 +427,7 @@ globalThis.GardenText = {
               <button id="pausedBadge" hidden>Ⅱ 已暂停 · 点此继续</button>
             </div>
             <div id="toast" role="status" aria-live="polite"></div>
-            <div class="sceneHint">左键涂抹 · 右键旋转 · 双指 / 滚轮缩放</div>
+            <div class="sceneHint">拖动旋转 · 滚轮缩放 · 双击跟随</div>
           </section>
           <aside class="side right">
             <section class="panel inspector">
@@ -437,14 +437,14 @@ globalThis.GardenText = {
                 <button id="inspectClose" aria-label="收起地块详情">收起</button>
               </div>
               <p id="cellDesc">点一下地面，了解这里正在发生什么。</p>
-              <button id="focusBtn" hidden>⌕ 近距离观察</button> <button id="petBtn" hidden>♡ 摸摸</button>
+              <button id="focusBtn" hidden>近距离观察</button> <button id="petBtn" hidden>♡ 摸摸</button>
               <div id="cellFacts"></div>
             </section>
             <section class="panel eventCard" id="eventCard" hidden>
               <div class="eyebrow">刚刚发生的故事</div>
               <h3 id="eventTitle"></h3>
               <p id="eventText"></p>
-              <button id="eventFocus">⌕ 近距离观察</button><button id="logBtn" class="textBtn">往事</button>
+              <button id="eventFocus">近距离观察</button><button id="logBtn" class="textBtn">往事</button>
             </section>
             <div class="options">
               <label><input type="checkbox" id="labelsToggle" checked> 显示小物底圈</label><label><input type="checkbox" id="replaceToggle"> 覆盖幼苗 / 花</label><label><input type="checkbox" id="followToggle"> 事件自动近看</label>
@@ -543,7 +543,7 @@ globalThis.GardenText = {
         </div>
       </dialog>
       <div id="achievementToast" role="status" aria-live="polite">
-        <span id="achievementTitle"></span><button id="achievementFocus" hidden>⌕ 去看看</button><button id="achievementDismiss" aria-label="收起成就通知">×</button>
+        <span id="achievementTitle"></span><button id="achievementFocus" hidden>去看看</button><button id="achievementDismiss" aria-label="收起成就通知">×</button>
       </div>
     `,
 };

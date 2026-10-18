@@ -297,8 +297,7 @@
     mountCover(home);
     const bar = document.createElement('div');
     bar.id = 'modeBar';
-    bar.innerHTML =
-      '<button id="createMode" aria-pressed="true">✿ 创造</button><button id="observeMode" aria-pressed="false">⌕ 观察</button><button id="gardenMenu">☰ 菜单</button>';
+    bar.innerHTML = '<button id="gardenMenu">☰ 菜单</button>';
     document.querySelector('header').append(bar);
     const menu = document.createElement('dialog');
     menu.id = 'gardenMenuPanel';
@@ -323,18 +322,9 @@
     svg.innerHTML =
       '<defs><marker id="arrowTip" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8" fill="white"/></marker></defs><path id="guideLine" fill="none" stroke="white" stroke-width="4" marker-end="url(#arrowTip)"/><circle id="guideTarget" r="19" fill="none" stroke="white" stroke-width="3"/>';
     game.append(svg);
-    const setMode = (m) => {
-      mode = m;
-      game.dataset.mode = m;
-      $('createMode').setAttribute('aria-pressed', m === 'create');
-      $('observeMode').setAttribute('aria-pressed', m === 'observe');
-      api.choose(m === 'observe' ? 'inspect' : 'seed');
-      api.view.panMode = false;
-      $('panToggle').setAttribute('aria-pressed', 'false');
-      api.view.resize();
-    };
-    $('createMode').onclick = () => setMode('create');
-    $('observeMode').onclick = () => setMode('observe');
+    // 只有一套手势：左键拖空白旋转/俯仰，中键拖动平移，滚轮缩放，双击跟随。
+    // "观察"不再是一个模式，而是点选、双击与"回到全岛"三个动作。
+    const setMode = () => {};
     $('enterGarden').onclick = () => {
       started = true;
       home.hidden = true;
@@ -513,9 +503,7 @@
         if (step?.tool === tool) learned(api.profile(), step);
       },
       active: () => started,
-      observe: () => {
-        if (mode !== 'observe') setMode('observe');
-      },
+      observe: () => {},
     };
   }
   root.GardenJourney = { plan, learned, mount };

@@ -1,84 +1,706 @@
-:root{--ink:#304b40;--muted:#738478;--paper:#fafaf3;--line:#d9e1d0;--green:#4e7556;--accent:#d69b54;--radius:19px}*{box-sizing:border-box}body{margin:0;font-family:'Microsoft YaHei','PingFang SC',system-ui,sans-serif;color:var(--ink);background:#e6eddd}button,input,select{font:inherit}button,.buttonLike{border:1px solid var(--line);border-radius:10px;background:#f8faf3;color:var(--ink);padding:9px 13px;cursor:pointer;transition:background .15s,transform .15s}button:hover,.buttonLike:hover{background:#e5edda}button:focus-visible,select:focus-visible,input:focus-visible{outline:3px solid #d6a35e;outline-offset:2px}button:disabled{opacity:.42;cursor:default}button.active{background:#e2ebce;border-color:#6d915d;box-shadow:inset 0 0 0 1px #6d915d}.primary{background:var(--green);color:white;border-color:var(--green)}.primary:hover{background:#3e6247}.textBtn{border:0;background:none;font-size:11px}.danger{color:#9b5549;background:#fff6ed}.muted{font-size:12px;color:var(--muted);line-height:1.8}#game{height:100vh;height:100dvh;display:flex;flex-direction:column;overflow:hidden}header{height:74px;flex-shrink:0;display:flex;align-items:center;gap:20px;padding:12px 24px;border-bottom:1px solid #becbb744;background:#f4f6edcc}.brand{display:flex;align-items:center;gap:10px;min-width:205px}.brandmark{display:grid;place-items:center;width:40px;height:40px;background:#678462;color:#faf7e5;border-radius:13px;font-size:20px}.brand b{font-size:18px;letter-spacing:3px}.brand small{display:block;font-size:10px;letter-spacing:1px;margin-top:4px;color:var(--muted)}nav{display:flex;gap:7px;margin-left:auto}nav button{font-size:12px}#saveStatus{font-size:10px;color:var(--muted);min-width:74px;text-align:right}.workspace{display:grid;grid-template-columns:230px minmax(0,1fr) 235px;flex:1;min-height:0;padding:16px 18px 0;gap:12px}.side{display:flex;flex-direction:column;gap:12px;min-height:0;overflow:auto;scrollbar-width:thin}.panel{background:#f9fbf0e6;border:1px solid #fafff9;border-radius:var(--radius);padding:17px;box-shadow:0 4px 20px #5f755308}.eyebrow{font-size:10px;letter-spacing:2px;color:#819071;font-weight:bold}h1{font-size:23px;line-height:1.3;margin:10px 0 12px}h2{font-size:27px;margin:12px 0}h3{font-size:15px;margin:10px 0}p{line-height:1.75;font-size:12px;margin:8px 0;color:#687b6c}.unhurried{font-size:10px;line-height:1.6;color:#8c977f;margin-top:15px}.goal{margin:14px 0}.goalHeader{display:flex;gap:8px;justify-content:space-between;font-size:11px;line-height:1.5}.goalHeader b{white-space:nowrap;color:#5e8457}.meter{height:5px;background:#e1e7d6;border-radius:8px;margin-top:7px;overflow:hidden}.meter i{height:100%;display:block;background:#94af75;transition:width .3s}.goal.done .meter i{background:#c8ae6b}.goal.done .goalHeader{color:#597b4c}#nextChapter{font-size:12px;padding:10px;width:100%}.resource{font-size:11px;display:flex;justify-content:space-between;margin:7px 0}.resource b{font-size:15px}.speed{display:flex;gap:5px;margin-top:14px}.speed button{flex:1;font-size:11px;padding:7px}.controls small{font-size:10px;color:var(--muted);display:block;margin-top:8px}.combo{min-height:19px;font-size:11px;color:#b17c44;margin-top:12px;line-height:1.5}#stage{position:relative;min-width:0;min-height:0;overflow:hidden;border-radius:24px;background:radial-gradient(ellipse at 50% 30%,#f5f6e9 0,#e4ebd9 55%,#d4e2d0 100%)}#garden{display:block;position:absolute;width:100%;height:100%;touch-action:none;outline:none}#worldLabels{position:absolute;inset:0;pointer-events:none;overflow:hidden}.world-label{position:absolute;top:0;left:0;font-size:10px;font-weight:bold;padding:2px 5px;line-height:1.2;white-space:nowrap;background:#fffbeeeb;border:1px solid #e3d9b0;color:#5a644b;border-radius:5px;box-shadow:0 2px 5px #3c542411;pointer-events:none}.viewTop{position:absolute;left:15px;right:15px;top:13px;display:flex;align-items:center;justify-content:space-between;pointer-events:none}.viewTop span{font-size:10px;letter-spacing:2px;color:#819477}.viewTop button{font-size:10px;padding:7px 9px;pointer-events:auto;background:#fafbf3ba}.cameraControls{position:absolute;bottom:34px;left:50%;transform:translateX(-50%);display:flex;gap:5px}.cameraControls button{padding:6px 12px;background:#fafbf3ca}.sceneHint{position:absolute;bottom:13px;left:0;right:0;text-align:center;font-size:9px;color:#8c9a7d;pointer-events:none}.inspectHead{display:flex;align-items:center;justify-content:space-between}.inspector h2{font-size:17px;margin:9px 0}.inspector p{font-size:11px}#inspectClose{display:none}#focusBtn{font-size:11px;margin-top:7px}#cellFacts{font-size:10px;color:#919b80;line-height:1.7;margin-top:8px}.eventCard{background:#f9f2df}.eventCard h3{font-size:15px}.eventCard p{font-size:11px}.eventCard button{font-size:11px}.options{padding:4px 12px;font-size:11px;color:#768568}.options label{display:block;margin:9px 0;cursor:pointer}.options input{accent-color:var(--green);vertical-align:middle;margin-right:7px}footer{flex-shrink:0;padding:12px 18px 15px;z-index:4;background:#e6eddd}.toolCaption{display:flex;gap:12px;align-items:center;font-size:11px;margin:0 auto 8px;max-width:1100px;min-height:24px}.toolCaption b{flex-shrink:0;font-size:13px;color:#4d6c48}.toolCaption span{color:#74826b;line-height:1.5}#toolbar{display:flex;justify-content:center;gap:7px;max-width:1100px;margin:auto;overflow-x:auto;padding:3px 2px 6px;scrollbar-width:thin}#toolbar button{flex:0 0 66px;padding:7px 5px;border-radius:14px;text-align:center;font-size:10px;background:#f7f9f0}#toolbar button.active{background:#e8edcf;border:2px solid #78965b;padding:6px 4px}#toolbar .toolIcon{display:block;width:28px;height:27px;border-radius:9px;margin:0 auto 5px;color:#5e7746;background:#e5edce;font-size:15px;line-height:27px;font-weight:bold}#toolbar button[data-tool='fire'] .toolIcon{background:#f3d4b7;color:#ac694a}#toolbar button[data-tool='water'] .toolIcon,#toolbar button[data-tool='lake'] .toolIcon{background:#cde1e2;color:#507e90}#toolbar button[data-tool='bird'] .toolIcon{background:#d0e4ee;color:#48748b}#toolbar button[data-tool='bug'] .toolIcon{background:#ead4ad;color:#96673e}#toolbar small{display:block;color:#9a9e87;font-size:9px;margin-top:3px}dialog{margin:auto;padding:28px;border:1px solid #eef1df;border-radius:25px;background:var(--paper);color:var(--ink);width:min(850px,94vw);max-height:88vh;max-height:88dvh;box-shadow:0 30px 100px #23352640}dialog::backdrop{background:#293b355e;backdrop-filter:blur(7px)}.dialogHead{display:flex;align-items:center;justify-content:space-between;gap:10px}.dialogHead button{font-size:11px}.intro{font-size:13px;line-height:1.9;max-width:680px;margin-bottom:20px}#chapterGrid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}.chapterCard{display:flex;flex-direction:column;text-align:left;padding:18px;border-radius:17px;min-height:170px;background:#eef2e2}.chapterCard small{font-size:10px;color:#8c9c7b;margin-bottom:12px}.chapterCard strong{font-size:18px;margin-bottom:8px}.chapterCard p{font-size:10px;line-height:1.6;margin:0 0 12px}.chapterCard span{font-size:11px;font-weight:bold;margin-top:auto;color:#6d8759}.chapterCard.locked{background:#f0f0e6}.chapterCard.done{border-color:#b2c092}.chapterCard:nth-child(2){background:#e6eee8}.chapterCard:nth-child(3){background:#f3e8d9}.chapterCard:nth-child(4){background:#ede7e9}.chapterCard:nth-child(5){background:#e0e9e6}.chapterCard:nth-child(6){background:#e5ebd4}#achievementGrid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}.achievement{padding:16px;background:#eeeeE3;border-radius:13px;color:#99a08d}.achievement h3{color:inherit;margin:0 0 6px}.achievement p{color:inherit;margin:0;font-size:11px}.achievement.unlocked{background:#e6edda;color:#4e6847;border:1px solid #bac8a7}.achievement small{display:block;margin-top:7px;font-size:9px}.guideFlow{padding:18px;background:#e9efdb;border-radius:15px;color:#6a804b;line-height:1.9}.guideGrid{display:grid;grid-template-columns:1fr 1fr;gap:10px 22px}.guideGrid h3{margin-top:20px}.saveActions{display:flex;gap:10px;flex-wrap:wrap;margin:18px 0}.setting{display:flex;gap:20px;align-items:center;justify-content:space-between;padding:12px 0;font-size:13px;border-bottom:1px solid var(--line)}select{border:1px solid var(--line);background:white;border-radius:8px;padding:7px;color:var(--ink)}#confirmDialog{width:min(450px,90vw)}#toast{position:absolute;bottom:84px;left:50%;transform:translateX(-50%);width:max-content;max-width:85%;background:#344d40ed;color:#fffce9;padding:10px 15px;border-radius:13px;font-size:12px;line-height:1.6;pointer-events:none;opacity:0;transition:opacity .2s}#toast.show{opacity:1}#achievementToast{position:fixed;top:90px;left:50%;transform:translate(-50%,-20px);z-index:50;padding:14px 23px;border-radius:18px;background:#fff7d9;color:#79613b;box-shadow:0 9px 30px #756e2326;font-size:13px;opacity:0;pointer-events:none;transition:all .3s}#achievementToast.show{opacity:1;transform:translate(-50%,0)}.logItem{padding:16px 0;border-bottom:1px solid var(--line)}.logItem h3{margin:0}.logItem button{font-size:11px}input[type='checkbox']{accent-color:var(--green)}[hidden]{display:none!important}
-@media(min-width:901px) and (max-width:1180px){.workspace{grid-template-columns:190px minmax(0,1fr) 195px;padding:12px 10px 0;gap:8px}.panel{padding:13px}h1{font-size:20px}.brand{min-width:180px}header{gap:10px;padding:10px 15px}#saveStatus{display:none}#toolbar{justify-content:flex-start}}
-@media(max-width:900px){header{height:62px;padding:8px 12px;gap:8px}.brand{min-width:0;gap:7px}.brandmark{width:30px;height:32px;border-radius:10px;font-size:16px}.brand b{font-size:14px;letter-spacing:1px}.brand small{font-size:8px;letter-spacing:0}.brand small,#saveStatus{display:none}nav{gap:4px}nav button{font-size:10px;padding:8px}#achievementCount{display:none}.workspace{display:flex;flex-direction:column;padding:8px 10px 0;gap:7px}.left{flex-direction:row;flex-shrink:0;overflow:visible;gap:7px;max-height:124px}.mission{flex:1;min-width:0;padding:10px 12px;overflow:auto}.mission h1{font-size:16px;display:inline;margin:0 8px 0 0}.eyebrow{font-size:9px;letter-spacing:1px}.mission .eyebrow{display:inline}.mission #levelTip,.unhurried{display:none}#goals{display:flex;gap:8px;margin-top:5px;flex-wrap:wrap}.goal{margin:3px 0;flex:1 1 130px}.goalHeader{font-size:10px}.meter{margin-top:4px;height:4px}#nextChapter{font-size:10px;padding:6px;margin-top:5px}.controls{width:130px;padding:8px 10px;flex-shrink:0}.resource{font-size:9px;margin:2px 0}.resource b{font-size:12px}.controls>.meter{margin-bottom:5px}.speed{margin-top:6px;gap:3px}.speed button{padding:5px 3px;font-size:9px}.controls small{display:none}.combo{font-size:9px;margin:4px 0;min-height:0}.combo:empty{display:none}#stage{flex:1;min-height:150px;border-radius:17px}.viewTop{top:10px;left:10px;right:10px}.viewTop span{font-size:9px;letter-spacing:1px}.viewTop button{padding:5px 7px}.cameraControls{bottom:24px}.cameraControls button{padding:5px 12px}.sceneHint{bottom:6px;font-size:8px}.right{flex-direction:row;flex-shrink:0;max-height:137px;gap:7px;overflow:auto}.inspector{flex:1;padding:10px 12px;min-width:160px}.inspector .eyebrow{display:none}.inspector h2{font-size:13px;margin:0}.inspector p{font-size:10px;margin:4px 0;line-height:1.5}.inspector #cellFacts{font-size:9px;margin:3px 0}.inspector #focusBtn{font-size:10px;margin:3px 0;padding:6px 8px}#inspectClose{display:block;font-size:9px;padding:3px 5px}.right.compact .inspector p,.right.compact #cellFacts,.right.compact #focusBtn{display:none!important}.eventCard{width:190px;flex-shrink:0;padding:10px}.eventCard h3{font-size:12px;margin:4px 0}.eventCard p{font-size:10px;line-height:1.45;margin:4px 0}.eventCard button{padding:5px 7px;font-size:9px}.eventCard .textBtn{display:none}.options{display:none}footer{padding:5px 10px calc(7px + env(safe-area-inset-bottom));}.toolCaption{font-size:10px;gap:7px;margin-bottom:5px;min-height:27px}.toolCaption span{line-height:1.3}.toolCaption b{font-size:12px}#toolbar{justify-content:flex-start;gap:5px;padding-bottom:3px}#toolbar button{flex-basis:56px;font-size:10px;padding:5px;border-radius:11px}#toolbar button.active{padding:4px}#toolbar .toolIcon{width:25px;height:23px;line-height:23px;font-size:14px;margin-bottom:3px}#toolbar small{font-size:8px;margin-top:2px}dialog{padding:20px;max-height:92dvh}.dialogHead button{font-size:10px}dialog h2{font-size:23px}.intro{font-size:12px}#chapterGrid{grid-template-columns:repeat(2,1fr);gap:8px}.chapterCard{padding:13px;min-height:155px}.chapterCard strong{font-size:16px}.chapterCard small{font-size:9px;margin-bottom:8px}.guideGrid{grid-template-columns:1fr}.world-label{font-size:9px;padding:1px 4px}#achievementToast{top:70px;font-size:12px;max-width:88vw;width:max-content}#achievementGrid{grid-template-columns:1fr 1fr}.achievement{padding:12px}.achievement h3{font-size:13px}#toast{font-size:11px;bottom:66px}}
-@media(max-width:390px){nav button{padding:7px 6px}.brand b{font-size:12px}.brandmark{display:none}.controls{width:112px}.mission{padding:8px}.goalHeader{font-size:9px}.right{max-height:122px}.toolCaption span{font-size:9px}.eventCard{width:155px}.chapterCard strong{font-size:14px}}
-@media(orientation:landscape) and (max-height:550px){header{height:46px}.workspace{display:grid;grid-template-columns:175px minmax(0,1fr) 175px;gap:7px;flex:1;min-height:0}.left{flex-direction:column;max-height:none;overflow:auto}.mission{flex:none}.controls{width:auto}.right{flex-direction:column;max-height:none;overflow:auto}.inspector{flex:none;min-width:0}.eventCard{width:auto}#stage{min-height:0}.sceneHint{display:none}.toolCaption{min-height:20px;font-size:9px}footer{padding-bottom:4px}#toolbar button{flex-basis:51px}.toolIcon{display:none!important}#toolbar small{display:inline;margin-left:4px}dialog{max-height:94dvh}.chapterCard{min-height:130px}}
+/* ===========================================================
+   生态花园 · UI
+   纸、墨、细线。界面是摊在桌上的一本园艺手账，
+   岛是贴在上面的那张照片。没有面板，只有排版。
+   =========================================================== */
 
-#cellFacts{display:flex;flex-wrap:wrap;gap:4px 9px}.chapterCard.current{outline:2px solid #8da878;outline-offset:-2px}.logItem{display:block;width:100%;text-align:left;margin:8px 0;padding:14px}.mission .eyebrow{margin-right:7px}@media(max-width:900px){.eventCard .textBtn{display:inline-block}}
+@font-face {
+  font-family: 'Garden WenKai';
+  src: url('../../assets/fonts/LXGWWenKai-Medium.ttf') format('truetype');
+  font-weight: 400 900;
+  font-style: normal;
+  font-display: swap;
+}
 
-/* Quiet interface: details belong in the guide, not over the island. */
-#levelTag,#levelTip,.unhurried,.eyebrow,#saveStatus,.sceneHint,#viewMode,.options,#timeLabel,.brand small{display:none!important}
-header{height:64px}.workspace{grid-template-columns:205px minmax(0,1fr) 205px}.brand{min-width:150px}.brand b{letter-spacing:1px}.brandmark{background:#e1e9d7}.viewTop{justify-content:flex-end}.mission h1{font-size:21px;margin:0 0 16px}.goalHeader{font-size:12px}.resource{font-size:13px}.resource b{font-size:19px}.speed button{font-size:12px;padding:9px 5px}.combo:empty{display:none}.inspector h2{font-size:18px}.inspector p,.eventCard p{font-size:13px}.eventCard h3{font-size:17px}.eventCard button,#focusBtn{font-size:13px}#cellFacts{font-size:12px}.lifeRow{width:100%}.lifeRow .meter{height:5px}.fact{font-size:12px}.toolCaption{font-size:13px;max-width:1100px}.toolCaption b{font-size:14px}#toolbar{justify-content:flex-start}#toolbar button{flex-basis:59px;font-size:11px}#toolbar .toolIcon{font-size:22px;background:transparent!important;height:30px;width:30px;line-height:30px;color:inherit!important}.chapterNumber{font-size:27px!important;font-weight:400!important;opacity:.55;margin:0!important}.chapterCard h3{font-size:18px;margin:12px 0 20px}.chapterState{font-size:13px!important}.chapterCard{min-height:155px}.cameraControls{bottom:14px}.logItem small{font-size:12px}
-@media(max-width:900px){header{height:56px}.workspace{display:flex}.mission h1{display:block;font-size:16px;margin:0 0 6px}.goalHeader{font-size:10px}.resource{font-size:10px}.resource b{font-size:14px}.speed button{font-size:11px;padding:7px 3px}.inspector h2{font-size:14px}.inspector p,.eventCard p{font-size:11px}.eventCard h3{font-size:13px}.eventCard button,#focusBtn{font-size:11px}.toolCaption{font-size:12px;min-height:22px}.toolCaption span{font-size:12px}.toolCaption b{font-size:13px}#toolbar button{flex-basis:55px}.right{max-height:140px}.eventCard{width:170px}#cellFacts{font-size:10px}.fact{font-size:11px}.cameraControls{bottom:12px}.chapterCard h3{font-size:16px;margin:8px 0 16px}.chapterNumber{font-size:22px!important}}
-@media(orientation:landscape) and (max-height:550px){header{height:44px}.workspace{display:grid;grid-template-columns:160px minmax(0,1fr) 160px}.mission h1{font-size:16px;margin-bottom:7px}.toolCaption{min-height:18px}.toolCaption span{font-size:11px}.toolIcon{display:none!important}.cameraControls button{padding:4px 10px}}
+:root {
+  --paper: #f2eddc;
+  --card: #fcf8ec;
+  --ink: #2e3a30;
+  --ink-2: #55634c;
+  --muted: #8b937e;
+  --line: #d8d0b6;
+  --line-soft: #e7e0c8;
+  --green: #4c6a46;
+  --green-l: #7e9a6a;
+  --ochre: #b07a3f;
+  --red: #a65b4a;
+  --radius: 3px;
+  --tilt: -0.85deg;
+}
 
-@media(max-width:900px){.speed button{white-space:nowrap;padding:7px 1px;min-width:0}}
+* { box-sizing: border-box; }
 
-@media(orientation:landscape) and (max-height:550px){.right{max-height:none}.eventCard{width:auto;min-width:0}}
-#toolbar::-webkit-scrollbar{height:4px}#toolbar::-webkit-scrollbar-thumb{background:#aab99a;border-radius:4px}
-@media(max-width:900px) and (orientation:portrait){.left{max-height:none}.mission{overflow:visible}.goal{margin:2px 0}#goals{gap:4px}}
-#petBtn{font-size:13px;margin-top:7px} @media(max-width:900px){#petBtn{font-size:12px;padding:6px 8px;margin:3px 0}}
+html, body { height: 100%; }
 
-/* v0.8: persistent exits, deliberate pause, and camera navigation. */
-dialog{overflow:auto;scroll-padding-top:76px}.dialogHead{position:sticky;top:-28px;z-index:3;background:var(--paper);padding:12px 0 14px;border-bottom:1px solid var(--line);margin-top:-12px}.dialogHead h2{font-size:22px;margin:0}.dialogHead button{min-height:40px}.chapterWrap{display:flex;flex-direction:column;gap:5px}.chapterWrap .chapterCard{width:100%;flex:1}.replay{font-size:12px}.chapterRecord{font-size:11px;color:var(--muted);padding:4px}.viewTop{gap:6px;flex-wrap:wrap}.viewTop #viewMode{display:block!important;margin-right:auto;font-size:12px;letter-spacing:0;background:#f9faf0e8;border-radius:9px;padding:7px 10px}.closeup{box-shadow:inset 0 0 0 3px #adc397}.closeup .viewTop #viewMode{color:#426543;background:#f0f5dd}.viewTop #pausedBadge{background:#725437;color:#fff;border:0;font-size:12px}.cameraControls{flex-wrap:wrap;justify-content:center;width:max-content;max-width:95%;gap:4px}.cameraControls button{padding:6px 9px}.cameraControls button[aria-pressed=true]{background:#d4e4bd;border-color:#658454}#achievementToast{pointer-events:auto;display:flex;align-items:center;gap:9px;max-width:94vw;visibility:hidden}#achievementToast.show{visibility:visible}#achievementToast button{white-space:nowrap;font-size:12px;padding:7px 9px}#achievementTitle{line-height:1.6}#focusBtn{background:#4e7556;color:#fff;border-color:#4e7556;font-weight:bold;min-height:40px}.residentRow{display:flex;align-items:center;gap:16px;width:100%;margin:7px 0;text-align:left;font-size:15px}.residentRow b{margin-left:auto}.residentRow span:last-child{font-size:12px;color:#58764a}#residents{max-width:480px}#residentsBtn{font-size:11px}.eventCard button{white-space:normal}#residentList{padding-top:10px}
-@media(max-width:900px){.dialogHead{top:-20px}.viewTop #viewMode{font-size:10px;padding:5px}.viewTop{gap:4px}.cameraControls{width:94%;bottom:10px}.cameraControls button{padding:6px 8px;font-size:12px}.cameraControls #panToggle{font-size:11px}.viewTop #pausedBadge{font-size:10px;padding:5px}#achievementToast{padding:10px;gap:5px;top:59px}#achievementToast button{padding:6px}#focusBtn{font-size:11px;min-height:34px}.residentRow{min-height:48px}.chapterRecord{font-size:10px}.right{max-height:162px}.eventCard{width:155px}#residentsBtn{font-size:10px}.viewTop #residentSummary{display:none}}
-@media(orientation:landscape) and (max-height:550px){.right{max-height:none}.cameraControls{width:96%;gap:3px}.cameraControls button{padding:4px 7px}.viewTop #viewMode{display:none!important}.eventCard{width:auto}.dialogHead{top:-20px}}
-/* Garden journal: a quiet canvas, two explicit modes, a letter from the last gardener. */
-:root{--ink:#354b39;--paper:#fffbed;--green:#546e42;--line:#d7d7ba;--radius:13px}body{font-family:'幼圆','YouYuan','HanziPen SC','STKaiti','KaiTi','Comic Sans MS',system-ui,sans-serif;background:#edead8}button{border-radius:18px;box-shadow:0 2px 0 #a5ad8c33}header{background:#f8f4e6;border:0;height:68px;padding:12px 22px}.brand b{letter-spacing:2px}.brand small,header nav,#saveStatus{display:none}#modeBar{margin-left:auto;display:flex;gap:8px}#modeBar button[aria-pressed=true]{color:#fff;background:#546e42;border-color:#546e42}.workspace{position:relative;grid-template-columns:210px minmax(0,1fr);padding:8px 16px;gap:14px}.panel{box-shadow:none;border:0;background:#fcf9ec}.left{z-index:1}.mission h1{font-size:22px}.mission .eyebrow,.unhurried,#levelTip,#timeLabel,.combo,.toolCaption,.sceneHint,.options{display:none!important}.resource b{font-size:28px}.resource{font-size:16px;align-items:center}.speed{margin-top:10px}.right{position:absolute;right:30px;top:65px;width:200px;max-height:65%;z-index:2;pointer-events:none}.right .panel{pointer-events:auto}.right .eventCard{display:none}.right .inspector{background:#fffbebed}.cameraControls{bottom:18px}.viewTop{top:12px}.viewTop #viewMode{display:none!important}#stage{background:radial-gradient(ellipse at 45% 30%,#f5f2de,#e1e7cf);border-radius:18px}footer{padding:8px 20px 14px;background:#f8f4e6}#toolbar{justify-content:center;gap:9px}.tool{position:relative;min-width:72px;border-radius:14px!important;box-shadow:0 3px 0 #8b9e6e26}.toolIcon{font-size:25px!important}.toolName{font-size:14px!important}.toolCost{display:block;font:11px system-ui,sans-serif;white-space:nowrap;margin-top:3px;color:#77714f}.tool.unaffordable{opacity:.58}.tool:disabled .toolCost{color:#7d5b37}.tool.guide-lit{outline:4px solid white;outline-offset:3px;box-shadow:0 0 0 7px #6c8663}.menuGrid{display:grid;grid-template-columns:1fr 1fr;gap:14px;padding:22px 0}.menuGrid button{padding:24px;font-size:19px}#game[data-mode=create] .cameraControls,#game[data-mode=create] .right{display:none}#game[data-mode=observe] footer{display:none}#game[data-mode=observe] .right .inspector:has(#focusBtn[hidden]){display:none}#game[data-mode=observe] #stage{cursor:grab}#game[data-mode=observe] #stage:active{cursor:grabbing}
-#welcome{position:fixed;inset:0;z-index:30;background:#f4efdd;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;overflow:auto;padding:24px}#welcome[hidden]{display:none}.welcome-art{font-size:60px;line-height:1}.overline{font-size:13px;letter-spacing:3px;color:#83916e}#welcome h1{font-size:56px;letter-spacing:9px;margin:15px 0}.welcome-copy{font-size:20px;line-height:1.8}.welcome-rules{text-align:left;margin:15px 0 22px;padding:12px 22px;border-top:1px solid #c9cfb3;border-bottom:1px solid #c9cfb3}.welcome-rules p{font-size:15px;margin:5px 0}.welcome-rules b{display:inline-block;width:85px}#enterGarden{font-size:20px;padding:14px 35px}#gardenerGuide{position:fixed;right:30px;bottom:128px;z-index:7;width:290px;padding:16px 18px;border-radius:4px 21px 21px 21px;background:#fffbed;box-shadow:3px 5px 0 #a3ac8733;display:flex;gap:10px;border:1px solid #e4dfc5;pointer-events:none}#gardenerGuide[hidden]{display:none}#gardenerGuide b{font-size:17px}#gardenerGuide p{font-size:14px;line-height:1.65;margin:7px 0 0;white-space:pre-line}#guideOK{pointer-events:auto;margin-top:10px;padding:7px 15px}.gardener-avatar{font-size:28px;color:#859963}#guideArrow{position:fixed;inset:0;width:100vw;height:100vh;z-index:6;pointer-events:none;filter:drop-shadow(0 1px 2px #45623a99)}#guideArrow[hidden]{display:none}#guideTarget{stroke-dasharray:5 4}#toolbar .tool{touch-action:none}
-@media(max-width:900px){header{height:58px;padding:8px 12px}.brand{min-width:0}.brand b{font-size:16px}.brandmark{display:none}#modeBar{gap:4px}#modeBar button{font-size:12px;padding:8px 10px}.workspace{display:flex;flex-direction:column;padding:6px 10px;gap:8px}.left{display:grid;grid-template-columns:minmax(0,1fr) 100px;gap:8px;overflow:visible;flex-shrink:0}.mission{padding:10px}.mission h1{font-size:17px;margin:0 0 5px}.goal{margin:3px 0}.goalHeader{font-size:10px}.controls{padding:8px}.resource{font-size:11px;margin:4px 0}.resource b{font-size:20px}.controls .meter{display:none}.speed button{font-size:10px;padding:5px 2px}.speed{gap:2px;margin-top:6px}#stage{flex:1;min-height:160px}.right{top:auto;bottom:60px;right:18px;width:160px;max-height:180px}.right .inspector{padding:10px}footer{padding:6px 8px 10px}#toolbar{justify-content:flex-start;gap:8px;padding:7px 4px}.tool{min-width:62px;flex:0 0 62px!important}.toolIcon{font-size:22px!important}.toolName{font-size:12px!important}.toolCost{font-size:10px}#gardenerGuide{right:18px;bottom:119px;width:235px;padding:11px 13px}#gardenerGuide p{font-size:12px}#gardenerGuide b{font-size:14px}.gardener-avatar{font-size:22px}#welcome h1{font-size:40px}.welcome-copy{font-size:17px}.welcome-rules{padding:9px 0}.welcome-rules p{font-size:13px}}
-@media(orientation:landscape) and (max-height:550px){header{height:45px}.workspace{display:grid;grid-template-columns:170px minmax(0,1fr)}.left{display:flex;overflow:auto}.controls{padding:6px}.resource{display:inline-flex;gap:8px;margin-right:12px}.resource b{font-size:18px}.speed{margin:0}footer{padding:0 8px 5px}.toolIcon{display:none!important}#toolbar{padding:4px}.tool{padding:4px!important}#gardenerGuide{bottom:85px;width:235px}.right{bottom:50px}.welcome-art,.overline{display:none}#welcome h1{font-size:32px;margin:0}.welcome-copy{font-size:14px;margin:4px}.welcome-rules{margin:6px}#enterGarden{font-size:16px;padding:9px 25px}}
+body {
+  margin: 0;
+  color: var(--ink);
+  font-family: 'Garden WenKai', 'PingFang SC', 'Noto Sans CJK SC', system-ui, sans-serif;
+  font-weight: 400;
+  background:
+    repeating-linear-gradient(0deg, rgba(90, 80, 40, 0.016) 0 1px, transparent 1px 3px),
+    radial-gradient(120% 85% at 18% 0%, #f7f2e2 0%, #f2eddc 55%, #ece6d2 100%);
+  background-attachment: fixed;
+  -webkit-font-smoothing: antialiased;
+}
 
-/* A friend's note stays legible without covering the entire island. */
-#gardenerGuide{left:50%;right:auto;top:22%;bottom:auto;transform:translateX(-50%);width:min(420px,calc(100vw - 32px));padding:22px;border:3px solid #fffdf3;box-shadow:0 8px 32px #283b4033;background:#fff9e8ef;font-size:17px;pointer-events:auto}
-#gardenerGuide b{font-size:23px}#gardenerGuide p{font-size:17px;line-height:1.7}.saveSlots{display:grid;gap:12px;margin-top:24px}.saveSlot{display:grid;grid-template-columns:1fr auto auto;gap:10px;align-items:center;border:1px solid #d2d9bb;border-radius:15px;padding:15px}.saveSlot>span{grid-column:1;font-size:14px}.saveSlot>button{grid-row:1/3}.saveSlot>button:last-child{grid-column:3}.saveSlot>button:nth-last-child(2){grid-column:2}
-@media(max-width:650px){#gardenerGuide{top:25%;padding:16px;width:min(350px,calc(100vw - 30px))}#gardenerGuide b{font-size:21px}.saveSlot{gap:6px;padding:10px}.saveSlot>button{padding:8px}.saveSlot>span{font-size:12px}}
+button, input, select, textarea { font: inherit; color: inherit; }
 
-#gardenerGuide{max-height:55vh;overflow:auto}#gardenerGuide #guideOK{position:sticky;bottom:0;background:#f5f0da;margin-top:12px}.residentEntry{display:flex;align-items:center;gap:10px}.residentEntry .residentRow{flex:1}.releaseAnimal{flex-shrink:0}.residentPanel #residentsBtn{display:block;width:100%;margin-top:14px;padding:10px 5px;font-size:13px}.residentPanel #residentSummary{display:block;font-size:12px;margin-top:5px}#undoBtn,.tool[data-tool=erase]{margin-left:0}#taskHelp{margin-top:5px}
+button {
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: transparent;
+  padding: 7px 12px;
+  cursor: pointer;
+  transition: background 0.14s, border-color 0.14s;
+}
+button:hover { background: rgba(76, 106, 70, 0.06); }
+button:focus-visible, select:focus-visible, input:focus-visible {
+  outline: 2px solid var(--ochre);
+  outline-offset: 2px;
+}
+button:disabled { opacity: 0.4; cursor: not-allowed; }
 
-#gardenerGuide>div{display:flex;flex-direction:column;min-height:0;max-height:calc(55vh - 44px)}#guideBody{overflow:auto;min-height:0}#gardenerGuide #guideOK{flex-shrink:0;align-self:flex-start}
+.primary { background: var(--green); border-color: var(--green); color: #faf7e9; }
+.primary:hover { background: #3f5a3a; }
+.textBtn { border: 0; background: none; padding: 0; font-size: 11.5px; color: var(--ink-2); }
+.textBtn:hover { background: none; text-decoration: underline; text-underline-offset: 3px; }
+.danger { color: var(--red); border-color: #dcc3b8; }
+.muted { font-size: 11.5px; color: var(--muted); line-height: 1.8; }
 
-.residentPanel #residentsBtn{margin:0;border:0;box-shadow:none;background:transparent;font-size:17px}.residentPanel #residentSummary{font-size:14px;margin-top:8px}#newSave{margin-bottom:18px}#toolbar{justify-content:safe center}@media(max-width:900px){.left{grid-template-columns:minmax(0,1fr) 100px}.residentPanel{grid-column:1/-1;padding:5px 10px}.residentPanel #residentsBtn{display:flex;justify-content:center;align-items:center;gap:12px;padding:5px;font-size:13px}.residentPanel #residentSummary{display:inline;margin:0;font-size:12px}}
+/* ---------------- 骨架 ---------------- */
 
-/* Unified game typography and illustrated title screen. */
-:root{--ink:#304635;--muted:#53634f}body,button,input,select{font-family:'Microsoft YaHei','PingFang SC','Noto Sans CJK SC',system-ui,sans-serif;font-weight:600;text-shadow:none}p,.muted,#cellFacts,.toolCaption span,.controls small,.chapterCard small,.chapterCard p,.chapterCard span,.logItem small{color:var(--muted);font-size:14px}h1,h2,h3,b,strong{font-weight:700}button,nav button,.speed button,.dialogHead button,#focusBtn,.textBtn,.goalHeader,.resource,.toolCost,#toolbar small,.saveSlot>span,.achievement p,.achievement small{font-size:14px;font-weight:600}#toolbar small,.toolCost{color:#53634f}.tool.unaffordable{opacity:1;background:#e9e5da!important}.tool.unaffordable .toolCost{color:#805b36}button:disabled{opacity:1;color:#68705f;background:#e5e4d8;border-color:#c6c9b8;cursor:not-allowed}.chapterNumber{opacity:1;color:#53634f}.achievement{color:#53634f}.mission h1{font-size:22px;line-height:1.4}.goalHeader{line-height:1.5}.panel{border-radius:12px}.menuGrid button{padding:18px}#welcome{background:#eeedda;padding:0;overflow:hidden}#coverModels{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}.coverTitle{position:relative;z-index:1;display:flex;flex-direction:column;align-items:center;text-align:center;padding:18px}#welcome .coverTitle h1{font-size:clamp(36px,5vw,66px);letter-spacing:.12em;text-indent:.12em;margin:0;color:#304635;line-height:1.3}#welcome .coverTitle p{font-size:clamp(18px,2.3vw,26px);letter-spacing:.16em;text-indent:.16em;margin:14px 0 30px;color:#53634f;font-weight:600}#welcome #enterGarden{font-size:19px;min-width:176px;padding:13px 28px;border-radius:10px;box-shadow:0 4px 0 #3f5734}@media(max-width:900px){.goalHeader,.speed button,.toolCost,#toolbar small,.residentPanel #residentSummary{font-size:12px}.mission h1{font-size:18px}#welcome .coverTitle p{margin:10px 0 22px}.left{grid-template-columns:minmax(0,1fr) 115px}}
+#game {
+  height: 100vh;
+  height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
 
-/* Round, readable lettering; the two friends guide without changing saved progress. */
-body,button,input,select{font-family:'YouYuan','幼圆','Yuanti SC','Microsoft YaHei',system-ui,sans-serif;font-weight:600}#welcome{background:#d8e6dc}.coverTitle{padding:26px 34px;border-radius:38%;background:#f9f5e6e8;box-shadow:0 0 55px 28px #f9f5e6b0}#welcome .coverTitle h1{font-weight:700}#chapters>.intro:empty{display:none}#chapterGrid{gap:22px 18px;margin-top:24px}.chapterCard{width:100%;min-height:160px;padding:20px}.chapterCard h3{margin:14px 0 24px;line-height:1.4}.chapterWrap .replay{margin-top:9px}.chapterRecord{display:none}#gardenerGuide{width:min(630px,calc(100vw - 28px));display:grid;grid-template-columns:170px minmax(0,1fr);gap:16px;align-items:center;padding:20px}#gardenerGuide[hidden]{display:none}.guideFriends{align-self:center;text-align:center}.guideFriends img{display:block;width:100%;height:auto}.guideFriends span{display:block;font-size:13px;font-weight:700;color:#53634f;margin-top:8px}.guideWords{min-width:0}#gardenerGuide b{font-size:21px}#gardenerGuide p{font-size:16px;line-height:1.7}#gardenerGuide #guideOK{font-size:15px}@media(max-width:650px){#gardenerGuide{grid-template-columns:90px minmax(0,1fr);gap:10px;padding:14px;top:19%;max-height:65vh}.guideFriends span{font-size:12px;line-height:1.6}#gardenerGuide p{font-size:14px}#gardenerGuide b{font-size:18px}.coverTitle{padding:20px 12px}#welcome .coverTitle h1{font-size:34px}#chapterGrid{gap:14px}.chapterCard{padding:14px;min-height:140px}}
+header {
+  flex: 0 0 66px;
+  height: 66px;
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  padding: 0 30px;
+  border-bottom: 1px solid var(--line);
+}
 
-/* One rounded font throughout the toolbar, including costs and undo. */
-#toolbar button,#toolbar .toolName,#toolbar .toolCost,#toolbar small,#toolbar #undoBtn,#toolbar .toolCost *{font-family:'YouYuan','幼圆','Yuanti SC','Microsoft YaHei',sans-serif!important;font-weight:600!important;font-style:normal!important}#toolbar .toolCost,#toolbar small{font-size:14px!important;line-height:1.5}#coverModels{opacity:.78}.coverTitle{background:#fff9e9;box-shadow:0 9px 0 #c4cdb6,0 18px 46px #354b3920;border:3px solid #fffef5;border-radius:32px;padding:42px 56px;min-width:380px}#welcome .coverTitle h1{font-family:'YouYuan','幼圆','Yuanti SC',sans-serif;font-size:clamp(44px,5.4vw,76px);font-weight:700;letter-spacing:.1em;color:#405b3b}#welcome .coverTitle p{font-family:inherit}#welcome .coverTitle #enterGarden{margin-top:6px}.guideFriends img{width:100%;filter:drop-shadow(0 6px 0 #a1af7826)}@media(max-width:650px){.coverTitle{min-width:0;width:min(310px,82vw);padding:32px 16px;border-radius:26px}#welcome .coverTitle h1{font-size:40px}#toolbar .toolCost,#toolbar small{font-size:12px!important}}
+.brand { display: flex; align-items: center; gap: 11px; min-width: 0; }
+.brandmark {
+  width: 26px; height: 26px;
+  display: block;
+  font-size: 0;
+  background: none;
+  border-radius: 0;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%234c6a46' stroke-width='1.5' stroke-linecap='round'%3E%3Cpath d='M12 21V10.5'/%3E%3Cpath d='M12 12c0-4.2 2.6-6.8 6.8-7.3C18.3 8.9 15.6 11.5 12 12z'/%3E%3Cpath d='M12 15.5c0-3.1-2.1-5.2-5.2-5.7.4 3.1 2.3 5.2 5.2 5.7z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-size: contain;
+}
+.brand b {
+  font-size: 18px; letter-spacing: 3px; font-weight: 600;
+  display: block; line-height: 1.1;
+}
+.brand small { display: none; }
 
-/* Solid reading surfaces and consistent dark labels. */
-:root{--ink:#293e2e;--muted:#354b38}.right .inspector,#gardenerGuide{background:#fff9e9}.inspector #cellTitle,.inspector #cellDesc,.inspector #cellFacts{color:#293e2e;opacity:1;-webkit-text-stroke:.18px currentColor}.inspector #cellDesc{font-size:15px;line-height:1.75}p,.muted,.controls small,.chapterCard small,.chapterCard p,.chapterCard span,.achievement,.achievement p,.achievement small,.goalHeader,.goalHeader b,.goal.done .goalHeader,.options,.logItem small,.saveSlot>span,#residentSummary,.guideFriends span,#toolbar .toolCost,#toolbar small,.viewTop span{color:#354b38}#toolbar [data-tool=erase] .toolCost{display:none}#toolbar [data-tool=erase]{align-self:stretch}
+nav { display: flex; gap: 22px; margin-left: auto; }
+nav button, #modeBar button {
+  border: 0; background: none; padding: 4px 0;
+  font-size: 12.5px; color: var(--ink-2); letter-spacing: 0.5px;
+  border-bottom: 1px solid transparent;
+}
+nav button:hover, #modeBar button:hover {
+  background: none;
+  border-bottom-color: var(--ochre);
+}
+#saveStatus { display: none; }
+#modeBar { margin-left: 26px; display: flex; gap: 18px; }
+#modeBar button { font-size: 12.5px; }
 
-/* Font license: assets/fonts/OFL.txt; bundled unmodified LXGW WenKai Medium v1.530. */
-@font-face{font-family:'Garden WenKai';src:url('../../assets/fonts/LXGWWenKai-Medium.ttf') format('truetype');font-weight:400 900;font-style:normal;font-display:swap}
-body,button,input,select,textarea,h1,h2,h3,p,span,b,strong,small,label,output,#toolbar button,#toolbar .toolName,#toolbar .toolCost,#toolbar small,#toolbar #undoBtn,#toolbar .toolCost *,#welcome .coverTitle h1,#welcome .coverTitle p{font-family:'Garden WenKai',sans-serif!important;font-synthesis:none!important}#game,#game p,#game small,#game label{color:#293e2e}.inspector #cellTitle,.inspector #cellDesc,.inspector #cellFacts{-webkit-text-stroke:0;color:#293e2e}.fertilityFact{margin-top:8px;font-size:13px;line-height:1.7;color:#354b38}
+.workspace {
+  flex: 1;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: 288px minmax(0, 1fr);
+  gap: 23px;
+  padding: 24px 28px 0;
+}
 
-/* 存档面板：导入与「保存花园照片 / 更新自动存档」同款大小，用暖色区分 */
-.buttonLike{display:inline-flex;align-items:center;justify-content:center;text-align:center}
-.accentBtn{background:#f6ead6;border-color:#dcc39a;color:#8a5c2c;font-weight:bold}
-.accentBtn:hover{background:#f0dfc3}
+.side { min-height: 0; }
+.left {
+  display: flex;
+  flex-direction: column;
+  overflow: auto;
+  padding-top: 6px;
+  scrollbar-width: thin;
+}
+.panel { background: none; border: 0; border-radius: 0; box-shadow: none; padding: 0; }
 
-/* 观察模式的相机倾角：一个贴着「平移 / 旋转 / 缩放」的小滑杆 */
-.cameraControls .tiltControl{display:flex;align-items:center;gap:6px;padding:6px 11px;border:1px solid var(--line);border-radius:18px;background:#fafbf3ca;font-size:10px;color:#6f7f62;white-space:nowrap}
-.cameraControls .tiltControl input[type=range]{width:84px;margin:0;accent-color:var(--green);cursor:pointer}
-@media(max-width:900px){.cameraControls .tiltControl{padding:5px 8px}.cameraControls .tiltControl input[type=range]{width:64px}}
+/* ---------------- 左：这一页 ---------------- */
 
-/* ===== 岛屿窗框：深棕木色双环，和淡绿背景分开 ===== */
-#stage{border:7px solid transparent;border-radius:27px;
-  background:radial-gradient(ellipse at 50% 28%,#f7f8ec 0,#e8eedd 55%,#dae6d4 100%) padding-box,
-             linear-gradient(155deg,#cb9d6e 0%,#a97b50 45%,#8a5e38 78%,#a97b50 100%) border-box;
-  box-shadow:0 14px 30px #3b2a1a24}
-#stage::after{content:'';position:absolute;inset:0;border-radius:19px;pointer-events:none;
-  box-shadow:inset 0 0 0 2px #fffdf2b8, inset 0 2px 10px #4b341f22}
+.eyebrow {
+  font-size: 10px; letter-spacing: 3px; color: var(--muted);
+  margin-bottom: 9px;
+}
+.mission h1 {
+  font-size: 31px; font-weight: 600; letter-spacing: 4px;
+  line-height: 1.15; margin: 0 0 40px;
+  position: relative;
+}
+.mission h1::after {
+  content: "";
+  position: absolute; left: 1px; top: calc(100% + 11px);
+  width: 82px; height: 7px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='82' height='7'%3E%3Cpath d='M1 5C18 1.5 36 6 54 3.4 66 1.8 74 4.6 81 3' stroke='%23b07a3f' stroke-width='1.4' fill='none' stroke-linecap='round' opacity='.55'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+}
 
-/* ===== 观察模式：底栏保留，相机控件放进来；底栏高度与创造模式一致，切模式时舞台不再被拉大 ===== */
-#game[data-mode=observe] footer{display:flex;align-items:center;justify-content:center;min-height:var(--footerH,118px)}
-#game[data-mode=observe] .toolCaption,#game[data-mode=observe] #toolbar{display:none}
-.cameraControls{position:static;transform:none;display:flex;flex-wrap:wrap;justify-content:center;gap:6px}
-#game[data-mode=observe] .cameraControls{gap:9px}
-.observeHint{display:none}
-#game[data-mode=observe] footer{flex-direction:column;gap:7px}
-#game[data-mode=observe] .observeHint{display:block;font-size:11px;color:#8b9884;letter-spacing:.3px;text-align:center}
+#levelTip {
+  font-size: 11.5px; line-height: 1.85; color: var(--muted);
+  margin: 0 0 24px; max-width: 250px;
+}
+
+#goals { display: flex; flex-direction: column; gap: 17px; }
+.goal { margin: 0; }
+.goalHeader {
+  display: flex; align-items: baseline; justify-content: space-between;
+  gap: 10px; font-size: 12.5px; line-height: 1.5; color: var(--ink); margin-bottom: 8px;
+}
+.goalHeader b {
+  font-size: 10.5px; font-weight: 400; color: var(--muted);
+  font-variant-numeric: tabular-nums; flex-shrink: 0;
+}
+.goal.done .goalHeader span { color: var(--muted); }
+.goal.done .goalHeader b { color: var(--green-l); }
+
+.dots { display: flex; flex-wrap: wrap; gap: 5px; }
+.dot {
+  width: 7px; height: 7px; border-radius: 50%;
+  border: 1px solid #aeb69b; display: block;
+}
+.dot.on { background: var(--green-l); border-color: var(--green-l); }
+
+.meter { height: 3px; background: var(--line-soft); border-radius: 2px; overflow: hidden; }
+.meter i { display: block; height: 100%; background: var(--green-l); }
+
+#nextChapter {
+  margin-top: 26px; align-self: flex-start;
+  font-size: 12px; padding: 8px 16px;
+}
+.unhurried {
+  margin-top: 26px; font-size: 11px; color: var(--muted);
+  letter-spacing: 0.4px; border-left: 1px solid var(--line); padding-left: 10px;
+  line-height: 1.7; max-width: 210px;
+}
+
+/* 能量 / 生态 */
+.controls { margin-top: 34px; }
+.resource {
+  display: flex; align-items: baseline; justify-content: space-between;
+  font-size: 11px; color: var(--muted); letter-spacing: 1px;
+}
+.resource b {
+  font-size: 27px; font-weight: 400; color: var(--ink);
+  font-variant-numeric: tabular-nums; letter-spacing: 0;
+}
+.controls > .meter {
+  height: 13px; border-radius: 0; margin: 9px 0 18px;
+  background-image: repeating-linear-gradient(90deg, #ddd5bb 0 5px, transparent 5px 9px);
+  background-color: transparent;
+}
+.controls > .meter i {
+  background-image: repeating-linear-gradient(90deg, var(--green) 0 5px, transparent 5px 9px);
+  background-color: transparent;
+}
+.combo { font-size: 10.5px; color: var(--ochre); margin-top: 8px; min-height: 0; }
+.combo:empty { display: none; }
+.speed { display: flex; gap: 15px; margin-top: 20px; }
+.speed button {
+  border: 0; background: none; padding: 0 0 3px;
+  font-size: 11.5px; color: var(--muted); border-bottom: 1.5px solid transparent;
+}
+.speed button:hover { background: none; color: var(--ink-2); }
+.speed button.active { color: var(--ink); border-bottom-color: var(--ochre); }
+#timeLabel { display: none; }
+
+#taskHelp { margin-top: 18px; }
+
+/* ---------------- 中：那张照片 ---------------- */
+
+/* 一张贴上去的相纸：微微歪着，左上角一条胶带，下缘留白写字。 */
+#stage {
+  position: relative;
+  min-height: 0;
+  padding: 12px 12px 46px;
+  background: #fffdf5;
+  background-image: repeating-linear-gradient(0deg, rgba(120, 100, 60, 0.012) 0 1px, transparent 1px 4px);
+  border: 1px solid #e6dcc2;
+  border-radius: 1px;
+  transform: rotate(var(--tilt));
+  transform-origin: 50% 50%;
+  box-shadow:
+    0 1px 2px rgba(62, 50, 24, 0.13),
+    0 4px 10px rgba(62, 50, 24, 0.07),
+    0 28px 44px -22px rgba(62, 50, 24, 0.46);
+}
+#stage::before {
+  content: "";
+  position: absolute;
+  left: -13px; top: -7px;
+  width: 74px; height: 21px;
+  background:
+    repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.10) 0 2px, transparent 2px 7px),
+    rgba(224, 207, 160, 0.9);
+  box-shadow: 0 1px 2px rgba(80, 65, 30, 0.12);
+  transform: rotate(-5deg);
+  z-index: 6;
+  pointer-events: none;
+}
+#stage::after {
+  content: "种下去，等它长";
+  position: absolute;
+  left: 25px; bottom: 13px;
+  font-size: 11.5px;
+  letter-spacing: 2.2px;
+  color: #8d8467;
+  z-index: 4;
+  pointer-events: none;
+}
+#garden {
+  position: absolute;
+  left: 12px; top: 12px;
+  width: calc(100% - 24px);
+  height: calc(100% - 58px);
+  display: block;
+}
+#worldLabels { position: absolute; inset: 12px 12px 46px 12px; pointer-events: none; z-index: 2; }
+.world-label {
+  position: absolute; top: 0; left: 0;
+  font-size: 9.5px; padding: 1px 5px; line-height: 1.3;
+  white-space: nowrap; pointer-events: none;
+  background: rgba(252, 248, 236, 0.9);
+  border: 1px solid #e0d6b8;
+  color: var(--ink-2);
+  border-radius: 2px;
+}
+
+.viewTop {
+  position: absolute; left: 22px; right: 22px; top: 22px;
+  transform: rotate(calc(-1 * var(--tilt)));
+  display: flex; align-items: center; gap: 8px; z-index: 4;
+  pointer-events: none; flex-wrap: wrap;
+}
+.viewTop > * { pointer-events: auto; }
+.viewTop span, .viewTop button {
+  font-size: 11px; padding: 4px 9px;
+  background: rgba(252, 248, 236, 0.88);
+  border: 1px solid #e4dcc4;
+  border-radius: 2px; color: var(--ink-2);
+}
+.viewTop button:hover { background: #fbf6e6; }
+#viewMode { margin-right: auto; border-color: transparent; background: transparent; }
+#viewMode:empty { display: none; }
+#pausedBadge { background: var(--ochre); border-color: var(--ochre); color: #fdf8ea; }
+#stage.closeup #viewMode { background: rgba(252, 248, 236, 0.88); border-color: #e0d5b6; }
+
+#toast {
+  position: absolute; left: 50%; bottom: 64px; transform: translateX(-50%) rotate(calc(-1 * var(--tilt)));
+  z-index: 5; pointer-events: none;
+  padding: 7px 14px; border-radius: 2px;
+  background: rgba(46, 58, 48, 0.9); color: #f4efdd;
+  font-size: 11.5px; letter-spacing: 0.4px;
+  opacity: 0; transition: opacity 0.2s;
+  max-width: 76%; text-align: center;
+}
+#toast.show { opacity: 1; }
+
+.sceneHint {
+  position: absolute; right: 24px; bottom: 15px; z-index: 3;
+  font-size: 10px; color: rgba(85, 99, 76, 0.45); letter-spacing: 0.4px;
+  pointer-events: none; text-align: right;
+}
+.sceneHint::after { content: ""; }
+
+/* ---------------- 右：贴着照片的观察卡 ---------------- */
+
+.right {
+  position: absolute;
+  right: 14px; bottom: 62px;
+  width: 200px;
+  transform: rotate(calc(-1 * var(--tilt)));
+  z-index: 6;
+  display: flex; flex-direction: column; gap: 10px;
+  pointer-events: none;
+}
+.right > * { pointer-events: auto; }
+
+.inspector {
+  background: var(--card);
+  border: 1px solid #e0d6b8;
+  border-radius: 2px;
+  padding: 13px 14px 14px;
+  box-shadow: 0 10px 20px -16px rgba(60, 48, 20, 0.6);
+  max-height: 60vh; overflow: auto;
+}
+.inspector .eyebrow { font-size: 9px; letter-spacing: 2px; margin-bottom: 8px; }
+.inspectHead { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; }
+.inspector h2, #cellTitle {
+  font-size: 15px; font-weight: 600; letter-spacing: 1.5px;
+  margin: 0 0 5px; line-height: 1.3;
+}
+#inspectClose {
+  border: 0; background: none; padding: 0; font-size: 10px;
+  color: var(--muted); flex-shrink: 0;
+}
+#cellDesc { font-size: 11px; line-height: 1.75; color: var(--muted); margin: 0 0 9px; }
+#focusBtn, #petBtn {
+  font-size: 11px; padding: 0; border: 0; background: none;
+  color: var(--green); border-bottom: 1px solid #a8bb98;
+  margin: 0 12px 9px 0; border-radius: 0;
+}
+#focusBtn:hover, #petBtn:hover { background: none; }
+#cellFacts { display: flex; flex-wrap: wrap; gap: 4px 10px; font-size: 10.5px; color: var(--ink-2); }
+.fact { font-size: 10.5px; }
+.lifeRow { width: 100%; display: flex; align-items: center; gap: 8px; font-size: 10px; color: var(--muted); }
+.lifeRow .meter { flex: 1; height: 2px; }
+.fertilityFact { font-size: 10.5px; line-height: 1.7; color: var(--muted); margin-top: 7px; }
+
+.eventCard {
+  background: #fbf5e4;
+  border: 1px solid #e5d9b6;
+  border-radius: 2px;
+  padding: 12px 14px;
+  box-shadow: 0 10px 18px -16px rgba(60, 48, 20, 0.55);
+}
+.eventCard h3 { font-size: 13px; margin: 0 0 4px; font-weight: 600; }
+.eventCard p { font-size: 10.5px; line-height: 1.7; color: var(--muted); margin: 0 0 7px; }
+.eventCard button {
+  font-size: 10.5px; padding: 0; border: 0; background: none;
+  color: var(--green); border-bottom: 1px solid #a8bb98; margin-right: 10px; border-radius: 0;
+}
+.options { display: none; }
+
+.residentPanel {
+  margin-top: auto;
+  padding-top: 15px;
+  border-top: 1px solid var(--line-soft);
+}
+.residentPanel #residentsBtn {
+  border: 0; background: none; padding: 0;
+  font-size: 11.5px; color: var(--ink-2); letter-spacing: 0.5px;
+  display: flex; align-items: baseline; gap: 8px;
+}
+.residentPanel #residentsBtn:hover { background: none; }
+.residentPanel #residentSummary { font-size: 10.5px; color: var(--muted); display: inline; }
+
+.right.compact .inspector p,
+.right.compact #cellFacts,
+.right.compact #focusBtn { display: none !important; }
+
+/* ---------------- 底：工具带 ---------------- */
+
+footer {
+  flex: 0 0 100px;
+  display: flex;
+  align-items: center;
+  gap: 22px;
+  padding: 0 30px;
+  border-top: 1px solid var(--line);
+  margin-top: 20px;
+}
+.toolCaption { width: 246px; flex-shrink: 0; }
+.toolCaption b {
+  display: block; font-size: 12.5px; font-weight: 600;
+  letter-spacing: 1px; margin-bottom: 4px;
+}
+.toolCaption span {
+  font-size: 10.5px; line-height: 1.6; color: var(--muted);
+  display: block; max-width: 240px;
+}
+
+#toolbar { display: flex; align-items: flex-end; gap: 21px; margin: 0 auto; }
+#toolbar .tool {
+  width: 56px; height: 58px;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 4px; padding: 0;
+  border: 0; background: none; border-radius: 2px;
+  position: relative; color: var(--ink-2);
+}
+#toolbar .tool:hover { background: rgba(76, 106, 70, 0.06); }
+#toolbar .tool.active { color: var(--green); }
+#toolbar .tool.active::after {
+  content: ""; position: absolute; bottom: -11px; left: 50%;
+  width: 20px; height: 2px; margin-left: -10px;
+  background: var(--ochre);
+}
+.toolIcon {
+  font-size: 0; width: 22px; height: 22px; line-height: 0;
+  background-color: currentColor;
+  -webkit-mask-repeat: no-repeat; -webkit-mask-position: center; -webkit-mask-size: contain;
+  mask-repeat: no-repeat; mask-position: center; mask-size: contain;
+}
+.toolName { font-size: 11px; letter-spacing: 0.5px; color: inherit; }
+.toolCost {
+  font-size: 9px; color: var(--muted); letter-spacing: 0.2px;
+  white-space: nowrap; margin-top: -1px;
+}
+.tool.active .toolCost { color: var(--ink-2); }
+.tool.unaffordable { opacity: 1; }
+.tool.unaffordable .toolCost { color: var(--ochre); }
+.tool:disabled { opacity: 0.45; }
+#toolbar .tool.guide-lit { outline: 2px solid var(--ochre); outline-offset: 3px; }
+
+/* 常见工具的线性图标 */
+[data-tool='seed'] .toolIcon {
+  -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.6' stroke-linecap='round'%3E%3Cellipse cx='12' cy='14' rx='5' ry='6.6' transform='rotate(-16 12 14)'/%3E%3Cpath d='M12 7.6C12 5.4 13.2 3.8 15.4 3'/%3E%3C/svg%3E");
+  mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.6' stroke-linecap='round'%3E%3Cellipse cx='12' cy='14' rx='5' ry='6.6' transform='rotate(-16 12 14)'/%3E%3Cpath d='M12 7.6C12 5.4 13.2 3.8 15.4 3'/%3E%3C/svg%3E");
+}
+[data-tool='water'] .toolIcon {
+  -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.6' stroke-linecap='round'%3E%3Cpath d='M3 9.5c3-2.2 6 2.2 9 0s6-2.2 9 0'/%3E%3Cpath d='M3 15c3-2.2 6 2.2 9 0s6-2.2 9 0'/%3E%3C/svg%3E");
+  mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.6' stroke-linecap='round'%3E%3Cpath d='M3 9.5c3-2.2 6 2.2 9 0s6-2.2 9 0'/%3E%3Cpath d='M3 15c3-2.2 6 2.2 9 0s6-2.2 9 0'/%3E%3C/svg%3E");
+}
+[data-tool='bug'] .toolIcon {
+  -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.6' stroke-linecap='round'%3E%3Cpath d='M3 16.5c3 0 3.2-6.4 6.4-6.4s3.2 6.4 6.4 6.4 3.2-6.4 6.2-6.4'/%3E%3Ccircle cx='21' cy='10' r='1' fill='black'/%3E%3C/svg%3E");
+  mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.6' stroke-linecap='round'%3E%3Cpath d='M3 16.5c3 0 3.2-6.4 6.4-6.4s3.2 6.4 6.4 6.4 3.2-6.4 6.2-6.4'/%3E%3Ccircle cx='21' cy='10' r='1' fill='black'/%3E%3C/svg%3E");
+}
+[data-tool='erase'] .toolIcon {
+  -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.6' stroke-linecap='round'%3E%3Cpath d='M6.5 6.5l11 11M17.5 6.5l-11 11'/%3E%3C/svg%3E");
+  mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.6' stroke-linecap='round'%3E%3Cpath d='M6.5 6.5l11 11M17.5 6.5l-11 11'/%3E%3C/svg%3E");
+}
+[data-tool='bird'] .toolIcon {
+  -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.6' stroke-linecap='round'%3E%3Cpath d='M3 14c3.5 0 5-2 6.5-5S13 4 16 4c2.6 0 4 1.6 4 4 0 4-3 8-7.5 8H3z'/%3E%3Cpath d='M16 8h.01'/%3E%3C/svg%3E");
+  mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.6' stroke-linecap='round'%3E%3Cpath d='M3 14c3.5 0 5-2 6.5-5S13 4 16 4c2.6 0 4 1.6 4 4 0 4-3 8-7.5 8H3z'/%3E%3Cpath d='M16 8h.01'/%3E%3C/svg%3E");
+}
+#undoBtn .toolIcon {
+  -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.6' stroke-linecap='round'%3E%3Cpath d='M8.5 6L3.5 11l5 5'/%3E%3Cpath d='M3.5 11h10.5a5 5 0 0 1 0 10h-3'/%3E%3C/svg%3E");
+  mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.6' stroke-linecap='round'%3E%3Cpath d='M8.5 6L3.5 11l5 5'/%3E%3Cpath d='M3.5 11h10.5a5 5 0 0 1 0 10h-3'/%3E%3C/svg%3E");
+}
+
+.cameraControls { display: none; }
+.observeHint { display: none; }
+
+/* ---------------- 对话框 ---------------- */
+
+dialog {
+  border: 1px solid #ddd3b7;
+  border-radius: 3px;
+  background: var(--card);
+  color: var(--ink);
+  padding: 26px 30px 30px;
+  max-width: 660px;
+  width: calc(100vw - 48px);
+  max-height: 88dvh;
+  overflow: auto;
+  box-shadow: 0 26px 50px -30px rgba(50, 40, 18, 0.55);
+}
+dialog::backdrop { background: rgba(46, 52, 40, 0.32); }
+.dialogHead {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 14px; margin-bottom: 14px;
+}
+.dialogHead h2 { font-size: 15px; margin: 0; font-weight: 600; letter-spacing: 1px; }
+.dialogHead .eyebrow { margin: 0; }
+.dialogHead button { font-size: 11.5px; padding: 5px 11px; }
+dialog h2 { font-size: 21px; font-weight: 600; letter-spacing: 2px; margin: 0 0 6px; }
+dialog .intro { font-size: 11.5px; color: var(--muted); margin: 0 0 20px; line-height: 1.7; }
+
+.chapterWrap { display: flex; flex-direction: column; gap: 6px; }
+.chapterWrap .chapterCard { width: 100%; flex: 1; }
+.replay {
+  align-self: flex-start; font-size: 10.5px; padding: 3px 9px;
+  border: 1px solid var(--line); border-radius: 2px;
+  color: var(--ink-2); background: none;
+}
+.chapterCard {
+  background: #f9f4e4;
+  border: 1px solid #e4dabb;
+  border-radius: 2px;
+  padding: 18px;
+  text-align: left;
+  min-height: 136px;
+  position: relative;
+}
+.chapterCard:hover { background: #fbf7ea; }
+.chapterCard.current { outline: 1.5px solid var(--green-l); outline-offset: -1.5px; }
+.chapterNumber { font-size: 24px; color: #c9bf9e; letter-spacing: 1px; font-weight: 400; }
+.chapterCard h3 { font-size: 16px; margin: 10px 0 18px; font-weight: 600; letter-spacing: 1px; }
+.chapterState { font-size: 11px; color: var(--muted); }
+.chapterRecord { font-size: 10.5px; color: var(--muted); padding: 3px; }
+#chapterGrid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px 12px; align-items: start; }
+#achievementGrid { display: grid; grid-template-columns: 1fr 1fr; gap: 9px; }
+.chapterCard.locked { opacity: 0.72; }
+.menuGrid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; padding: 6px 0 0; }
+.menuGrid button { padding: 15px; font-size: 13.5px; text-align: left; }
+
+.achievement { padding: 13px; border: 1px solid var(--line-soft); border-radius: 2px; font-size: 11.5px; }
+.achievement h3 { font-size: 12.5px; margin: 0 0 4px; font-weight: 600; }
+.achievement.locked { opacity: 0.55; }
+.achievement.unlocked { border-color: #bccfab; background: #f5f7ea; }
+
+.saveActions { display: flex; gap: 9px; flex-wrap: wrap; margin: 18px 0; }
+.saveSlots { display: grid; gap: 9px; margin-top: 18px; }
+.saveSlot {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 9px;
+  border: 1px solid var(--line-soft); border-radius: 2px; padding: 11px 13px;
+}
+.saveSlot > b { font-size: 12px; font-weight: 600; min-width: 76px; }
+.saveSlot > span { flex: 1; font-size: 11px; color: var(--muted); }
+.saveSlot > button { font-size: 11px; padding: 5px 11px; }
+.setting {
+  display: flex; gap: 18px; align-items: center; justify-content: space-between;
+  padding: 11px 0; font-size: 12px; border-bottom: 1px solid var(--line-soft);
+}
+.logItem { padding: 13px 0; border-bottom: 1px solid var(--line-soft); font-size: 11.5px; }
+.logItem h3 { margin: 0 0 3px; font-size: 12.5px; font-weight: 600; }
+
+.residentRow {
+  display: flex; align-items: center; gap: 12px; width: 100%;
+  margin: 6px 0; padding: 7px 2px; text-align: left; font-size: 12.5px;
+  border: 0; border-bottom: 1px solid var(--line-soft); border-radius: 0; background: none;
+}
+.residentRow b { margin-left: auto; font-weight: 400; color: var(--muted); }
+.releaseAnimal { font-size: 11px; padding: 4px 9px; }
+
+#achievementToast {
+  position: fixed; left: 50%; top: 78px; transform: translateX(-50%);
+  z-index: 40; display: flex; align-items: center; gap: 10px;
+  max-width: 92vw; padding: 9px 14px;
+  background: #fbf6e5; border: 1px solid #ddd2b0; border-radius: 2px;
+  box-shadow: 0 14px 26px -20px rgba(50, 40, 18, 0.6);
+  font-size: 11.5px; visibility: hidden; pointer-events: auto;
+}
+#achievementToast.show { visibility: visible; }
+#achievementTitle { line-height: 1.6; }
+#achievementToast button { font-size: 11px; padding: 4px 9px; white-space: nowrap; }
+
+/* ---------------- 欢迎页 ---------------- */
+
+#welcome {
+  position: fixed; inset: 0; z-index: 30;
+  display: flex; align-items: center; justify-content: center;
+  overflow: hidden; padding: 0;
+  background: #dce7d9;
+}
+#welcome[hidden] { display: none; }
+#coverModels { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; opacity: 0.8; }
+.coverTitle {
+  position: relative; z-index: 1;
+  display: flex; flex-direction: column; align-items: center; text-align: center;
+  background: #fbf7e7;
+  border: 1px solid #e2d8b8;
+  padding: 46px 62px 42px;
+  box-shadow: 0 26px 54px -30px rgba(40, 52, 36, 0.55), 0 2px 8px rgba(40, 52, 36, 0.06);
+}
+#welcome .coverTitle h1 {
+  font-size: clamp(40px, 5vw, 62px);
+  letter-spacing: 0.16em; text-indent: 0.16em;
+  margin: 0; line-height: 1.25; font-weight: 600; color: var(--ink);
+}
+#welcome .coverTitle p {
+  font-size: clamp(13px, 1.5vw, 16px);
+  letter-spacing: 0.3em; text-indent: 0.3em;
+  margin: 14px 0 30px; color: var(--muted);
+}
+#enterGarden { font-size: 14.5px; padding: 12px 30px; letter-spacing: 4px; }
+.welcome-art, .overline, .welcome-copy, .welcome-rules { display: none; }
+
+/* ---------------- 园丁的纸条 ---------------- */
+
+#gardenerGuide {
+  position: fixed; left: 50%; top: 20%;
+  transform: translateX(-50%) rotate(-0.4deg);
+  z-index: 7; width: min(600px, calc(100vw - 32px));
+  display: grid; grid-template-columns: 132px minmax(0, 1fr);
+  gap: 16px; align-items: center;
+  padding: 18px 20px;
+  background: #fbf6e4;
+  border: 1px solid #e3d8b8;
+  box-shadow: 0 18px 34px -22px rgba(50, 40, 18, 0.6);
+  max-height: 62vh; overflow: auto;
+}
+#gardenerGuide[hidden] { display: none; }
+.guideFriends { text-align: center; }
+.guideFriends img { display: block; width: 100%; height: auto; }
+.guideFriends span { display: block; font-size: 10.5px; color: var(--muted); margin-top: 6px; }
+.guideWords { min-width: 0; }
+#gardenerGuide b { font-size: 17px; font-weight: 600; letter-spacing: 1px; }
+#gardenerGuide p { font-size: 12.5px; line-height: 1.85; color: var(--ink-2); margin: 8px 0 0; white-space: pre-line; }
+#guideOK {
+  margin-top: 12px; font-size: 11.5px; padding: 6px 14px;
+  border: 1px solid var(--line); border-radius: 2px; background: transparent;
+}
+#guideOK:hover { background: rgba(76, 106, 70, 0.07); }
+#guideArrow { position: fixed; inset: 0; width: 100vw; height: 100vh; z-index: 6; pointer-events: none; }
+#guideArrow[hidden] { display: none; }
+#guideTarget { stroke-dasharray: 4 5; }
+.guideGrid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px 20px; }
+.guideFlow { padding: 14px; background: #f3f0dd; border-radius: 2px; color: var(--ink-2); line-height: 1.8; font-size: 11.5px; }
+
+/* ---------------- 响应式 ---------------- */
+
+@media (max-width: 1080px) {
+  .workspace { grid-template-columns: 240px minmax(0, 1fr); gap: 16px; padding: 18px 18px 0; }
+  .mission h1 { font-size: 26px; }
+  .toolCaption { width: 190px; }
+  #toolbar { gap: 14px; }
+}
+
+@media (max-width: 820px) {
+  header { height: 56px; flex: 0 0 56px; padding: 0 16px; gap: 10px; }
+  .brand b { font-size: 15px; letter-spacing: 2px; }
+  nav { gap: 14px; }
+  nav button, #modeBar button { font-size: 11.5px; }
+  #modeBar { margin-left: 10px; gap: 10px; }
+  .workspace { display: flex; flex-direction: column; padding: 12px 12px 0; gap: 10px; }
+  .left { flex-direction: row; flex-wrap: wrap; align-items: flex-end; gap: 8px 14px; overflow: visible; padding: 0; }
+  .mission { flex: 1 1 100%; min-width: 0; }
+  .mission h1 { font-size: 19px; letter-spacing: 2px; margin: 0 0 5px; }
+  .mission h1::after { display: none; }
+  #levelTip, .unhurried, #taskHelp { display: none; }
+  #goals { flex-direction: row; gap: 14px; flex-wrap: wrap; }
+  .goal { flex: 1 1 120px; }
+  .goalHeader { font-size: 10.5px; margin-bottom: 5px; }
+  .controls { margin: 0; width: auto; flex: 1 1 100%; display: flex; align-items: center; gap: 11px; }
+  .resource { flex: 0 0 auto; gap: 5px; justify-content: flex-start; font-size: 10px; }
+  .resource b { font-size: 16px; }
+  .controls > .meter { flex: 1 1 40px; margin: 0; height: 9px; min-width: 48px; }
+  .speed { margin: 0; gap: 9px; flex: 0 0 auto; }
+  .speed button { font-size: 10.5px; }
+  .combo { display: none; }
+  .residentPanel { flex: 1 1 100%; margin: 0; padding-top: 8px; border-top: 1px solid var(--line-soft); }
+  #stage { flex: 1; min-height: 160px; }
+  footer { flex: 0 0 80px; padding: 0 12px; gap: 10px; margin-top: 10px; }
+  .toolCaption { display: none; }
+  #toolbar { gap: 8px; }
+  #toolbar .tool { width: 50px; height: 52px; }
+  .toolName { font-size: 10px; }
+  .toolCost { font-size: 8.5px; }
+  #stage::before { display: none; }
+  #stage::after { font-size: 10.5px; letter-spacing: 1.6px; left: 16px; }
+  .right { right: 10px; bottom: 46px; width: 166px; }
+  .inspector { padding: 10px 11px; }
+  .inspector h2, #cellTitle { font-size: 13px; }
+  #cellDesc { font-size: 10px; line-height: 1.6; }
+  .viewTop { left: 14px; right: 14px; top: 12px; }
+  .sceneHint { display: none; }
+  #gardenerGuide { grid-template-columns: 84px minmax(0, 1fr); padding: 14px; top: 16%; }
+  #gardenerGuide b { font-size: 15px; }
+  #gardenerGuide p { font-size: 11.5px; }
+  .coverTitle { padding: 36px 30px 32px; }
+  #chapterGrid { grid-template-columns: 1fr; }
+  dialog { padding: 18px 18px 22px; }
+}
+
+@media (max-width: 420px) {
+  .brandmark { display: none; }
+  .mission h1 { font-size: 17px; }
+  .controls { width: 78px; }
+  #toolbar .tool { width: 46px; }
+  .toolCost { display: none; }
+}
+
+.achievement { text-align: left; width: 100%; }
+button.achievement { border: 1px solid var(--line-soft); background: #f9f6e8; }
+button.achievement:hover { background: #fbf8ee; }

@@ -25,9 +25,39 @@
       sky: 'radial-gradient(ellipse at 50% 20%, #fff7e9 0%, #f8e8d2 52%, #e6d2b6 100%)',
     },
     // ↓ 以下三档尚未按观感调整，界面上暂不开放
-    afternoon: { sunColor: 0xfff4dc, sunIntensity: 1.15, sunPos: [-8, 34, 16], skyColor: 0xeaf6ff, groundColor: 0x6c6654, hemiIntensity: 0.8, exposure: 1.0, shadowSpan: 34, sky: 'radial-gradient(ellipse at 50% 26%, #f8fcff 0%, #eaf2ec 60%, #dae7d8 100%)' },
-    dusk: { sunColor: 0xff9d6b, sunIntensity: 1.0, sunPos: [28, 9, 18], skyColor: 0xffc9a8, groundColor: 0x5b4a44, hemiIntensity: 0.5, exposure: 1.05, shadowSpan: 48, sky: 'radial-gradient(ellipse at 50% 22%, #ffe2c2 0%, #f3c3a8 50%, #c99a9c 100%)' },
-    night: { sunColor: 0x9fb4d8, sunIntensity: 0.25, sunPos: [-22, 26, 20], skyColor: 0x3d4a66, groundColor: 0x2b2f38, hemiIntensity: 0.5, exposure: 0.95, shadowSpan: 34, sky: 'radial-gradient(ellipse at 50% 30%, #39465f 0%, #2a3448 60%, #1e2532 100%)' },
+    afternoon: {
+      sunColor: 0xfff4dc,
+      sunIntensity: 1.15,
+      sunPos: [-8, 34, 16],
+      skyColor: 0xeaf6ff,
+      groundColor: 0x6c6654,
+      hemiIntensity: 0.8,
+      exposure: 1.0,
+      shadowSpan: 34,
+      sky: 'radial-gradient(ellipse at 50% 26%, #f8fcff 0%, #eaf2ec 60%, #dae7d8 100%)',
+    },
+    dusk: {
+      sunColor: 0xff9d6b,
+      sunIntensity: 1.0,
+      sunPos: [28, 9, 18],
+      skyColor: 0xffc9a8,
+      groundColor: 0x5b4a44,
+      hemiIntensity: 0.5,
+      exposure: 1.05,
+      shadowSpan: 48,
+      sky: 'radial-gradient(ellipse at 50% 22%, #ffe2c2 0%, #f3c3a8 50%, #c99a9c 100%)',
+    },
+    night: {
+      sunColor: 0x9fb4d8,
+      sunIntensity: 0.25,
+      sunPos: [-22, 26, 20],
+      skyColor: 0x3d4a66,
+      groundColor: 0x2b2f38,
+      hemiIntensity: 0.5,
+      exposure: 0.95,
+      shadowSpan: 34,
+      sky: 'radial-gradient(ellipse at 50% 30%, #39465f 0%, #2a3448 60%, #1e2532 100%)',
+    },
   };
   // 把一个十六进制颜色按系数调暗（用于贴图里的环境光遮蔽）
   function shadeHex(hex, k) {
@@ -57,6 +87,8 @@
       this.targetLook = new THREE.Vector3();
       this.lastDraw = 0;
       this.selected = -1;
+      this.lastClick = null;
+      this.onDoublePick = null;
       this.showLabels = true;
       this.renderer = new THREE.WebGLRenderer({
         canvas,
@@ -264,14 +296,14 @@
         far: 200,
       });
       this.sun.shadow.camera.updateProjectionMatrix();
-      const stage = document.getElementById('stage');
-      if (stage) stage.style.background = p.sky;
+      // 合并说明：新界面把 #stage 当相纸用（纸纹 + 留白 + 胶带），
+      // 天空底色不能盖掉整张纸，只能铺在照片内容区（画布）里。
+      if (this.canvas) this.canvas.style.background = p.sky;
       this.dirty = true;
     }
     resize() {
-      let r = this.canvas.getBoundingClientRect(),
-        w = Math.max(1, r.width),
-        h = Math.max(1, r.height);
+      let w = Math.max(1, this.canvas.clientWidth),
+        h = Math.max(1, this.canvas.clientHeight);
       this.renderer.setPixelRatio(
         Math.min(devicePixelRatio || 1, this.quality === 'high' ? 2 : 1.5),
       );
@@ -291,7 +323,7 @@
       this.look.lerp(this.targetLook, k);
       let a = this.width / this.height,
         extent =
-          Math.max((this.world.w * 0.65) / Math.max(0.65, a), this.world.h * 0.73, 8) * this.zoom;
+          Math.max((this.world.w * 0.65) / Math.max(0.65, a), this.world.h * 0.82, 8) * this.zoom;
       // 相机绕岛心转圈：水平距离与高度都由倾角（仰角）决定，默认 38.7° 与之前的构图完全一致。
       // 倾角越大越俯视，越小越接近平视；半径不变，所以画面大小不受影响。
       const R = 57.6,
@@ -350,13 +382,36 @@
       this.targetLook.set(0, 0, 0);
       this.targetZoom = 1;
     }
+    // 相纸是斜的，画布跟着歪。屏幕坐标要先逆着这层旋转回到画布本地坐标系，
+    // 否则鼠标越靠边，落点偏得越多（0.6° 在 800px 宽上约 4px，正好错开一格）。
+    screenToCanvas(cx, cy) {
+      const el = this.canvas,
+        w = Math.max(1, el.clientWidth),
+        h = Math.max(1, el.clientHeight),
+        stage = el.closest('#stage');
+      const tf = stage ? getComputedStyle(stage).transform : '';
+      if (!stage || !tf || tf === 'none') {
+        const r = el.getBoundingClientRect();
+        return [cx - r.left, cy - r.top, w, h];
+      }
+      const m = new DOMMatrix(tf),
+        sr = stage.getBoundingClientRect(),
+        cs = getComputedStyle(stage),
+        padX = parseFloat(cs.paddingLeft) || 0,
+        padY = parseFloat(cs.paddingTop) || 0;
+      const dx = cx - (sr.left + sr.width / 2),
+        dy = cy - (sr.top + sr.height / 2);
+      return [
+        dx * m.a + dy * m.b + stage.clientWidth / 2 - padX,
+        -dx * m.b + dy * m.a + stage.clientHeight / 2 - padY,
+        w,
+        h,
+      ];
+    }
     pick(cx, cy) {
       if (!this.world) return -1;
-      let r = this.canvas.getBoundingClientRect(),
-        v = new THREE.Vector2(
-          ((cx - r.left) / r.width) * 2 - 1,
-          (-(cy - r.top) / r.height) * 2 + 1,
-        );
+      const [lx, ly, w, h] = this.screenToCanvas(cx, cy),
+        v = new THREE.Vector2((lx / w) * 2 - 1, -(ly / h) * 2 + 1);
       this.ray.setFromCamera(v, this.camera);
       return this.rayCell(this.ray.ray.origin, this.ray.ray.direction);
     }
@@ -453,7 +508,10 @@
           this.pointers.set(e.pointerId, q);
           if (this.pointers.size === 1 && mode !== 'pinch') {
             let begun = !dragging && start && Math.hypot(q[0] - start[0], q[1] - start[1]) > 9;
-            if (begun) dragging = true;
+            if (begun) {
+              dragging = true;
+              this.lastClick = null;
+            }
             if (dragging) {
               if (mode === 'paint') paintLine(begun ? start : p, q);
               else if (mode === 'pan') this.pan(dx, q[1] - p[1]);
@@ -490,8 +548,19 @@
       c.addEventListener('pointerup', (e) => {
         let single = this.pointers.size === 1;
         this.pointers.delete(e.pointerId);
-        if (single && !dragging && start && e.button === 0 && mode !== 'pan')
-          this.onPick(this.pick(e.clientX, e.clientY));
+        const now = performance.now(),
+          hit = this.pick(e.clientX, e.clientY),
+          dbl =
+            single &&
+            !dragging &&
+            !!this.lastClick &&
+            now - this.lastClick.t < 340 &&
+            Math.hypot(e.clientX - this.lastClick.x, e.clientY - this.lastClick.y) < 16;
+        if (single && !dragging && start && e.button === 0 && mode !== 'pan') {
+          const used = dbl && this.onDoublePick ? this.onDoublePick(hit) !== false : false;
+          if (!used) this.onPick(hit);
+        }
+        this.lastClick = dbl ? null : { t: now, x: e.clientX, y: e.clientY };
         if (this.pointers.size === 0) {
           if (painted) this.onStrokeEnd?.();
           start = null;
@@ -746,7 +815,7 @@
               d,
               shadeHex(
                 GardenPalette.animalColor(col, a.type, a.variant || 0),
-                0.80 + 0.20 * Math.min(1, Math.max(0, y / 0.55)),
+                0.8 + 0.2 * Math.min(1, Math.max(0, y / 0.55)),
               ),
               yaw,
               tilt,
@@ -850,8 +919,10 @@
       // 画面会被拉伸——看起来就像"视角变了"。这里不依赖 ResizeObserver，自己发现就重新测量。
       if (!this.lastSizeCheck || t - this.lastSizeCheck > 250 || this.lastSizeCheck > t) {
         this.lastSizeCheck = t;
-        const r = this.canvas.getBoundingClientRect();
-        if (Math.abs(r.width - this.width) > 0.5 || Math.abs(r.height - this.height) > 0.5)
+        if (
+          Math.abs(this.canvas.clientWidth - this.width) > 0.5 ||
+          Math.abs(this.canvas.clientHeight - this.height) > 0.5
+        )
           this.resize();
       }
       if (this.followAnimal && this.focus !== null) {
