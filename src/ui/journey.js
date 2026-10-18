@@ -1,9 +1,15 @@
 (function (root) {
   'use strict';
   const intro = [
-    ['第一滴水', '这座花园送给你！我来陪你试试怎么打理它，先从水边种点绿开始。'],
-    ['谁来吃虫？', '草养幼虫，幼虫养飞鸟。这次，我们接上一条食物链。'],
-    ['火后的花园', '留一圈石头，再点一小片火。给灰烬留些时间。'],
+    [
+      '种子发芽',
+      '你好，朋友！这座岛送给你，我们一起打理吧。放置需要能量，等一会儿就会恢复；植物发芽、动物进食和新生都会增加生态值。完成左上角任务，就能去下一关啦。',
+    ],
+    ['小鸟来了', '你种的草长得真好。再放些幼虫和飞鸟吧：草养幼虫，幼虫养飞鸟，这就是食物链。'],
+    [
+      '浆果熟了',
+      '我们种些浆果，招待松鼠吧！先种 4 丛，等枝头结出果实，再把松鼠放到旁边。它采食 4 次就完成啦；吃种子不计入这个任务。',
+    ],
     [
       '林间来客',
       `虫、草食的、吃虫的，得同时住在这座岛上，满地也得有东西长着。
@@ -19,7 +25,7 @@
 还得真的发生过一次捕食——有人被吃掉，才说明这个圈转起来了。
 新的一代要接得上，中途断了要重新算，但修好的岛不会重新锁上。`,
     ],
-    ['把时间交给花园', '能量无限，地形仍靠本岛生态值解锁。慢慢建一座自己的花园。'],
+    ['自由建造', '能量无限，地形仍靠本岛生态值解锁。慢慢建一座自己的花园。'],
   ];
   function nextStep(s, p) {
     const m = s.metrics,
@@ -32,29 +38,22 @@
           'sow',
           'seed',
           '把种子带到水边',
-          '白框是种子。拖到箭头处，或选中后在湿地上划一划。让 12 颗种子发芽。',
+          '跟我试试：选中白框里的种子，拖到箭头指着的水边。让 12 颗种子发芽吧！',
         );
       if (m.bugMeals < 4)
         return choose(
           'feedBug',
           'bug',
-          '给草地请一位小客人',
-          '把幼虫拖到草上。它吃过 4 次，这一关就完成了。',
+          '放置幼虫',
+          '给草地添一只幼虫吧！把它拖到草上，等它吃过 4 次就完成啦。',
         );
     }
     if (s.level === 1) {
-      if (m.bushPlaced < 4)
-        return choose(
-          'berries',
-          'bush',
-          '给邻居种点浆果',
-          '在空地种下 4 丛浆果。图标下面的小数字，是每次放置花掉的能量。',
-        );
       if (!s.cells.some((c) => c?.animal?.type === 'bug') && m.birdMeals < 3)
         return {
           id: 'food',
           tool: 'bug',
-          title: '飞鸟的午餐还没来',
+          title: '准备食物',
           body: '先把幼虫放到草地。食物够了，再请飞鸟。',
         };
       if (m.birdMeals < 3)
@@ -66,26 +65,22 @@
         );
     }
     if (s.level === 2) {
-      if (m.rocksPlaced < 6)
-        return choose('rocks', 'rock', '先留一道防火边', '放下 6 块石头，把准备燃烧的草地围开。');
-      if (m.burned < 8)
+      if (m.bushPlaced < 4)
+        return choose('berries', 'bush', '种植浆果', '种下 4 丛浆果，等它们成熟。');
+      if (m.berryMeals < 4)
         return choose(
-          'fire',
-          'fire',
-          '只点一小片火',
-          '火也会伤害动物。选一片远离动物的草地，留意左上角的恢复任务。',
+          'berryGuests',
+          'squirrel',
+          '松鼠来做客',
+          '把松鼠放在成熟的浆果旁边。等待它采食 4 次；灌木吃过后还会再结果。',
         );
-      return {
-        id: 'recover',
-        title: '等土地缓一缓',
-        body: '灰烬冷却后，在旁边补水。任务需要 4 次火后新生。',
-      };
+      return null;
     }
     if (s.level === 3)
       return choose(
         'neighbors',
         'animal',
-        '留出食物，再请邻居',
+        '引入动物',
         '种草和浆果，邀请 4 种动物。让它们进食并共同生活；不必一直放新动物。',
       );
     if (s.level >= 4) {
@@ -94,7 +89,7 @@
         ? {
             id: 'terrain',
             tool: 'seed',
-            title: '先让小生命长起来',
+            title: '提升生态',
             body:
               '发芽、进食和新生命都会增加生态值。下一项：' +
               Eco.TOOL[next[0]].name +
@@ -112,7 +107,7 @@
                   : s.metrics.mountainArea < 5
                     ? 'mountain'
                     : null,
-            title: '把山林和湖泊连起来',
+            title: '完善生态',
             body: '左上角记录湖面、山地、森林、新生与持续生态。创造完，去观察模式看看它们。',
           };
     }
@@ -132,6 +127,157 @@
     const key = step.tool || step.id;
     p.tutorialCounts[key] = Math.min(2, (p.tutorialCounts[key] || 0) + 1);
   }
+
+  function mountCover(home, portrait = false) {
+    const canvas = home.querySelector(portrait ? '#friendModels' : '#coverModels');
+    let renderer;
+    try {
+      renderer = new THREE.WebGLRenderer({
+        canvas,
+        alpha: true,
+        antialias: true,
+        preserveDrawingBuffer: portrait,
+      });
+    } catch {
+      return;
+    }
+    renderer.setPixelRatio(Math.min(devicePixelRatio || 1, 2));
+    const scene = new THREE.Scene(),
+      camera = new THREE.OrthographicCamera(),
+      geometry = new THREE.BoxGeometry(1, 1, 1),
+      materials = new Map(),
+      figures = [];
+    scene.add(new THREE.HemisphereLight(0xfffbeb, 0x849477, 0.8));
+    const light = new THREE.DirectionalLight(0xfff2d9, 0.45);
+    light.position.set(-5, 12, 14);
+    scene.add(light);
+    function part(g, x, y, z, w, h, d, c, tilt = 0) {
+      if (!materials.has(c)) materials.set(c, new THREE.MeshLambertMaterial({ color: c }));
+      const mesh = new THREE.Mesh(geometry, materials.get(c));
+      mesh.position.set(x, y, z);
+      mesh.scale.set(w, h, d);
+      mesh.rotation.z = tilt;
+      g.add(mesh);
+    }
+    const types = portrait
+      ? ['dragon']
+      : Array.from({ length: 99 }, (_, i) => Object.keys(EcoData.LIFE)[i % 31]);
+    types.forEach((type, i) => {
+      const group = new THREE.Group();
+      scene.add(group);
+      figures.push(group);
+      if (type === 'mountain') {
+        for (let k = 0; k < 4; k++)
+          part(
+            group,
+            0,
+            0.17 + k * 0.34,
+            0,
+            1.5 - k * 0.24,
+            0.35,
+            1.3 - k * 0.2,
+            [0x879384, 0x99a28e, 0xb1b9a1, 0xdbdfcc][k],
+          );
+      } else if (type === 'tree' || type === 'bush') {
+        GardenModels.plants({
+          b: (...args) => part(group, ...args),
+          c: { plant: type, age: 160, variant: i % 5 },
+          i,
+          x: 0,
+          z: 0,
+          variant: i % 5,
+          wet: false,
+          labelList: [],
+        });
+      } else
+        GardenModels.animals({
+          a: { type, age: 100, habit: 0 },
+          part: (...args) => part(group, ...args),
+          phase: 0,
+          t: 0,
+          i,
+          labelList: [],
+        });
+      group.rotation.y = ((i % 3) - 1) * 0.22;
+    });
+
+    let width = 24,
+      elapsed = 0,
+      last = 0;
+    function layout() {
+      figures.forEach((g, i) => {
+        if (portrait) {
+          g.position.set(0, -0.9, 0);
+          g.scale.setScalar(1.45);
+          g.rotation.set(0.13, -0.45, 0);
+          return;
+        }
+        const col = i % 9,
+          row = Math.floor(i / 9),
+          dx = 3.2,
+          dy = 2.8,
+          periodX = 9 * dx,
+          periodY = 11 * dy;
+        const wrap = (v, n) => ((v + n / 2) % n) - n / 2;
+        const u = wrap((col - 4) * dx + (row % 2) * 0.6 + elapsed * 0.13, periodX),
+          v = wrap((row - 5) * dy + elapsed * 0.055, periodY),
+          angle = 0.38;
+        g.position.set(
+          u * Math.cos(angle) - v * Math.sin(angle),
+          u * Math.sin(angle) + v * Math.cos(angle),
+          0,
+        );
+        g.scale.setScalar(['bug', 'bee', 'butterfly', 'frog'].includes(types[i]) ? 1.4 : 1.25);
+        g.rotation.set(0.18, 0.45 + ((i % 3) - 1) * 0.12, 0);
+      });
+    }
+    function resize() {
+      const w = portrait ? 320 : home.clientWidth,
+        h = portrait ? 230 : home.clientHeight;
+      if (!w || !h) return;
+      renderer.setSize(w, h, false);
+      const height = portrait ? 2.7 : 16;
+      width = (height * w) / h;
+      camera.left = -width / 2;
+      camera.right = width / 2;
+      camera.top = height / 2;
+      camera.bottom = -height / 2;
+      camera.near = 0.1;
+      camera.far = 100;
+      camera.position.set(0, 0, 22);
+      camera.lookAt(0, 0, 0);
+      camera.updateProjectionMatrix();
+      layout();
+      renderer.render(scene, camera);
+    }
+    if (portrait) {
+      resize();
+      const img = document.createElement('img');
+      img.src = canvas.toDataURL('image/png');
+      img.alt = '送你小岛的龙朋友';
+      canvas.replaceWith(img);
+      renderer.dispose();
+      geometry.dispose();
+      materials.forEach((m) => m.dispose());
+    } else {
+      const observer = new ResizeObserver(resize);
+      observer.observe(home);
+      resize();
+      const reduced = matchMedia('(prefers-reduced-motion: reduce)');
+      function frame(t) {
+        if (!home.isConnected) return;
+        if (!home.hidden && !document.hidden && !reduced.matches) {
+          elapsed += last ? Math.min((t - last) / 1000, 0.05) : 0;
+          layout();
+          renderer.render(scene, camera);
+        }
+        last = t;
+        requestAnimationFrame(frame);
+      }
+      requestAnimationFrame(frame);
+    }
+  }
+
   function mount(api) {
     const $ = (id) => document.getElementById(id),
       game = $('game');
@@ -143,8 +289,9 @@
     const home = document.createElement('div');
     home.id = 'welcome';
     home.innerHTML =
-      '<div class="welcome-art">🌱</div><p class="overline">朋友送来的一座花园</p><h1>生态花园</h1><p class="welcome-copy">送你一个大花园！<br>种一点绿，等一位邻居，<br>让生命慢慢接上生命。</p><div class="welcome-rules"><p><b>⚡ 能量</b> 放置会消耗，时间会补充。</p><p><b>✦ 生态</b> 发芽、进食、新生让它增加。</p><p><b>✓ 任务</b> 看左上角，全部完成后去下一关。</p></div><button id="enterGarden" class="primary">接过这座花园 →</button>';
+      '<canvas id="coverModels" aria-hidden="true"></canvas><div class="coverTitle"><h1>生态花园</h1><p>Ecogarden</p><button id="enterGarden" class="primary">开始打造</button></div>';
     game.append(home);
+    mountCover(home);
     const bar = document.createElement('div');
     bar.id = 'modeBar';
     bar.innerHTML =
@@ -153,7 +300,7 @@
     const menu = document.createElement('dialog');
     menu.id = 'gardenMenuPanel';
     menu.innerHTML =
-      '<div class="dialogHead"><h2>歇一会儿</h2><button id="closeGardenMenu">返回花园</button></div><div class="menuGrid"></div>';
+      '<div class="dialogHead"><h2>菜单</h2><button id="closeGardenMenu">返回花园</button></div><div class="menuGrid"></div>';
     game.append(menu);
     for (const id of ['chapterBtn', 'achieveBtn', 'saveBtn'])
       menu.querySelector('.menuGrid').append($(id));
@@ -165,8 +312,9 @@
     const guide = document.createElement('section');
     guide.id = 'gardenerGuide';
     guide.innerHTML =
-      '<span class="gardener-avatar">✿</span><div><b id="guideTitle"></b><p id="guideBody"></p><button id="guideOK">知道啦</button></div>';
+      '<div class="guideFriends"><canvas id="friendModels"></canvas></div><div class="guideWords"><b id="guideTitle"></b><p id="guideBody"></p><button id="guideOK">知道啦</button></div>';
     game.append(guide);
+    mountCover(guide, true);
     const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
     svg.id = 'guideArrow';
     svg.innerHTML =
@@ -259,10 +407,9 @@
       }
       if (s.metrics.sprouted >= 12) p.tutorial.sow = true;
       if (s.metrics.bugMeals >= 4) p.tutorial.feedBug = true;
-      if (s.level === 1 && s.metrics.bushPlaced >= 4) p.tutorial.berries = true;
+      if (s.level === 2 && s.metrics.bushPlaced >= 4) p.tutorial.berries = true;
       if (s.level === 1 && s.metrics.birdMeals >= 3) p.tutorial.birds = true;
-      if (s.level === 2 && s.metrics.rocksPlaced >= 6) p.tutorial.rocks = true;
-      if (s.level === 2 && s.metrics.burned >= 8) p.tutorial.fire = true;
+      if (s.level === 2 && s.metrics.berryMeals >= 4) p.tutorial.berryGuests = true;
       if (s.level === 3 && s.metrics.animalKinds >= 4 && s.metrics.meals >= 12)
         p.tutorial.neighbors = true;
       if (s.complete) p.tutorial['chapter' + s.level] = true;
@@ -277,7 +424,7 @@
       guide.hidden = !opening && !step;
       $('guideOK').hidden = false;
       if (guide.hidden) return;
-      $('guideTitle').textContent = opening ? '朋友的小纸条 · ' + intro[s.level][0] : step.title;
+      $('guideTitle').textContent = opening ? intro[s.level][0] : step.title;
       $('guideBody').textContent = opening
         ? intro[s.level][1] + (s.level < 3 && step ? ' ' + step.body : '')
         : step.body;

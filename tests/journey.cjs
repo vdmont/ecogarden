@@ -24,16 +24,6 @@ for (const l of [4, 5]) {
 console.log(
   'PASS terrain thresholds apply to chapters five and six without mutating locked worlds',
 );
-for (const type of Object.keys(E.LIFE)) {
-  const [p, s] = setup(3),
-    i = s.cells.findIndex((c) => c && c.ground === 'soil');
-  s.cells[i].animal = E.animal(type);
-  s.cells[i].fire = 5;
-  E.step(s, p);
-  assert.equal(s.cells[i].animal, null, type);
-  assert(s.cells[i].fert > 0);
-}
-console.log('PASS fire kills each animal species on burning ground');
 {
   const [p, s] = setup(0);
   assert.equal(GardenJourney.plan(s, p).tool, 'seed');
@@ -42,8 +32,6 @@ console.log('PASS fire kills each animal species on burning ground');
   s.metrics.bugMeals = 4;
   assert.equal(GardenJourney.plan(s, p), null);
   const [q, t] = setup(1);
-  assert.equal(GardenJourney.plan(t, q).tool, 'bush');
-  t.metrics.bushPlaced = 4;
   assert.equal(GardenJourney.plan(t, q).tool, 'bug');
   t.cells.find((c) => c?.plant === 'grass').animal = E.animal('bug');
   assert.equal(GardenJourney.plan(t, q).tool, 'bird');

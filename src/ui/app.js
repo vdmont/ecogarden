@@ -201,7 +201,7 @@
     bird: '🐦',
     bush: '🫐',
     rock: '🪨',
-    fire: '🔥',
+    squirrel: '🐿️',
     sheep: '🐑',
     alpaca: '🦙',
     rabbit: '🐇',
@@ -223,7 +223,7 @@
     bird: T.m297,
     bush: T.m298,
     rock: T.m299,
-    fire: T.m300,
+    squirrel: '放到成熟浆果旁，观察采食',
     sheep: T.m301,
     alpaca: T.m302,
     rabbit: T.m303,
@@ -255,7 +255,11 @@
         el(
           'span',
           'toolCost',
-          locked ? '🔒 ' + threshold + ' 生态' : (world.level === 5 ? '0' : t.cost) + ' 能量',
+          k === 'erase'
+            ? ''
+            : locked
+              ? '🔒 ' + threshold + ' 生态'
+              : (world.level === 5 ? '0' : t.cost) + ' 能量',
         ),
       );
       b.onclick = () => chooseTool(k);
@@ -316,7 +320,7 @@
       } else if (batch) {
         strokeCount++;
       } else {
-        sound(tool === 'fire' ? 170 : tool === 'water' ? 650 : 450);
+        sound(tool === 'water' ? 650 : 450);
         view.draw(performance.now());
         save();
       }
@@ -370,30 +374,27 @@
       text('cellDesc', T.m313);
       return;
     }
-    text('cellTitle', c.fire ? T.m051 : names[c.animal?.type || c.plant || c.ground]);
-    let desc = c.fire
-      ? T.m314
-      : c.ash
-        ? T.m315
-        : c.plant === 'seed'
-          ? c.moist >= 0.6
-            ? T.m316
-            : T.m317
-          : c.plant === 'bush'
-            ? c.age >= 150
-              ? T.m318
-              : c.age >= 80
-                ? T.m319
-                : T.m320
-            : c.plant === 'tree'
-              ? T.m321
-              : c.plant === 'grass'
-                ? T.m322
-                : c.ground === 'rock'
-                  ? T.m323
-                  : ['water', 'spring'].includes(c.ground)
-                    ? T.m324
-                    : T.m325;
+    text('cellTitle', names[c.animal?.type || c.plant || c.ground]);
+    let desc =
+      c.plant === 'seed'
+        ? c.moist >= 0.6
+          ? T.m316
+          : T.m317
+        : c.plant === 'bush'
+          ? c.age >= 150
+            ? T.m318
+            : c.age >= 80
+              ? T.m319
+              : T.m320
+          : c.plant === 'tree'
+            ? T.m321
+            : c.plant === 'grass'
+              ? T.m322
+              : c.ground === 'rock'
+                ? T.m323
+                : ['water', 'spring'].includes(c.ground)
+                  ? T.m324
+                  : T.m325;
     if (c.animal) {
       const a = c.animal;
       desc = a.drunk
@@ -442,6 +443,19 @@
       $('cellFacts').append(row);
     }
     text('cellDesc', desc);
+    if (!c.fire && c.fert >= 0.1)
+      $('cellFacts').append(
+        el(
+          'div',
+          'fertilityFact',
+          (c.fert >= 0.4 ? '肥沃土壤 · ' : '土壤养分 · ') +
+            '发芽概率 +' +
+            Math.round(c.fert * 20) +
+            '% · 开花概率 +' +
+            Math.round(c.fert * 30) +
+            '%',
+        ),
+      );
     if (!c.animal && c.plant)
       $('cellFacts').append(
         el('span', 'fact', c.moist >= 0.6 ? T.m345 : c.moist ? T.m346 : T.m347),
@@ -461,9 +475,12 @@
         'unaffordable',
         !locked && world.level !== 5 && world.energy < E.TOOL[k].cost,
       );
-      b.querySelector('.toolCost').textContent = locked
-        ? '🔒 ' + n + ' 生态'
-        : (world.level === 5 ? 0 : E.TOOL[k].cost) + ' 能量';
+      b.querySelector('.toolCost').textContent =
+        k === 'erase'
+          ? ''
+          : locked
+            ? '🔒 ' + n + ' 生态'
+            : (world.level === 5 ? 0 : E.TOOL[k].cost) + ' 能量';
     }
     text(
       'combo',
@@ -595,19 +612,6 @@
             loadLevel(i);
           });
         wrap.append(replay);
-        const rec = profile.records?.[i];
-        if (rec)
-          wrap.append(
-            el(
-              'span',
-              'chapterRecord',
-              T.m378 +
-                Math.floor(rec.bestScore).toLocaleString() +
-                T.m379 +
-                rec.completions +
-                T.m380,
-            ),
-          );
       }
       $('chapterGrid').append(wrap);
     });
@@ -634,7 +638,7 @@
     const need = {
       bug: 'bug',
       bird: 'bird',
-      fire: 'ash',
+      berries: 'squirrel',
       drunk: 'sheep',
       sober: 'sheep',
       petDrunk: 'sheep',

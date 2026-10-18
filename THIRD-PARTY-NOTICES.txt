@@ -24,3 +24,6 @@ THE SOFTWARE.
 No Minecraft textures/models or Dwarf Fortress assets are included.
 The fermented-berry sheep story is a gameplay homage only.
 Models are newly constructed from cubes, inspired by the supplied screenshot.
+
+LXGW WenKai Medium v1.530 — https://github.com/lxgw/LxgwWenKai
+Unmodified font bundled under SIL Open Font License 1.1. Full license: assets/fonts/OFL.txt (also embedded in standalone HTML).

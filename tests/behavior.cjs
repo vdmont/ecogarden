@@ -120,7 +120,8 @@ test('terrain stamps cover low vegetation and create real areas', () => {
   patch(s, j % s.w, Math.floor(j / s.w), 'flower', 4);
   assert(E.place(s, 'mountain', j, p).ok);
   assert(s.cells.filter((c) => c?.ground === 'mountain').length >= 5);
-  assert.equal(s.cells[j].elevation, 7);
+  assert(s.cells[j].elevation > 5 && s.cells[j].elevation < 5.7);
+  assert(Math.abs(s.cells[j].elevation - s.cells[j + 1].elevation) < 1);
   assert(E.place(s, 'forest', empty(s), p).ok);
 });
 test('terrain tools preserve existing animals and mature trees', () => {
@@ -225,19 +226,6 @@ test('all pets, secret clues and exact achievement locations', () => {
   assert(p.achievements.petAll);
   assert.equal(p.achievementPlaces.petalpaca.i, i);
   assert.equal(new Set(Object.values(GardenCopy.secrets).map((v) => v[0])).size, 3);
-});
-test('fire cooldown and recovery still prevent instant forest', () => {
-  let [p, s] = setup(2),
-    i = s.cells.findIndex((c) => c?.plant === 'grass' && c.moist >= 0.6);
-  assert(E.place(s, 'fire', i, p).ok);
-  ticks(p, s, 10);
-  assert(s.cells[i].ash > 0);
-  assert(!E.place(s, 'seed', i, p).ok);
-  ticks(p, s, 25);
-  assert.equal(s.cells[i].plant, null);
-  ticks(p, s, 80);
-  assert(s.metrics.reborn > 0);
-  assert.notEqual(s.cells[i].plant, 'tree');
 });
 test('lifetimes and starvation return nutrients', () => {
   for (const type of Object.keys(E.LIFE)) {

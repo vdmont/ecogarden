@@ -60,6 +60,7 @@
   function defaultProfile() {
     return {
       version: VERSION,
+      campaign: 2,
       unlocked: 0,
       current: 0,
       completed: [],
@@ -192,7 +193,7 @@
       const c = s.cells[idx],
         t = 1 - k / Math.max(1, want - 1);
       c.ground = 'mountain';
-      c.elevation = Math.round((2.4 + t * spread) * 100) / 100;
+      c.elevation = Math.round((2.4 + t * spread) * 0.92 * 100) / 100;
     });
     // 3) 湖：从内陆最低处挖一片不规则水面
     if (level >= 2) {
@@ -504,10 +505,6 @@
     if (s.level >= 4 && TERRAIN_UNLOCK[tool] && s.score < TERRAIN_UNLOCK[tool])
       return '需要 ' + TERRAIN_UNLOCK[tool] + ' 生态值解锁';
     if (s.level !== 5 && s.energy < TOOL[tool].cost) return T.m217;
-    if (tool === 'fire')
-      return c.plant && ['grass', 'flower', 'tree', 'bush'].includes(c.plant) && !c.fire
-        ? ''
-        : T.m218;
     if (Object.hasOwn(EcoData.POOLS, tool) || Object.hasOwn(LIFE, tool)) {
       if (!isLand(c)) return T.m219;
       if (c.animal) return T.m220;
@@ -595,16 +592,10 @@
       c.ground = 'rock';
       count(s, 'rocksPlaced', 1, p);
     }
-    if (tool === 'fire') {
-      c.fire = 10;
-      c.plant = null;
-      count(s, 'burned', 1, p);
-      note(s, 'firstFire', T.m226, T.m227, i);
-    }
     if (['lake', 'mountain', 'forest'].includes(tool)) {
       if (['seed', 'grass', 'flower'].includes(c.plant)) c.plant = null;
       const waterLevel = c.elevation || 0;
-      const reach = tool === 'forest' ? 4.6 : tool === 'lake' ? 3.7 : 3.1;
+      const reach = tool === 'forest' ? 4.6 : tool === 'lake' ? 3.7 : 2.8;
       const spots = [i, ...nearby(s, i, Math.ceil(reach))].filter((j) => {
         const d = Math.hypot((j % s.w) - (i % s.w), Math.floor(j / s.w) - Math.floor(i / s.w));
         return (
@@ -625,7 +616,13 @@
         if (tool === 'mountain') {
           const dist = Math.hypot((j % s.w) - (i % s.w), Math.floor(j / s.w) - Math.floor(i / s.w));
           d.ground = 'mountain';
-          d.elevation = dist < 0.6 ? 7 : dist < 1.5 ? 5.4 : dist < 2.4 ? 3.2 : 1.6;
+          d.elevation =
+            Math.round(
+              (1.45 +
+                4.05 * Math.max(0, 1 - Math.pow(dist / 3.4, 1.3)) +
+                0.18 * (fbm((j % s.w) * 0.6, Math.floor(j / s.w) * 0.6, s.seed + 31, 2) - 0.5)) *
+                100,
+            ) / 100;
         }
         if (tool === 'forest') {
           d.plant = j === i || rand(s) < 0.55 ? 'tree' : 'grass';
@@ -954,48 +951,8 @@
         !n.some((j) => s.cells[j].ground === 'spring')
       )
         c.ground = 'soil';
-      if (c.fire) {
-        if (c.animal) {
-          c.animal = null;
-          c.fert = Math.min(3, c.fert + 0.3);
-        }
-        c.fire--;
-        for (const j of n) {
-          if (Math.abs((j % s.w) - x) + Math.abs(Math.floor(j / s.w) - y) !== 1) continue;
-          let d = s.cells[j];
-          if (['grass', 'flower', 'tree', 'bush'].includes(d.plant) && !d.fire && rand(s) < 0.16) {
-            d.fire = 10;
-            d.plant = null;
-            count(s, 'burned', 1, p);
-          }
-        }
-        if (!c.fire) {
-          c.ground = 'ash';
-          c.ash = 30;
-          c.age = 0;
-          c.recovery = 180;
-          c.fert = Math.min(3, c.fert + 0.6 * Math.pow(0.65, c.burns));
-          c.burns++;
-        }
-        continue;
-      }
-      if (c.ash > 0) c.ash--;
-      if (WATERY.includes(c.ground)) ensureFlow(s, i); // 有落差的水自己就会流，不必等动物踩上去
-      if (
-        c.ground === 'ash' &&
-        !c.plant &&
-        !c.ash &&
-        rand(s) < (c.moist >= 0.6 ? 0.025 : 0.008) * (1 + c.fert * 0.3)
-      ) {
-        c.plant = 'grass';
-        c.age = 0;
-        c.plantLife = 0;
-        c.ground = 'soil';
-        count(s, 'reborn', 1, p);
-        combo(s, T.m234);
-        award(p, 'fire', s, typeof i === 'number' ? i : -1);
-        note(s, 'regrowth', T.m116, T.m235, i);
-      }
+      // Legacy fire fields are inert; loaded old saves are normalized to ordinary soil.
+      if (WATERY.includes(c.ground)) ensureFlow(s, i);
       if (
         s.level >= 3 &&
         !c.plant &&
@@ -1018,6 +975,7 @@
         c.plant = 'grass';
         c.age = 0;
         c.plantLife = 0;
+        c.fert = Math.max(0, c.fert - 0.08);
         count(s, 'sprouted', 1, p);
         note(s, 'firstSprout', T.m236, T.m237, i);
       } else if (c.plant === 'grass') {
@@ -1042,7 +1000,8 @@
           c.age = 0;
           c.plantLife = 0;
           note(s, 'tree', T.m238, T.m239, i);
-        } else if (c.age > 40 && rand(s) < 0.012) {
+        } else if (c.age > 40 && rand(s) < 0.012 * (1 + Math.min(3, c.fert) * 0.3)) {
+          c.fert = Math.max(0, c.fert - 0.05);
           c.plant = 'flower';
           c.age = 0;
           c.plantLife = 0;
@@ -1108,7 +1067,11 @@
         continue;
       }
       let ate = false,
-        food = eatPlants(s, i, a),
+        food = eatPlants(s, i, a).sort((left, right) =>
+          a.type === 'squirrel'
+            ? (s.cells[right].plant === 'bush' ? 1 : 0) - (s.cells[left].plant === 'bush' ? 1 : 0)
+            : 0,
+        ),
         prey = predator
           ? nearby(s, i, 2).filter((j) => PREY[a.type].includes(s.cells[j].animal?.type))
           : [];
@@ -1153,8 +1116,14 @@
             s.cells[k].plantLife = 0;
             s.cells[k].age = 0;
           }
-        } else if (d.plant === 'bush') d.age = 0;
-        else if (d.plant !== 'tree') {
+        } else if (d.plant === 'bush') {
+          if (a.type === 'squirrel') {
+            count(s, 'berryMeals', 1, p);
+            note(s, 'berryMeal', '浆果小客人', '松鼠采下了成熟浆果，灌木会再次结果。', j);
+            if (s.metrics.berryMeals >= 4) award(p, 'berries', s, j);
+          }
+          d.age = 0;
+        } else if (d.plant !== 'tree') {
           d.plant = s.level >= 3 ? 'grass' : null;
           d.age = 0;
           d.plantLife = 0;
@@ -1241,7 +1210,7 @@
         !a.drunk &&
         !a.sleep &&
         a.petUntil <= s.tick &&
-        rand(s) < (a.type === 'bug' ? 0.18 : pollinator || a.type === 'bird' ? 0.42 : 0.3)
+        rand(s) < (a.type === 'bug' ? 0.15 : pollinator || a.type === 'bird' ? 0.34 : 0.24)
       ) {
         let choices = n.filter(
           (j) => canWalk(s.cells[j], a, c) && !s.cells[j].animal && !reserved.has(j),

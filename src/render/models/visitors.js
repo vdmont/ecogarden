@@ -4,7 +4,16 @@ for (const [type, [name, kind, color]] of Object.entries(EcoData.VISITORS))
     const scale = a.age < 0 ? 0.68 : 1,
       rest = a.sleep > 0 || a.habit === 2 ? 0.62 : a.habit === 4 ? 0.55 : 1;
     const p = (x, y, z, w, h, d, c, tilt = 0) =>
-      part(x * scale, y * scale * rest, z * scale, w * scale, h * scale, d * scale, c, tilt);
+      part(
+        x * scale * (type === 'abyssinian' ? 0.76 : 1),
+        y * scale * rest,
+        z * scale,
+        w * scale * (type === 'abyssinian' ? 0.76 : 1),
+        h * scale,
+        d * scale,
+        c,
+        tilt,
+      );
     const eye = (y, z) => {
       for (const side of [-1, 1])
         p(side * 0.115, y, z, 0.045, 0.05, 0.035, type === 'ragdoll' ? 0x609dc1 : 0x253633);
@@ -85,22 +94,49 @@ for (const [type, [name, kind, color]] of Object.entries(EcoData.VISITORS))
     p(0, 0.45, 0, 0.48, body, 0.66, color);
     for (const x of [-0.16, 0.16])
       for (const z of [-0.23, 0.23]) p(x, 0.17, z, 0.11, 0.3, 0.12, color);
-    const hy = capy ? 0.57 : 0.76,
+    const hy = capy ? 0.57 : cat ? 0.82 : 0.76,
       hz = 0.34;
     p(0, hy, hz, capy ? 0.4 : 0.37, 0.33, capy ? 0.44 : 0.33, color);
-    p(0, hy - 0.08, hz + 0.21, 0.23, 0.15, capy ? 0.26 : 0.16, capy ? color : 0xe8dcc5);
+    p(
+      0,
+      hy - 0.08,
+      hz + (cat ? 0.165 : 0.21),
+      cat ? 0.21 : 0.23,
+      cat ? 0.1 : 0.15,
+      capy ? 0.26 : cat ? 0.055 : 0.16,
+      capy ? color : 0xe8dcc5,
+    );
     eye(hy + 0.03, hz + 0.18);
-    p(0, hy - 0.04, hz + (capy ? 0.36 : 0.31), 0.07, 0.05, 0.035, 0x41433b);
-    for (const side of [-1, 1])
-      p(
-        side * 0.14,
-        hy + (cat || myth ? 0.24 : 0.13),
-        hz - 0.04,
-        cat ? 0.1 : 0.13,
-        cat || myth ? 0.2 : 0.17,
-        0.12,
-        type === 'ragdoll' ? 0x746b63 : color,
-      );
+    p(0, hy - 0.04, hz + (capy ? 0.36 : cat ? 0.205 : 0.31), 0.07, 0.05, 0.035, 0x41433b);
+    for (const side of [-1, 1]) {
+      if (cat) {
+        for (let tier = 0; tier < 4; tier++) {
+          const width = 0.16 - tier * 0.038;
+          p(
+            side * 0.135,
+            hy + 0.19 + tier * 0.047,
+            hz - 0.015,
+            width,
+            0.052,
+            0.11,
+            type === 'ragdoll' ? 0x746b63 : color,
+          );
+          if (tier < 3)
+            p(
+              side * 0.135,
+              hy + 0.19 + tier * 0.047,
+              hz + 0.043,
+              width * 0.5,
+              0.04,
+              0.012,
+              0xd4a093,
+            );
+        }
+        for (const dy of [-0.025, 0.025])
+          p(side * 0.215, hy - 0.055 + dy, hz + 0.18, 0.12, 0.015, 0.02, 0xeee4cc);
+      } else
+        p(side * 0.14, hy + (myth ? 0.24 : 0.13), hz - 0.04, 0.13, myth ? 0.2 : 0.17, 0.12, color);
+    }
     if (!capy) p(0.08, 0.55, -0.49, 0.1, cat ? 0.46 : 0.23, 0.12, color, Math.sin(phase) * 0.08);
     if (type === 'tabby' || type === 'orangeCat')
       for (let j = 0; j < 3; j++)

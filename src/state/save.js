@@ -41,7 +41,9 @@
     const out = defaultProfile();
     for (const [key, value] of Object.entries(input.tutorialCounts || {}))
       if (
-        /^(seed|bug|bird|bush|rock|fire|animal|lake|forest|mountain|recover|island)$/.test(key) &&
+        /^(seed|bug|bird|bush|rock|squirrel|animal|lake|forest|mountain|recover|island)$/.test(
+          key,
+        ) &&
         Number.isInteger(value) &&
         value >= 0 &&
         value <= 2
@@ -49,7 +51,7 @@
         out.tutorialCounts[key] = value;
     for (const [key, value] of Object.entries(input.tutorial || {}))
       if (
-        /^(intro[0-5]|chapter[0-5]|dismiss[0-4]_(sow|feedBug|berries|food|birds|rocks|fire|recover|neighbors|terrain|island)|sow|feedBug|berries|birds|rocks|fire|neighbors)$/.test(
+        /^(intro[0-5]|chapter[0-5]|dismiss[0-4]_(sow|feedBug|berries|berryGuests|food|birds|rocks|fire|recover|neighbors|terrain|island)|sow|feedBug|berries|berryGuests|birds|rocks|fire|neighbors)$/.test(
           key,
         ) &&
         value === true
@@ -203,6 +205,11 @@
           b.state = a.state === 'walk' ? 'walk' : 'idle';
           d.animal = b;
         }
+        if (d.ground === 'ash') d.ground = 'soil';
+        d.fire = 0;
+        d.ash = 0;
+        d.recovery = 0;
+        d.burns = 0;
         copy.cells[i] = d;
       }
       for (const k of ['tick', 'energy', 'score', 'combo', 'comboLeft', 'rng']) {
@@ -248,6 +255,10 @@
               tick: e.tick,
             }))
         : [];
+      copy.events = copy.events.filter(
+        (e) =>
+          !/(fire|burn|ash|regrowth)/i.test(e.id) && !/(野火|灰烬|燃烧|火后|点火)/.test(e.title),
+      );
       copy.notified = Object.fromEntries(
         Object.keys(s.notified || {})
           .filter((k) => /^[a-zA-Z0-9]+$/.test(k))
@@ -262,6 +273,26 @@
           if (c.animal) out.seen[c.animal.type] = true;
           out.seen[c.ground] = true;
         }
+    }
+    if (input.campaign !== 2) {
+      out.completed = out.completed.filter((l) => l !== 2);
+      delete out.records[2];
+      for (const k of Object.keys(out.tutorial))
+        if (
+          k === 'berries' ||
+          k === 'berryGuests' ||
+          k === 'intro2' ||
+          k === 'chapter2' ||
+          k.startsWith('dismiss2_')
+        )
+          delete out.tutorial[k];
+      delete out.tutorialCounts.bush;
+      delete out.tutorialCounts.squirrel;
+      if (out.worlds[2]) {
+        out.worlds[2].complete = false;
+        out.worlds[2].metrics.bushPlaced = 0;
+        out.worlds[2].metrics.berryMeals = 0;
+      }
     }
     return out;
   }

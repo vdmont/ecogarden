@@ -485,6 +485,7 @@
           bare = c.ground === 'mountain';
         if (!bare && terr > 0.12) b(x, (terr - 0.1) / 2, z, 1, terr, 1, 0x8d7659);
         let ground = c.ground === 'ash' ? 0x7f756a : c.moist >= 0.6 ? 0x9c9a6b : 0xb7a57c;
+        if (c.ground === 'soil' && c.fert >= 0.4) ground = c.moist >= 0.6 ? 0x858558 : 0x9b8965;
         if (!bare) b(x, terr, z, 1, 0.1, 1, ground);
         if (['water', 'spring'].includes(c.ground)) {
           b(x, terr + 0.11, z, 1, 0.12, 1, c.ground === 'spring' ? 0x53a9b5 : 0x71b3c2);
@@ -566,21 +567,21 @@
       this.lastTick = s.tick;
     }
     // 脚底高度：周围四格双线性插值，走坡/上台阶时是斜坡而不是瞬间抬升
-  groundAt(s, ax, az) {
-    const x0 = Math.max(0, Math.min(s.w - 2, Math.floor(ax - 0.5)));
-    const z0 = Math.max(0, Math.min(s.h - 2, Math.floor(az - 0.5)));
-    const fx = Math.max(0, Math.min(1, ax - 0.5 - x0));
-    const fz = Math.max(0, Math.min(1, az - 0.5 - z0));
-    const h = (x, z) => {
-      const c = s.cells[z * s.w + x];
-      return c ? Eco.surfaceHeight(c) : 0;
-    };
-    return (
-      (h(x0, z0) * (1 - fx) + h(x0 + 1, z0) * fx) * (1 - fz) +
-      (h(x0, z0 + 1) * (1 - fx) + h(x0 + 1, z0 + 1) * fx) * fz
-    );
-  }
-  drawAnimals(t) {
+    groundAt(s, ax, az) {
+      const x0 = Math.max(0, Math.min(s.w - 2, Math.floor(ax - 0.5)));
+      const z0 = Math.max(0, Math.min(s.h - 2, Math.floor(az - 0.5)));
+      const fx = Math.max(0, Math.min(1, ax - 0.5 - x0));
+      const fz = Math.max(0, Math.min(1, az - 0.5 - z0));
+      const h = (x, z) => {
+        const c = s.cells[z * s.w + x];
+        return c ? Eco.surfaceHeight(c) : 0;
+      };
+      return (
+        (h(x0, z0) * (1 - fx) + h(x0 + 1, z0) * fx) * (1 - fz) +
+        (h(x0, z0 + 1) * (1 - fx) + h(x0 + 1, z0 + 1) * fx) * fz
+      );
+    }
+    drawAnimals(t) {
       if (!this.world) return;
       const s = this.world,
         m = this.animals;
@@ -588,7 +589,7 @@
       const b = (...args) => this.put(m, ...args),
         labelList = [],
         dt = Math.min(60, Math.max(0, t - this.lastAnimalFrame)),
-        blend = 1 - Math.exp(-dt / 130);
+        blend = 1 - Math.exp(-dt / 170);
       this.lastAnimalFrame = t;
       s.cells.forEach((c, i) => {
         if (!c?.animal) return;
@@ -675,54 +676,6 @@
         if (!c) return;
         const x = (i % s.w) - s.w / 2 + 0.5,
           z = Math.floor(i / s.w) - s.h / 2 + 0.5;
-        if (c.fire) {
-          const fe = Eco.surfaceHeight(c);
-          b(x, 0.12 + fe, z, 0.62, 0.14, 0.21, 0x5e4e40, 0.5);
-          b(x, 0.13 + fe, z, 0.23, 0.15, 0.62, 0x6f5540, -0.35);
-          for (let k = 0; k < 3; k++) {
-            let flicker = Math.sin(t * 0.006 + i * 1.7 + k * 2),
-              dx = (k - 1) * 0.18,
-              dz = k === 1 ? -0.08 : 0.08,
-              h = 0.55 + (k === 1 ? 0.27 : 0) + flicker * 0.09;
-            this.put(
-              this.flames,
-              x + dx,
-              0.19 + fe + h * 0.48,
-              z + dz,
-              0.22,
-              h,
-              0.2,
-              0xe47a3c,
-              0,
-              flicker * 0.1,
-            );
-            this.put(
-              this.fireCores,
-              x + dx,
-              0.18 + fe + h * 0.25,
-              z + dz + 0.02,
-              0.13,
-              h * 0.55,
-              0.12,
-              0xffd786,
-              0,
-              flicker * 0.08,
-            );
-          }
-          for (let k = 0; k < 2; k++) {
-            let rise = (t * 0.0007 + i * 0.21 + k * 0.47) % 1;
-            b(
-              x + Math.sin(i + k + t * 0.001) * 0.13,
-              0.8 + fe + rise * 0.48,
-              z + 0.05,
-              0.035,
-              0.065 * (1 - rise) + 0.025,
-              0.035,
-              0xffd58b,
-            );
-          }
-        }
-
         if (['water', 'spring'].includes(c.ground)) {
           const myY = Eco.surfaceHeight(c);
           if (c.flow) {

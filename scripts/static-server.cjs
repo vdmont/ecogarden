@@ -24,6 +24,7 @@ const TYPES = {
   '.ico': 'image/x-icon',
   '.svg': 'image/svg+xml',
   '.woff2': 'font/woff2',
+  '.ttf': 'font/ttf',
   // 音频：背景音乐与动物叫声都在仓库里，不加这几行的话服务器会一律 404，
   // 本地试玩和 npm run preview 就都听不到声音。
   '.mp3': 'audio/mpeg',
