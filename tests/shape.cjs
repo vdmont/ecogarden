@@ -287,6 +287,9 @@ test('no two boxes fight over the same faces', () => {
     view.draw(0);
     view.drawAnimals(0);
     view.drawEffects(1000);
+    // 圆环标记现在由 drawMarkers() 每帧画（原来在 draw() 里），不补这一句
+    // 扫描就悄悄少扫了这些方块 —— 少扫不会报错，只会安静地放过问题。
+    view.drawMarkers(0);
     for (const box of view.cliffBoxes(s)) view.boxes.push(box);
     const groups = new Map();
     for (const [x, y, z, w, h, d, c, ry, rz] of view.boxes) {
@@ -496,6 +499,7 @@ test('worst-case terrain stays inside the instance budget', () => {
   const count = (s) => {
     const v = boxView(s);
     v.draw(0);
+    v.drawMarkers(0);
     return v.boxes.length;
   };
   const check = (level, name, mutate) => {

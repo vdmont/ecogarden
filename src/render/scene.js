@@ -736,7 +736,6 @@
       let s = this.world,
         m = this.mesh;
       m.count = 0;
-      this.rings.count = 0;
       let labelList = [];
       const b = (...args) => this.boxAt(...args);
       s.cells.forEach((c, i) => {
@@ -814,25 +813,11 @@
         if (c.ground === 'ash' && !c.plant && c.ash > 0 && i % 3 === 0)
           b(x, terr + 0.18, z, 0.25, 0.15, 0.16, 0x9a8e86);
       });
-      if (this.showLabels) {
-        for (const [i, txt, col, y] of labelList)
-          if (['种', '虫', '鸟', '蝶'].includes(txt))
-            this.put(
-              this.rings,
-              (i % s.w) - s.w / 2 + 0.5,
-              Eco.surfaceHeight(s.cells[i]) + 0.16,
-              Math.floor(i / s.w) - s.h / 2 + 0.5,
-              1,
-              1,
-              1,
-              col,
-            );
-      }
+      // 圆环本身不在这里画：draw() 只在"地形变了"时才跑，画在这里就永远动不了。
+      // 只把清单留下来，交给每帧都跑的 drawMarkers()。
       this.labelData = labelList;
       m.instanceMatrix.needsUpdate = true;
       m.instanceColor.needsUpdate = true;
-      this.rings.instanceMatrix.needsUpdate = true;
-      this.rings.instanceColor.needsUpdate = true;
       this.flames.instanceMatrix.needsUpdate = true;
       this.flames.instanceColor.needsUpdate = true;
       this.fireCores.instanceMatrix.needsUpdate = true;
@@ -841,6 +826,43 @@
       this.lastDraw = t;
       this.dirty = false;
       this.lastTick = s.tick;
+    }
+    // 地上那些小圆环标记：慢速轻轻浮起来再落回去，像在呼吸。
+    // 幅度很小（抬 0.075 格、涨 12%），一个来回约 3.6 秒，并按格子错开相位，
+    // 否则满地圆环会整齐划一地上下，像节拍器。用余弦形而不是硬摆，起落是平滑的。
+    // 低画质（"轻量"档）下保持静止：那档本来就该省开销，也免得动态看着变形。
+    drawMarkers(t) {
+      const m = this.rings,
+        list = this.labelData;
+      if (!m || !list) return;
+      m.count = 0;
+      if (!this.showLabels) return;
+      const s = this.world,
+        still = this.quality === 'low';
+      for (const [i, txt, col] of list) {
+        if (!['种', '虫', '鸟', '蝶'].includes(txt)) continue;
+        let lift = 0,
+          k = 1;
+        if (!still) {
+          const ph = (t * 0.00028 + (i % 7) * 0.9) % 1,
+            ease = 0.5 - 0.5 * Math.cos(ph * Math.PI * 2);
+          lift = ease * 0.075;
+          k = 1 + ease * 0.12;
+        }
+        this.put(
+          m,
+          (i % s.w) - s.w / 2 + 0.5,
+          Eco.surfaceHeight(s.cells[i]) + 0.16 + lift,
+          Math.floor(i / s.w) - s.h / 2 + 0.5,
+          // 圆环躺在 XZ 平面上，所以只放大 x/z；两轴同值就是等比，不会拉变形
+          k,
+          1,
+          k,
+          col,
+        );
+      }
+      m.instanceMatrix.needsUpdate = true;
+      m.instanceColor.needsUpdate = true;
     }
     // 体素环境光遮蔽：看 8 个邻格比本格高多少，折算成一个 0.72~1 的亮度系数
     voxelAO(s, i, terr) {
@@ -1121,6 +1143,7 @@
       this.drawClouds(t);
       this.drawAnimals(t);
       this.drawEffects(t);
+      this.drawMarkers(t);
       let i = this.hover >= 0 ? this.hover : this.selected;
       this.cursor.visible = i >= 0 && !!this.world.cells[i];
       if (this.cursor.visible)
@@ -1129,6 +1152,12 @@
           0.19 + Eco.surfaceHeight(this.world.cells[i]),
           Math.floor(i / this.world.w) - this.world.h / 2 + 0.5,
         );
+      // 悬停/选中方块也轻轻呼吸一下，三轴同值所以不会拉变形；低画质下保持静止
+      if (this.cursor.visible) {
+        const breathe =
+          this.quality === 'low' ? 1 : 1 + (0.5 - 0.5 * Math.cos(t * 0.0004)) * 0.07;
+        this.cursor.scale.set(breathe, 1, breathe);
+      }
       this.updateLabels();
       this.renderer.render(this.scene, this.camera);
     }
