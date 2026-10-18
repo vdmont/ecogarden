@@ -652,9 +652,13 @@
               1 - left - right,
               total / slices,
               1 - front - back,
-              k === slices - 1 && el > 5
-                ? 0xe2e8df
-                : [0x777f78, 0x858b7d, 0x969b8b][(k + (i % 2)) % 3],
+                shadeHex(
+                  k === slices - 1 && el > 5
+                    ? 0xe2e8df
+                    : [0x777f78, 0x858b7d, 0x969b8b][(k + (i % 2)) % 3],
+                  // 山体也要吃环境光遮蔽：越靠下越暗，夹在两峰之间的岩面压暗
+                  voxelAO * (0.80 + 0.20 * (k / slices)),
+                ),
             );
           }
         }
