@@ -262,25 +262,61 @@ for (const [g, list] of Object.entries(GardenAudio.CALL_FILES)) {
   }
 }
 
-// —— 混音曲线：全局 0.2、聚焦 0.4、看得见 0.32、其他 0.1，且都要开根号 ——
+// ══════════════ 空间混音模型：验收要求里能在 Node 里验的那些 ══════════════
+//
+// 这里只验**公式与常量**。真实的平滑曲线、片段链、能量实测必须在浏览器里验
+// （.dsh-reports/research/probe-calls.mjs）：Web Audio 的时间在 Node 桩里是
+// frozen 的，量出来的过渡全是假的——上一轮就因为这个把陈旧值当成真值。
 {
   const M = GardenAudio.MIX;
-  assert.equal(M.base, 0.2, '全局基准不是 0.2');
-  assert.equal(M.base * M.focusK, 0.4, '聚焦时不是 0.4');
-  // 0.2 × 1.6 在浮点里是 0.32000000000000006，用容差比而不是相等
-  assert(Math.abs(M.base * M.seenK - 0.32) < 1e-9, '镜头里看得见但没聚焦的不是 0.32');
-  assert.equal(M.base * M.otherK, 0.1, '完全看不见的不是 0.1');
-  // 增益是振幅比 = sqrt(能量比)
-  assert(Math.abs(Math.sqrt(0.2) - 0.4472) < 1e-3);
-  assert(Math.abs(Math.sqrt(0.4) - 0.6325) < 1e-3);
-  assert(Math.abs(Math.sqrt(0.32) - 0.5657) < 1e-3);
-  assert(Math.abs(Math.sqrt(0.1) - 0.3162) < 1e-3);
-  assert(M.ceiling >= 0.4, '上限低于聚焦时的 0.4，等于聚焦没效果');
-  // 三档必须真的分得开，否则"抬高看得见的、压低看不见的"就是一句空话
-  assert(M.focusK > M.seenK && M.seenK > 1 && M.otherK < 1, '三档没有拉开差距');
+
+  // 验收 8：归一化目标必须落在 0.2–0.4
+  assert(
+    M.clipRms >= M.clipRmsMin && M.clipRms <= M.clipRmsMax,
+    '归一化目标 ' + M.clipRms + ' 不在要求的 ' + M.clipRmsMin + '–' + M.clipRmsMax + ' 区间',
+  );
+  // 峰值上限必须小于 1，否则归一化之后仍可能削波
+  assert(M.clipPeak < 1, '峰值上限 ' + M.clipPeak + ' ≥ 1，归一化后仍会削波');
+
+  // 验收 7：平滑时间常数必须在要求的 0.3–0.8 秒之间
+  assert(
+    M.smoothTau >= 0.3 && M.smoothTau <= 0.8,
+    '平滑时间常数 ' + M.smoothTau + ' 不在要求的 0.3–0.8 秒',
+  );
+
+  // 验收 1：全局视角动物声只是很小的环境声 —— zoomMin 要远小于 zoomMax
+  assert(M.zoomMin > 0 && M.zoomMin < M.zoomMax * 0.3, '全局视角的动物声不够小');
+  // 验收 3：锁定要有额外抬升，不然"锁定谁"在混音上毫无区别
+  assert(M.lockBoost > 1.2, '锁定的那只没有被额外抬高');
+  // 验收 9：BGM 让位但不能压没
+  assert(M.bgmDuckMin > 0.5 && M.bgmDuckMin <= 1, 'BGM 让位太多或完全没让位');
+  // 验收 6：交叉淡化要够短（否则叠音）又不能是 0（会"啪"）
+  assert(M.xfadeSec > 0.02 && M.xfadeSec < 0.5, '交叉淡化时长离谱：' + M.xfadeSec);
+  // 验收 4：同屏多源要能叠，但 31 种全放就是菜市场
+  assert(M.maxVoices >= 2, '同屏多种同时发声做不到');
+  assert(M.maxVoices <= 8, '同时在响的物种太多，会变成一片糊');
+  assert(M.voiceFloor > 0 && M.voiceFloor < 0.2, '视口边缘之外的淡出阈值不对：' + M.voiceFloor);
 }
 console.log(
-  'PASS 属级分组符合分类学、录音文件都在盘上、混音三档 0.4/0.32/0.1 且按能量开根号',
+  'PASS 空间混音常量符合验收要求：归一化 ' +
+    GardenAudio.MIX.clipRms +
+    '（要求 ' +
+    GardenAudio.MIX.clipRmsMin +
+    '–' +
+    GardenAudio.MIX.clipRmsMax +
+    '）、时间常数 ' +
+    GardenAudio.MIX.smoothTau +
+    's（要求 0.3–0.8）、全局 ' +
+    GardenAudio.MIX.zoomMin +
+    ' → 最近 ' +
+    GardenAudio.MIX.zoomMax +
+    '、锁定 ×' +
+    GardenAudio.MIX.lockBoost +
+    '、最多 ' +
+    GardenAudio.MIX.maxVoices +
+    ' 个声源、淡化 ' +
+    GardenAudio.MIX.xfadeSec +
+    's',
 );
 
 // ══════════════ 素材包映射：每个物种都有录音，多条的要能随机 ══════════════
@@ -412,6 +448,11 @@ console.log(
   console.log(
     `PASS 在响的只数会归零（摸 ${n} 次${PET_TYPE} → ${playing - before} 段 → 放完回到基线 ${before}）`,
   );
+
+  // 停掉混音回路。**必须放在这里**，不能只靠模块末尾那一句：
+  // 模块末尾那句是同步执行的，而本块里的 pet() 会调 unlock() → startMixLoop()
+  // 把定时器重新起起来，之后没人再停——进程就永远不退出，测试表现为"卡住"。
+  GardenAudio.stopMixLoop();
 })();
 
 // 混音回路是 setInterval，不停掉的话进程不会退出。

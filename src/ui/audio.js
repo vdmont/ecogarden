@@ -678,6 +678,7 @@
   // ══════════════════════════════════ 发声层 ══════════════════════════════════
   let ctx,
     master,
+    limiter,
     settings = {},
     active = false;
   // 合成声的输出节点。默认等于 master，但环境声混音会把某些属的合成叫
@@ -1040,51 +1041,102 @@
   //  3. 不改 scene.js / app.js（朋友正在 rebase 那两个文件），而是在这里包一层
   //     GardenView.prototype.render 拿到视图实例，逐帧读 zoom 与 followAnimal。
   //     等 rebase 完成后，应该改成 app.js 显式调 GardenAudio.setMix()。
+  // ══════════════════════════════════════════════════════════════
+  // 空间化动物声层
+  //
+  // 项目所有者 2026-10-18 定的验收标准（要点）：
+  //   · 全局视角：耳朵里最明显的是 BGM，动物声只是很小的环境声
+  //   · 逐渐放大：视口内的动物声**随缩放平滑升高**，不能突然出现
+  //   · 锁定一只：它在动物层里最大，但**切换必须平滑**，不能"啪"一下炸出来
+  //   · 视口里有什么就放什么：鸟和狗同屏就该同时听到两种；移出视口淡出到 0
+  //   · 离视口中心越近越大、越靠边缘越小（连续权重，不是"看得见/看不见"两级）
+  //   · 每个物种从**自己的音频池随机取片段**，一段接一段，**交叉淡化**，80 条都参与
+  //   · 增益每帧 lerp 到目标值，时间常数 0.3–0.8 秒；镜头瞬移也不能从 0 跳到最大
+  //   · 按**平均能量（RMS）**归一化到 0.2–0.4，不只看峰值
+  //
+  // 三条实现上的选择，说清楚为什么：
+  //
+  // 1. **归一化到固定 RMS，而不是"对着 BGM 量能量再修正"。**
+  //    原来有个 AGC 回路：挂两个 AnalyserNode 量动物声与 BGM 的能量，再慢慢修正。
+  //    问题是它在无头浏览器里量不准（音频线程成块渲染，而且完全静音的分支根本不
+  //    推进参数，上一轮实测就是把陈旧值当成了真值），而且它和"每帧平滑"天然打架
+  //    ——一个每 250ms 步进 1.5 dB，一个要求 0.3–0.8 秒内到位。
+  //    改成：解码后把每条片段**一次性**归一化到 RMS 0.3，之后增益完全由空间模型决定，
+  //    不再有任何反馈回路。AnalyserNode 留着，但只用来**测量和验收**，不参与控制。
+  //
+  // 2. **每帧在 JS 侧做 lerp 再写 gain.value**，而不是往音频线程排 ramp。
+  //    因为验收要看"当前增益真的走到哪了"。排进音频线程的 ramp 读不回来，
+  //    出问题时分不清是算法错了还是根本没排上。
+  //
+  // 3. **同物种多只用饱和相加（1-Π(1-w)），不是直接相加。**
+  //    三只羊挤在画面中央，直接相加就是 3 倍能量，锁一只猫的时候背景会突然变响。
+  //    饱和相加的效果是"一只 = 一只，两只还是一只那么多但更满"，不会有突变。
   const MIX = {
-    base: 0.2, // 全局视角：动物声能量 / BGM 能量
-    focusK: 2.0, // 聚焦的那个物种 ×2 → 0.2 × 2 = 0.4
-    // 镜头里**看得见但没聚焦**的那些：抬到 1.6 倍（0.2 × 1.6 = 0.32）。
-    // 项目所有者要的是"一片生机"，不是"孤零零一只"，所以看得到的都该浮出来一点。
-    seenK: 1.6,
-    otherK: 0.5, // 完全看不到的 ×0.5 → 0.2 × 0.5 = 0.1
-    zoomBoost: 1.5, // 拉到最近时整体再抬这么多倍（即最多 ×2.5）
-    ceiling: 0.85, // 能量比上限，防止拉满后盖过背景音乐
-    rampSec: 1.2, // 线性过渡时长
-    agcMs: 250, // 能量修正回路步进
-    agcMaxDb: 1.5, // 每步最多修正 1.5 dB
-    minConcurrent: 3, // 环境声同时在响的只数下限
-    maxConcurrent: 5, // 上限
-    gapMs: [4000, 22000], // 两次发声之间的随机间隔
-    // 镜头正在看的那只：间隔比别的短得多，所以它几乎一直在叫。
-    focusGapMs: 2600,
-    focusDb: -1, // 比背景声稍大一点，够突出又不吵
-    // 「看得见」的判定半径（以正交相机画面半高 extent 为 1 倍）。
-    // 1.15 是放宽了一点：相机有俯角，动物又有高度，站在画面边上的也该算看见。
+    // 每条片段归一化到的 RMS。要求落在 0.2–0.4，取中间值 0.3。
+    clipRms: 0.3,
+    clipRmsMin: 0.2,
+    clipRmsMax: 0.4,
+    // 归一化之后还要限一下峰值：有些片段动态极大（素材包自己标注 cat_067 就是），
+    // 按 RMS 拉到 0.3 之后峰值会超过 1.0，那就会削波。超过就整体压下来，
+    // 并记进 clipStats，诊断里能看见是哪些。
+    clipPeak: 0.89,
+    // 压缩门槛 = 当前平均能量 × 这个倍数。取 2.2 而不是 1.0：门槛放低压得更狠、
+    // 数字更容易凑齐，但听起来"被压过"。实测两者归一化结果几乎一样
+    // （峰值最高 0.861 vs 0.863），所以取更温和的这个。
+    compThrMul: 2.2,
+
+    // 空间权重 → 增益
+    zoomMin: 0.06, // 缩到最远时动物层还剩这么多（不能真到 0，要留一点"生机"）
+    zoomMax: 0.85, // 锁到最近且那只就在画面中心时的上限（防盖过 BGM）
+    lockBoost: 1.45, // 锁定的那只比同样距离的"只是看见"的动物再大 1.45 倍
+    // 每帧 lerp 的时间常数（秒）。取 0.45：够快（验收要求约 0.5 秒内到位），
+    // 又不会在镜头轻微晃动时跟着抖。
+    smoothTau: 0.45,
+    // 视口判定半径（以正交相机画面半高 extent 为 1 倍）。1.15 把画面边上的也算进来
+    // ——相机有俯角、动物有高度，卡太死会让站在边上的羊突然静音。
     seenRadius: 1.15,
+
+    // 同时在响的物种数上限。31 种全放就是菜市场，不是花园。
+    maxVoices: 5,
+    // 权重低于这个就不放（视口边缘之外自然落到 0）。
+    voiceFloor: 0.06,
+
+    // 片段之间的交叉淡化时长。太短会"啪"，太长会两声叠在一起。
+    xfadeSec: 0.14,
+    // 片段至少要有这么长才值得排进链里（否则交叉淡化会盖过整段）。
+    minClipSec: 0.25,
+
+    // BGM 让位：全局 1.0，锁到最近时压到 bgmDuckMin。要让位但不能被压没。
+    bgmDuckMin: 0.72,
+
+    tickMs: 33, // 空间增益的刷新间隔（约 30 帧/秒）
   };
 
   let ambientBus = null,
     ambAnalyser = null,
     bgmAnalyser = null,
     bgmGain = null;
-  const genusBus = {}; // genus → GainNode
-  const mixLog = []; // 最近几次 applyMix 的「想要多少 / 实际多少」，诊断用
+  const speciesBus = {}; // type → GainNode（每个物种一条总线）
+  const busGainState = {}; // type → {cur, target}：验收要看"当前增益真的走到哪了"
+  const mixLog = []; // 最近几次空间计算的快照，诊断用
   const LOG_MAX = 12;
-  const buffers = {}; // path → AudioBuffer（加载后按 RMS 归一到 1.0）
+  const buffers = {}; // path → AudioBuffer（解码后已按 RMS 归一化到 0.3）
   const loading = {}; // path → Promise，避免并发重复加载
-  let mixRamp = null; // 当前这轮线性过渡的起点/终点
-  let agcScale = 1; // 能量修正回路累计出来的整体缩放
-  let mixCalls = 0; // applyMix 被调了几次（诊断用：反复调用会把线性过渡一次次重启）
+  const clipStats = {}; // path → {rmsBefore, rmsAfter, peak, limited}
+  const failedClips = {}; // path → 错误信息（取不到的片段；不牵连整个物种）
+  const voices = {}; // type → 正在连续播的那条（片段链）
+  let agcScale = 1; // 只为兼容旧诊断输出，已不参与控制
+  let mixCalls = 0;
   let observeCalls = 0; // observeView 被调了几次（应该等于渲染帧数）
   let view = null; // GardenView 实例（由包一层 render 拿到）
   let viewHooked = false;
   let focusType = ''; // 镜头正在看的那只（type key），没有就是空串
   let focusGenus = ''; // 它的属，只作为"这个物种没录音"时的退路
-  let seenTypes = new Set(); // 镜头看得见的物种集合
   let zoomT = 0; // 0 = 最远，1 = 最近
-  let ambTargetEnergy = MIX.base;
-  let ambMeasured = 0;
+  let lastTickAt = 0;
+  let ambMeasured = 0; // 只用于测量与验收，不参与控制
   let bgmMeasured = 0;
+  let lastSpatial = { weights: {}, locked: '', audible: [] };
 
   function ensureBuses() {
     if (!ctx || !master) return false;
@@ -1099,13 +1151,18 @@
     return true;
   }
 
-  function busFor(genus) {
+  function busFor(type) {
     if (!ensureBuses()) return null;
-    let g = genusBus[genus];
+    let g = speciesBus[type];
     if (!g) {
       g = ctx.createGain();
+      // 新建的总线增益默认是 1.0，但空间模型认为"还没被看见"的目标是 0。
+      // 这里显式置 0 并同步到 busGainState——否则第一帧 lerp 是从 1.0 往下走，
+      // 听起来就是"本来很响突然被关小"。
+      g.gain.value = 0;
       g.connect(ambientBus);
-      genusBus[genus] = g;
+      speciesBus[type] = g;
+      busGainState[type] = { cur: 0, target: 0 };
     }
     return g;
   }
@@ -1121,11 +1178,19 @@
         if (!r.ok) throw new Error('HTTP ' + r.status);
         const raw = await r.arrayBuffer();
         const buf = await ctx.decodeAudioData(raw);
-        normalizeBuffer(buf);
+        normalizeBuffer(buf, path);
         buffers[path] = buf;
         return buf;
       } catch (e) {
-        delete CALL_FILES[Object.keys(CALL_FILES).find((k) => CALL_FILES[k].includes(path)) || ''];
+        // ⚠ 这里原来写的是 `delete CALL_FILES[用到的物种]`，也就是
+        //   **任何一条片段加载失败，就把整个物种从表里永久删掉**。
+        //   后果是：一次网络抖动、一次 ctx 还没建好的早调用，那只动物就永远不出声，
+        //   而且错误被吞掉、控制台什么都没有——排查时完全看不出发生过什么。
+        //   （暴露它的经过：给验收加了 _preloadAll()，在 unlock 之前调用，
+        //   ctx 为 null → 80 条全"失败" → CALL_FILES 被清空 → 全场静音。）
+        // 正确做法：只记下**这一条**取不到，把它从该物种的候选里排除，
+        // 别的片段照常播；物种本身不动。
+        failedClips[path] = String((e && e.message) || e);
         return null;
       } finally {
         delete loading[path];
@@ -1135,21 +1200,128 @@
     return p;
   }
 
-  function normalizeBuffer(buf) {
+  // 按**平均能量（RMS）**归一化，不是按峰值。
+  //
+  // 为什么不能只看峰值：峰值只管最响的那一下。一条极短、高动态的猫叫
+  // （素材包自己标注 cat_067 就是）峰值可以顶到 0，而一条又长又平的蟋蟀
+  // 峰值不低但平均能量很小。按峰值对齐，这两条放在一起的听感差一大截。
+  //
+  // ⚠ 这里有个绕不过去的物理约束，必须说清楚：**光靠调增益，RMS 0.3 和峰值
+  // 0.89 在数学上不可能同时满足。** 素材包里很多片段的峰均比高达 25 dB
+  // （峰是均值的 18 倍）；按 RMS 拉到 0.3，峰值就是 5.4，削掉到 0.89 的话
+  // RMS 会被压到 0.05 左右。第一版就是纯增益缩放 + 峰值硬限，实测 80 条**全部**
+  // 被限幅、RMS 只剩 0.04–0.26 —— 等于没有归一化。
+  //
+  // 正确做法是**先把峰均比压到达标，再一次性归一化**，最后硬限幅兜底。
+  //
+  // ⚠ 为什么必须"先压后归一"、不能反过来：能量不在峰值上。
+  //   一段叫声的响度几乎全在中间那一段，峰值只是最响的那一下。
+  //   所以"压一下峰值再按平均能量放大"是个正反馈——压掉的峰值少，
+  //   放大又把峰值顶回去，越迭代越糟。
+  //   实测（.dsh-reports\research\probe-norm.mjs，80 条真实解码音频）：
+  //     · 纯增益不管峰值      → 80/80 落在 0.2–0.4，但峰值最高到 6.6
+  //     · 压→归一化循环（旧） → 只有 21/80，平均能量中位只剩 0.074（发散）
+  //     · 先压到峰均比达标再归一 → 80/80 落在 0.2–0.4，峰值最高 0.863
+  //
+  // 门槛取"当前平均能量的 2.2 倍"而不是固定电平，是为了跟素材的电平无关：
+  // 安静的和响的用同一套压缩量。门槛以下一个样本都不动，
+  // 所以不会把底噪放大。
+  function normalizeBuffer(buf, path) {
+    const stat = measureBuf(buf);
+    const rec = {
+      rmsBefore: +stat.rms.toFixed(5),
+      peakBefore: +stat.peak.toFixed(4),
+      crestBefore: +(stat.peak / Math.max(1e-9, stat.rms)).toFixed(2),
+      limited: false,
+      silent: false,
+    };
+    if (!(stat.rms > 1e-6)) {
+      clipStats[path] = rec;
+      return;
+    }
+    // RMS 0.3 + 峰值 0.89 意味着峰均比最多只能到 2.97。留 3% 余量给浮点误差。
+    const wantCrest = (MIX.clipPeak / MIX.clipRms) * 0.97;
+    let m = stat;
+    let passes = 0;
+    for (; passes < 7 && m.peak / m.rms > wantCrest; passes++) {
+      const ratio = [2, 3, 4, 6][Math.min(passes, 3)];
+      const thr = m.rms * MIX.compThrMul;
+      for (let c = 0; c < buf.numberOfChannels; c++) applyChan(buf, c, (d) => softCompress(d, thr, ratio));
+      m = measureBuf(buf);
+    }
+    rec.passes = passes;
+    rec.limited = passes > 0;
+    // 压到达标之后**只做一次**归一化。
+    if (m.rms > 1e-6) {
+      const scale = MIX.clipRms / m.rms;
+      for (let c = 0; c < buf.numberOfChannels; c++) applyChan(buf, c, (d) => scaleChan(d, scale));
+    }
+    // 兜底：无论上面走到哪一步，峰值都不得超过 clipPeak
+    const fin = measureBuf(buf);
+    if (fin.peak > MIX.clipPeak) {
+      const k = MIX.clipPeak / fin.peak;
+      for (let c = 0; c < buf.numberOfChannels; c++) applyChan(buf, c, (d) => scaleChan(d, k));
+      rec.limited = true;
+    }
+    const after = measureBuf(buf);
+    rec.rmsAfter = +after.rms.toFixed(4);
+    rec.peakAfter = +after.peak.toFixed(4);
+    rec.gain = +(MIX.clipRms / Math.max(1e-9, m.rms)).toFixed(2);
+    clipStats[path] = rec;
+  }
+
+  function applyChan(buf, c, fn) {
+    const d = buf.getChannelData(c);
+    fn(d);
+  }
+  function scaleChan(d, k) {
+    for (let i = 0; i < d.length; i++) d[i] *= k;
+  }
+  // 软拐点压缩：阈值以下原样，超过的部分按 1/ratio 压。
+  // 不用硬限幅是因为硬限幅会在波形上切出平台，听着像被削过。
+  function softCompress(d, thr, ratio) {
+    for (let i = 0; i < d.length; i++) {
+      const a = d[i] < 0 ? -d[i] : d[i];
+      if (a <= thr) continue;
+      const y = thr + (a - thr) / ratio;
+      d[i] = d[i] < 0 ? -y : y;
+    }
+  }
+  function measureBuf(buf) {
     let sum = 0,
-      n = 0;
+      n = 0,
+      peak = 0;
     for (let c = 0; c < buf.numberOfChannels; c++) {
       const d = buf.getChannelData(c);
-      for (let i = 0; i < d.length; i++) sum += d[i] * d[i];
+      for (let i = 0; i < d.length; i++) {
+        const v = d[i];
+        sum += v * v;
+        const a = v < 0 ? -v : v;
+        if (a > peak) peak = a;
+      }
       n += d.length;
     }
-    const rms = Math.sqrt(sum / Math.max(n, 1));
-    if (!(rms > 1e-6)) return;
-    const k = 1 / rms;
-    for (let c = 0; c < buf.numberOfChannels; c++) {
-      const d = buf.getChannelData(c);
-      for (let i = 0; i < d.length; i++) d[i] *= k;
+    return { rms: Math.sqrt(sum / Math.max(n, 1)), peak };
+  }
+
+  // 归一化之后这条片段的平均能量落在哪儿。要求 0.2–0.4。
+  // 这是验收用的判据，所以它是"真的算一遍"，不是查一个写死的数。
+  function clipEnergyReport() {
+    const rows = [];
+    for (const [p, s] of Object.entries(clipStats)) {
+      if (s.silent) continue;
+      rows.push({ path: p, rms: s.rmsAfter, peak: s.peakAfter, limited: s.limited });
     }
+    const inRange = rows.filter((r) => r.rms >= MIX.clipRmsMin && r.rms <= MIX.clipRmsMax).length;
+    return {
+      total: rows.length,
+      inRange,
+      limited: rows.filter((r) => r.limited).length,
+      overPeak: rows.filter((r) => r.peak > 1).length,
+      rmsMin: rows.length ? Math.min(...rows.map((r) => r.rms)) : 0,
+      rmsMax: rows.length ? Math.max(...rows.map((r) => r.rms)) : 0,
+      rows,
+    };
   }
 
   function pickFile(genus) {
@@ -1161,18 +1333,20 @@
   // 放一段录音。走属总线，所以聚焦/远近的混音对它同样生效。
   //
   // ambPlaying 的增减**只在这里做**，调用方一律不许碰。踩过的坑：原来
-  // playRecord 自己加一、scheduleAmbient 又加一，而结束时只减一次；pet() 那条路
+  // playRecord 自己加一、调度器又加一，而结束时只减一次；pet() 那条路
   // 更是只加不减。计数器只涨不涨，涨过 maxConcurrent 之后调度被永久挡死——
   // 表现是开场几声鸟叫之后再也不响。真实浏览器里量到的 ambPlaying 恒为 9、
   // 30 秒 recordPlays 零增长，就是这个。
   // 计数时机取"源真的开始发声"，而不是"决定要发声"：加载失败的那次不该占位。
   function pickFile(type, wantLoop) {
-    const list = CALL_FILES[type];
-    if (!list || !list.length) return null;
+    const all = CALL_FILES[type];
+    if (!all || !all.length) return null;
+    let list = all.filter((p) => !failedClips[p]);
+    if (!list.length) list = all;
     const meta = CALL_META[type];
     // wantLoop：这个物种有没有标了「适合连续播」的文件（蟋蟀、蜜蜂、狐狸那声带混响的）。
     // 有就从里面挑，没有就退回普通变体。
-    const loops = (meta && meta.loops) || [];
+    const loops = ((meta && meta.loops) || []).filter((p) => list.includes(p));
     const pool = wantLoop && loops.length ? loops : list;
     return pool[Math.floor(Math.random() * pool.length)];
   }
@@ -1180,7 +1354,7 @@
   // 放一段录音。走物种总线，所以聚焦/远近的混音对它同样生效。
   //
   // ambPlaying 的增减**只在这里做**，调用方一律不许碰。踩过的坑：原来
-  // playRecord 自己加一、scheduleAmbient 又加一，而结束时只减一次；pet() 那条路
+  // playRecord 自己加一、调度器又加一，而结束时只减一次；pet() 那条路
   // 更是只加不减。计数器只涨不跌，涨过 maxConcurrent 之后调度被永久挡死——
   // 表现是开场几声鸟叫之后再也不响。真实浏览器里量到的 ambPlaying 恒为 9、
   // 30 秒 recordPlays 零增长，就是这个。
@@ -1230,117 +1404,209 @@
     return byType[type] || 0;
   }
 
-  const byType = {}; // type → 正在发声的条数（voices 上限就是拿它数的）
+  const byType = {}; // type → 正在发声的条数（playRecord 那条路用它数 voices）
 
   let ambPlaying = 0;
   let recordPlays = 0;
-  let ambTimer = 0;
-  const ambCooldown = {}; // type → 下次可发声的时间戳
 
-  // 场上真的有、而且有录音的物种。羊都迁走了就不该再咩咩叫。
-  // 返回 type 而不是属：素材包给的是**每种动物**独立的录音与变调。
-  function liveTypes() {
-    const w = view?.world;
-    if (!w || !w.cells) return Object.keys(CALL_FILES);
-    const out = new Set();
-    for (const c of w.cells) {
-      const a = c && c.animal;
-      if (!a || !a.type) continue;
-      if (CALL_FILES[a.type]) out.add(a.type);
-      else if (CALL_FILES[genusOf(a.type)]) out.add(genusOf(a.type));
-    }
-    return [...out];
-  }
-
-  // 镜头看得见的物种。这是"抬高看得见的、压低看不到的"那条需求的判据。
+  // ══════════════ 空间权重 ══════════════
   //
-  // 判据用**离镜头注视点的世界距离**而不是投影到屏幕坐标，因为正交相机的
-  // 可视范围就是一个以注视点为中心、按 zoom 放大的矩形（见 scene.js 的
-  // updateCamera：extent = max(...) * zoom）。照抄那个公式量出来的半径，
-  // 和画面实际大小是一致的；再乘 1.15 把画面边上的也算进来。
+  // 需求原文：「离视口中心越近的动物，叫声越大；越靠边缘越小，窗口外淡出到 0。」
+  // 所以这里是**连续**权重，不是我上一版的"看得见 / 看不见"两级。
   //
-  // 动物位置优先从 view.motion 里读——那是渲染时真正在用的坐标，动物会走动；
-  // 读不到（还没被画过）才退回按格子下标推算的位置。
-  function visibleTypes() {
+  // 半径照抄 scene.js 的正交相机可视范围公式（extent = max(...) * zoom），
+  // 再乘 seenRadius 把画面边上的也算进来。动物坐标优先取 view.motion——
+  // 那是渲染时真正在用的坐标，动物会走动；读不到才按格子下标推算。
+  function spatialWeights() {
     const v = view;
     const w = v && v.world;
-    if (!w || !w.cells) return new Set(liveTypes());
+    const out = {};
+    if (!w || !w.cells) return out;
     const aspect = (v.width || 1) / (v.height || 1);
     const extent =
       Math.max((w.w * 0.65) / Math.max(0.65, aspect), w.h * 0.73, 8) * (v.zoom || v.targetZoom || 1);
     const radius = extent * MIX.seenRadius;
     const lx = (v.look && v.look.x) || 0;
     const lz = (v.look && v.look.z) || 0;
-    const out = new Set();
     for (let i = 0; i < w.cells.length; i++) {
       const c = w.cells[i];
       const a = c && c.animal;
       if (!a || !a.type) continue;
+      const key = CALL_FILES[a.type] ? a.type : genusOf(a.type);
+      if (!CALL_FILES[key]) continue;
       const st = v.motion && v.motion.get(a);
       const x = st ? st.x : i % w.w - w.w / 2 + 0.5;
       const z = st ? st.z : Math.floor(i / w.w) - w.h / 2 + 0.5;
-      if ((x - lx) * (x - lx) + (z - lz) * (z - lz) > radius * radius) continue;
-      if (CALL_FILES[a.type]) out.add(a.type);
-      else if (CALL_FILES[genusOf(a.type)]) out.add(genusOf(a.type));
+      const d = Math.hypot(x - lx, z - lz) / radius; // 0 = 正中心，1 = 画面边缘
+      if (d >= 1) continue; // 窗口外：不进权重表，也就不会被排进播放
+      let wi = 1 - d; // 连续：中心 1 → 边缘 0
+      if (key === focusType) {
+        // 锁定的那只权重最高。镜头正对着它时它可能不在几何中心附近，
+        // 所以给它一个下限，免得"锁定了却在画面边上、声音很小"。
+        wi = Math.max(wi, 0.85);
+        wi = Math.min(1, wi * MIX.lockBoost);
+      }
+      // 同物种多只用饱和相加 1-Π(1-w)，不是直接相加：
+      // 三只羊挤在中央，直接相加就是 3 倍能量，锁一只猫时背景会突然变响。
+      out[key] = 1 - (1 - (out[key] || 0)) * (1 - wi);
     }
     return out;
   }
 
-  // 调度。项目所有者要的是「镜头移到哪，哪只动物就一直叫」：
-  //   · 镜头正在看的那只（focusType）**优先**，冷却比别的短得多，所以它几乎一直在叫；
-  //     镜头上秒看羊、下秒看松鼠，羊停了、松鼠接上。
-  //   · 剩下的名额给"镜头看得见的其他动物"随机挑，维持 3–5 个声音在响，
-  //     才有生机盎然的感觉；完全没有在看的就退回场上任意物种。
-  // 同物种多条素材由 pickFile 随机挑，所以听不出在重复。
-  function scheduleAmbient() {
-    if (!ambientBus || !active || settings.sound === false) return;
-    const now = performance.now();
-    const want =
-      MIX.minConcurrent + Math.floor(Math.random() * (MIX.maxConcurrent - MIX.minConcurrent + 1));
-    if (ambPlaying >= want) return;
-
-    const live = liveTypes();
-    if (!live.length) return;
-    const inView = visibleTypes();
-    const onCooldown = (t, gap) => (ambCooldown[t] || 0) >= now + gap;
-    const markCooldown = (t, gap) => {
-      ambCooldown[t] = now + gap + Math.random() * MIX.gapMs[1] * 0.5;
-    };
-    const gapFor = (t) => (t === focusType ? MIX.focusGapMs : MIX.gapMs[0] + Math.random() * (MIX.gapMs[1] - MIX.gapMs[0]));
-
-    // 1) 镜头正在看的那只：只要冷却到了就给它一个位置，不管 want 还剩多少。
-    if (focusType && CALL_FILES[focusType] && !onCooldown(focusType, 0)) {
-      markCooldown(focusType, MIX.focusGapMs);
-      playRecord(focusType, MIX.focusDb);
-      if (ambPlaying >= want) return;
-    }
-
-    // 2) 其余名额：先在"镜头看得见的"里挑，没有可见动物再从全场挑。
-    const pickFrom = (list) => {
-      const pool = list.filter((t) => CALL_FILES[t] && !onCooldown(t, 0));
-      if (!pool.length) return null;
-      const t = pool[Math.floor(Math.random() * pool.length)];
-      markCooldown(t, gapFor(t));
-      playRecord(t, -3); // ambPlaying 由 playRecord 自己管，这里不要再加减
-      return t;
-    };
-    if (!pickFrom(inView)) pickFrom(live);
+  // ══════════════ 片段链 ══════════════
+  //
+  // 需求原文：「每个动物叫声不要只循环一条，要从该动物对应的音频池中随机选片段，
+  // 一段播完再随机播下一段；片段切换要交叉淡化，避免爆音和重复感。80 条音频
+  // 要真正参与随机池管理。」
+  //
+  // 一条 voice 的结构：当前片段 cur（src+gain）+ 预排的下一段 next。
+  // 下一段在当前段结束前 xfadeSec 开始淡入，同时把当前段淡出并 stop——
+  // 中间那一小段两者都在，就是交叉淡化。淡化不足会"啪"，过长会两声叠在一起。
+  function makeVoice(type, bus) {
+    return { type, bus, cur: null, next: null, last: '', clips: 0 };
   }
 
-  // 能量修正回路：把环境声的实际能量慢慢拉到目标（相对 BGM）。
-  // 每步只允许修 ±1.5 dB，快了会泵动。
-  function agcStep() {
+  // 抽一条不等于上一条的片段。池子只有 1 条时只能重复，那是素材的缺口。
+  // 取不到的片段（failedClips）不参与抽取——但只排除它自己，不牵连整个物种。
+  function pickNextPath(type, last) {
+    const all = CALL_FILES[type];
+    if (!all || !all.length) return null;
+    let list = all.filter((p) => !failedClips[p]);
+    // 全都取不到就退回原始列表，宁可再失败一次也不要彻底哑掉
+    if (!list.length) list = all;
+    if (list.length === 1) return list[0];
+    let p = list[Math.floor(Math.random() * list.length)];
+    for (let guard = 0; p === last && guard < 8; guard++)
+      p = list[Math.floor(Math.random() * list.length)];
+    return p;
+  }
+
+  function startVoice(type, bus) {
+    const v = makeVoice(type, bus);
+    voices[type] = v;
+    pumpVoice(v, ctx.currentTime, true);
+    return v;
+  }
+
+  function stopVoice(type, fadeSec) {
+    const v = voices[type];
+    if (!v) return;
+    delete voices[type];
+    const now = ctx.currentTime;
+    for (const slot of [v.cur, v.next]) {
+      if (!slot) continue;
+      const g = slot.g;
+      try {
+        g.gain.cancelScheduledValues(now);
+        g.gain.setValueAtTime(g.gain.value, now);
+        g.gain.linearRampToValueAtTime(0, now + (fadeSec === undefined ? 0.35 : fadeSec));
+        slot.src.stop(now + (fadeSec === undefined ? 0.35 : fadeSec) + 0.02);
+        slot.src.onended = () => {
+          ambPlaying--;
+          try {
+            slot.src.disconnect();
+            g.disconnect();
+          } catch {}
+        };
+      } catch {}
+    }
+    v.cur = null;
+    v.next = null;
+  }
+
+  // 把链往前推一格：没有当前段就起一条；当前段快结束就排下一条。
+  function pumpVoice(v, now, first) {
+    if (!ctx) return;
+    if (!v.cur) {
+      scheduleClip(v, now + 0.03, first);
+      return;
+    }
+    if (v.next) return;
+    const end = v.cur.started + v.cur.dur;
+    if (now >= end - MIX.xfadeSec) scheduleClip(v, Math.max(now + 0.02, end - MIX.xfadeSec), false);
+  }
+
+  function scheduleClip(v, at, isFirst) {
+    const path = pickNextPath(v.type, v.last);
+    if (!path) return;
+    v.last = path;
+    loadBuffer(path).then((buf) => {
+      // 加载是异步的。这期间物种可能已经退出视口（voice 被删了），
+      // 或者已经排过下一段了——两种情况都直接放弃，别叠进来。
+      if (!buf || voices[v.type] !== v) return;
+      if (!isFirst && v.next) return;
+      if (!(buf.duration >= MIX.minClipSec)) return;
+      const meta = CALL_META[v.type] || {};
+      const src = ctx.createBufferSource();
+      src.buffer = buf;
+      // 变调：素材包给的大小差异为主，再叠 ±1.5% 的随机，免得同一条反复听出来
+      src.playbackRate.value = (meta.rate || 1) * (0.985 + Math.random() * 0.03);
+      const g = ctx.createGain();
+      src.connect(g);
+      g.connect(v.bus);
+      const start = Math.max(at, ctx.currentTime + 0.01);
+      const xf = Math.min(MIX.xfadeSec, buf.duration / 3);
+      ambPlaying++;
+      v.clips++;
+      if (isFirst || !v.cur) {
+        g.gain.setValueAtTime(0, start);
+        g.gain.linearRampToValueAtTime(1, start + xf);
+        src.start(start);
+        v.cur = { src, g, started: start, dur: buf.duration / src.playbackRate.value };
+      } else {
+        const old = v.cur;
+        g.gain.setValueAtTime(0, start);
+        g.gain.linearRampToValueAtTime(1, start + xf);
+        // 旧的那段在同样这段时间里淡出——中间重叠的就是交叉淡化
+        try {
+          old.g.gain.cancelScheduledValues(start);
+          old.g.gain.setValueAtTime(old.g.gain.value, start);
+          old.g.gain.linearRampToValueAtTime(0, start + xf);
+          old.src.stop(start + xf + 0.02);
+          old.src.onended = () => {
+            ambPlaying--;
+            try {
+              old.src.disconnect();
+              old.g.disconnect();
+            } catch {}
+          };
+        } catch {}
+        src.start(start);
+        v.cur = { src, g, started: start, dur: buf.duration / src.playbackRate.value };
+        v.next = null;
+        // 到了 start+xf 就把 v.next 用掉，让下一轮可以继续排
+        setTimeout(
+          () => {
+            if (voices[v.type] === v) v.next = null;
+          },
+          Math.max(0, start + xf - ctx.currentTime) * 1000 + 20,
+        );
+      }
+      if (src.onended === null) {
+        src.onended = () => {
+          ambPlaying--;
+          try {
+            src.disconnect();
+            g.disconnect();
+          } catch {}
+        };
+      }
+    });
+  }
+
+  // 只测量，不控制。
+  //
+  // 这里原来是一个 AGC 反馈回路：量动物声与 BGM 的能量，然后每 250ms 修正 1.5 dB。
+  // 两个问题，都不是调参能解决的：
+  //   · 它和无头浏览器的测量方式冲突——音频线程成块渲染，完全静音的分支根本不
+  //     推进参数，上一轮实测就是把陈旧值当成真值，整组结论作废重测才拿到真数。
+  //   · 它和"0.3–0.8 秒内平滑到位"天然打架：一个每 250ms 步进 1.5 dB。
+  // 现在增益完全由空间模型算出来，这两件事都不存在了，所以回路删掉。
+  // AnalyserNode 留着，给验收用（能量到底落在 0.2–0.4 区间没有）。
+  function measureLevels() {
     if (!ambAnalyser || !bgmAnalyser) return;
     ambMeasured = readRms(ambAnalyser);
     bgmMeasured = readRms(bgmAnalyser);
-    if (!(bgmMeasured > 1e-5) || !(ambMeasured > 1e-6)) return;
-    const want = ambTargetEnergy * bgmMeasured * bgmMeasured; // 目标能量（功率）
-    const have = ambMeasured * ambMeasured;
-    const errDb = 10 * Math.log10(want / have);
-    if (!isFinite(errDb) || Math.abs(errDb) < 0.5) return;
-    const step = Math.max(-MIX.agcMaxDb, Math.min(MIX.agcMaxDb, errDb));
-    agcScale *= Math.pow(10, step / 20);
-    agcScale = Math.max(0.02, Math.min(4, agcScale));
   }
 
   const rmsBuf = new Float32Array(1024);
@@ -1351,45 +1617,106 @@
     return Math.sqrt(s / rmsBuf.length);
   }
 
-  // 把每个属的增益从当前值线性过渡到目标值。
-  function applyMix(instant) {
+  // ══════════════ 每帧：算目标增益 → 平滑插值 → 写总线 ══════════════
+  //
+  // 需求原文：「响度必须渐变：每帧根据"缩放级别 + 距视口中心距离 + 是否锁定"计算
+  // 目标增益，再用平滑插值过渡，例如 currentGain = lerp(currentGain, targetGain,
+  // smoothFactor)，时间常数约 0.3–0.8 秒。即使镜头瞬移到鸟身上，也要在短时间内
+  // 平滑升高，不能瞬间从 0 跳到最大。」
+  //
+  // 目标增益怎么算（三项相乘）：
+  //   zoomLerp   缩放从最远到最近，动物层整体从 zoomMin 抬到 zoomMax
+  //   w          该物种的空间权重（0…1，离中心越近越大；锁定的那只最高）
+  //   duck       被锁定物种的额外抬升
+  // 三者相乘再钳位，所以离画面边缘越远的动物目标越接近 0，窗口外就是 0。
+  //
+  // 平滑用指数趋近，等价于对时间常数 τ 的一阶低通：
+  //   cur += (target - cur) * (1 - exp(-dt / τ))
+  // 每帧用**实际经过的时间**算系数，不是写死一个 magic number——
+  // 掉帧或标签页节流时 dt 变大，插值跟着变大，声音不会因为卡顿而变慢。
+  function lerpTo(cur, target, dt, tau) {
+    if (!(dt > 0)) return cur;
+    const k = 1 - Math.exp(-dt / tau);
+    const v = cur + (target - cur) * k;
+    return Math.abs(v - target) < 1e-5 ? target : v; // 收尾：别在目标附近抖
+  }
+
+  function targetGainFor(type, weight) {
+    const zoomLerp = MIX.zoomMin + (MIX.zoomMax - MIX.zoomMin) * zoomT;
+    const locked = type === focusType;
+    let g = zoomLerp * Math.max(0, Math.min(1, weight));
+    if (locked) g *= MIX.lockBoost;
+    return Math.max(0, Math.min(MIX.zoomMax * MIX.lockBoost, g));
+  }
+
+  function updateSpatial(now) {
     if (!ambientBus || !ctx) return;
     mixCalls++;
-    // 缩放做整体远近：最远 ×1，最近 ×(1 + zoomBoost)
-    const boost = 1 + MIX.zoomBoost * zoomT;
-    // 能量比 → 振幅比要开根号
-    const t = ctx.currentTime;
-    const ramp = instant ? 0.001 : MIX.rampSec;
+    const dt = lastTickAt ? Math.max(0, Math.min(0.5, (now - lastTickAt) / 1000)) : 1 / 30;
+    lastTickAt = now;
+
+    const weights = spatialWeights();
+    // 挑要开声/关声的物种：权重够高的，最多 maxVoices 个，按权重从大到小。
+    const ranked = Object.keys(weights)
+      .filter((t) => weights[t] >= MIX.voiceFloor)
+      .sort((a, b) => (a === focusType ? 1e9 : weights[a]) - (b === focusType ? 1e9 : weights[b]));
+    const want = new Set(ranked.slice(0, MIX.maxVoices));
+
+    for (const t of Object.keys(speciesBus)) {
+      if (want.has(t)) continue;
+      // 掉出视口：先淡出再拆。淡出期间总线增益还在往下走，声音是平滑消失的。
+      const st = busGainState[t];
+      if (st.cur > 0.002) {
+        st.target = 0;
+        st.cur = lerpTo(st.cur, 0, dt, MIX.smoothTau);
+        speciesBus[t].gain.value = st.cur;
+      } else if (voices[t]) {
+        st.cur = 0;
+        speciesBus[t].gain.value = 0;
+        stopVoice(t, 0.25);
+      }
+    }
+    for (const t of want) {
+      const bus = busFor(t);
+      if (!bus) continue;
+      const st = busGainState[t] || (busGainState[t] = { cur: 0, target: 0 });
+      st.target = targetGainFor(t, weights[t]);
+      st.cur = lerpTo(st.cur, st.target, dt, MIX.smoothTau);
+      bus.gain.value = st.cur;
+      // 增益起来一点之后才开声：否则会出现"刚开始播就只有一个响的瞬间"
+      if (!voices[t] && st.cur > 0.01) startVoice(t, bus);
+      const v = voices[t];
+      if (v) pumpVoice(v, ctx.currentTime, false);
+    }
+
+    // BGM 让位：放大/锁定时压一点，但压不到 0。
+    if (bgmGain) {
+      const duck = 1 - (1 - MIX.bgmDuckMin) * zoomT;
+      bgmGain.gain.value = lerpTo(bgmGain.gain.value, MUSIC_VOLUME * duck, dt, MIX.smoothTau);
+    }
+
+    lastSpatial = { weights, locked: focusType, audible: [...want] };
     const entry = {
-      t: +t.toFixed(2),
+      t: +(ctx.currentTime).toFixed(2),
       zoomT: +zoomT.toFixed(3),
       focus: focusType || '-',
-      gen: {},
-      tgt: {},
-      was: {},
+      audible: [...want].join(',') || '-',
+      gains: Object.fromEntries(
+        Object.keys(speciesBus).map((k) => [
+          k,
+          +((busGainState[k] ? busGainState[k].cur : 0) || 0).toFixed(4),
+        ]),
+      ),
+      targets: Object.fromEntries(
+        Object.keys(speciesBus).map((k) => [
+          k,
+          +((busGainState[k] ? busGainState[k].target : 0) || 0).toFixed(4),
+        ]),
+      ),
+      clips: Object.fromEntries(Object.entries(voices).map(([k, v]) => [k, v.clips])),
     };
-    for (const g of Object.keys(genusBus)) {
-      // 三档：镜头正在看的那只最高，镜头里看得见的次之，完全看不到的压低。
-      // 项目所有者要的是"生机盎然"——看得到的一起响，看不到的退到后面去。
-      const focused = !!focusType && (g === focusType || g === focusGenus);
-      let k;
-      if (!focusType) k = 1;
-      else if (focused) k = MIX.focusK;
-      else if (seenTypes.has(g)) k = MIX.seenK;
-      else k = MIX.otherK;
-      const energy = Math.min(MIX.ceiling, MIX.base * boost * k);
-      const target = Math.sqrt(energy);
-      const p = genusBus[g].gain;
-      entry.gen[g] = 1;
-      entry.tgt[g] = +target.toFixed(4);
-      entry.was[g] = +p.value.toFixed(4);
-      p.cancelScheduledValues(t);
-      p.setValueAtTime(p.value, t);
-      p.linearRampToValueAtTime(target, t + ramp);
-    }
     mixLog.push(entry);
     if (mixLog.length > LOG_MAX) mixLog.shift();
-    ambTargetEnergy = Math.min(MIX.ceiling, MIX.base * boost * (focusType ? MIX.otherK : 1));
   }
 
   // 逐帧读视图状态。只在这里读，不改 scene.js / app.js。
@@ -1406,15 +1733,9 @@
     // 就没法做到"镜头看阿比西尼亚猫时只响它那两条"。
     const fa = v.followAnimal;
     const ty = fa ? fa.type || fa : '';
-    const seen = visibleTypes();
-    const seenChanged = seen.size !== seenTypes.size || [...seen].some((x) => !seenTypes.has(x));
-    if (t !== zoomT || ty !== focusType || seenChanged) {
-      zoomT = t;
-      focusType = ty;
-      focusGenus = ty ? genusOf(ty) : '';
-      seenTypes = seen;
-      applyMix(false);
-    }
+    zoomT = t;
+    focusType = ty;
+    focusGenus = ty ? genusOf(ty) : '';
   }
 
   function hookView() {
@@ -1513,14 +1834,26 @@
       if (!master) {
         master = ctx.createGain();
         master.gain.value = 0.8;
-        master.connect(ctx.destination);
+        // 主输出限幅器，兜住「总输出不爆音」这条验收。
+        // 单条片段归一化之后峰值已经 ≤0.89，但最多 5 个物种可以同时响、
+        // 锁定的那个还能再乘 1.45，理论上仍可能叠过 1.0 削波。
+        // 平时它完全不动（阈值 -3 dB 之上才介入），只在极端叠加时压一下。
+        limiter = ctx.createDynamicsCompressor();
+        limiter.threshold.value = -3;
+        limiter.knee.value = 0;
+        limiter.ratio.value = 20;
+        limiter.attack.value = 0.003;
+        limiter.release.value = 0.25;
+        master.connect(limiter);
+        limiter.connect(ctx.destination);
       }
       ctx.resume();
     } catch {}
     try {
       ensureBuses();
       hookView();
-      applyMix(true);
+      lastTickAt = 0; // 让第一帧的 dt 用默认值，不把「从解锁到现在」算成一个大 dt
+      updateSpatial(performance.now());
       startMixLoop();
     } catch {}
     try {
@@ -1528,19 +1861,19 @@
     } catch {}
   }
 
-  // 混音回路：能量修正（很慢）+ 环境声调度（更慢）。用 setInterval 而不是
-  // 挂在渲染循环上，这样页面切到后台 rAF 被节流时声音也不会停。
+  // 空间混音回路。挂在 setInterval 上而不是渲染循环里：页面切到后台时
+  // rAF 会被节流到一秒一帧甚至停掉，声音的平滑推进不能跟着停。
+  // 33ms 约等于 30 帧/秒，配合 0.45 秒的时间常数，插值是连续的。
   let mixTimer = 0;
   function startMixLoop() {
     if (mixTimer || !ctx) return;
     mixTimer = setInterval(() => {
       if (document.hidden || !active) return;
       try {
-        agcStep();
-        if (ambientBus) ambientBus.gain.value = agcScale;
-        scheduleAmbient();
+        updateSpatial(performance.now());
+        if ((mixCalls & 15) === 0) measureLevels(); // 测量是给验收看的，不用那么勤
       } catch {}
-    }, MIX.agcMs);
+    }, MIX.tickMs);
   }
 
   // 停掉混音回路。正常游戏里不主动调用（页面卸载时浏览器会回收），
@@ -1589,21 +1922,18 @@
     }
   }
 
-  // 等 rebase 完成、app.js 可以改之后，应该由 app.js 显式调这个函数，
-  // 替掉现在「包一层 GardenView.prototype.render」的观察办法。
+  // 手动推一次镜头状态。正常游戏里**不用**——混音是逐帧读视图自己算的
+  // （observeView + updateSpatial）。留这个函数是为了测试能单独驱动，
+  // 但要清楚：拿它测出来的结果不代表正式流程，正式流程要看 observeCalls。
   function setMix(state) {
     if (!state) return;
     const tz = state.zoom || 1;
     const lo = Math.log(0.14),
       hi = Math.log(1.8);
-    const t = Math.max(0, Math.min(1, (hi - Math.log(tz)) / (hi - lo)));
-    const g = state.focus ? state.focus : '';
-    if (t === zoomT && g === focusType) return;
-    zoomT = t;
-    focusType = g;
-    focusGenus = g ? genusOf(g) : '';
-    if (state.seen) seenTypes = new Set(state.seen);
-    applyMix(false);
+    zoomT = Math.max(0, Math.min(1, (hi - Math.log(tz)) / (hi - lo)));
+    focusType = state.focus || '';
+    focusGenus = focusType ? genusOf(focusType) : '';
+    updateSpatial(performance.now());
   }
 
   document.addEventListener('visibilitychange', () => configure(settings));
@@ -1629,25 +1959,64 @@
     musicLevel: () => (bgmGain ? bgmGain.gain.value : bgm ? bgm.volume : null),
     // 背景音乐是否接进了音频图（接了才能被测量）
     musicMetered: () => !!bgmAnalyser,
-    // 视图实例。混音在正式流程里是**逐帧读它**驱动的（observeView），不是靠
-    // setMix 推的——所以要验证真实行为就得改这里的 targetZoom / followAnimal。
-    // 只给测试和调试用，正常游戏代码不碰。
+    // 视图实例。混音在正式流程里是**逐帧读它**驱动的（observeView），
+    // 要验证真实行为就得改这里的 targetZoom / followAnimal。只给测试和调试用。
     _view: () => view,
-    // 属总线上那个 AudioParam 的活对象（不是快照）。诊断用：
-    // 能拿它单独排一次过渡，就分得清「写法不对」和「这条图上的参数不跑」。
-    _busParam: (genus) => (genusBus[genus] ? genusBus[genus].gain : null),
-    // 调试用：读当前混音状态，验证线性过渡真的到位了
+    // 总线上那个 AudioParam 的活对象（不是快照）。诊断用。
+    _busParam: (type) => (speciesBus[type] ? speciesBus[type].gain : null),
+    // 空间模型算出来的权重（离视口中心越近越大）。验收"越近越大"看这个。
+    _weights: () => ({ ...spatialWeights() }),
+    // 归一化之后的能量报告：每条片段的平均能量有没有落在 0.2–0.4。
+    _clipEnergy: clipEnergyReport,
+    // 取归一化**之后**那条波形（游戏真正在放的那份），用来试听和量频谱。
+    // 只给测试/诊断用，游戏本身不读它。
+    _clipBuffer: (path) => {
+      const b = buffers[path];
+      if (!b) return null;
+      const ch = [];
+      for (let c = 0; c < b.numberOfChannels; c++) ch.push(Array.from(b.getChannelData(c)));
+      return { ch, rate: b.sampleRate, len: b.length, stats: clipStats[path] || null };
+    },
+    // 取不到的片段（不会牵连整个物种，只是不参与抽取）
+    _failedClips: () => ({ ...failedClips }),
+    // 把全部片段都加载一遍（解码 + 归一化），然后给出能量报告。
+    //
+    // 为什么需要这个：归一化是在**内存里**做的，磁盘上的文件还是原始电平。
+    // 所以"直接 fetch 文件量 RMS"量到的是素材包原样，永远不是 0.2–0.4——
+    // 上一版探针就栽在这儿，把正确的结果报成了 0/80 不合格。
+    _preloadAll: async () => {
+      const paths = [...new Set(Object.values(CALL_FILES).flat())];
+      await Promise.all(paths.map((p) => loadBuffer(p).catch(() => null)));
+      return clipEnergyReport();
+    },
+    // 只加载指定的几条（试听/对比用）。给的是文件名片段，会匹配 CALL_FILES 里
+    // 所有含它的路径。全量 80 条解码一遍要几十秒，只听 3 条就别付那个代价。
+    _loadClips: async (names) => {
+      const all = [...new Set(Object.values(CALL_FILES).flat())];
+      const paths = all.filter((p) => names.some((n) => p.includes(n)));
+      await Promise.all(paths.map((p) => loadBuffer(p).catch(() => null)));
+      return paths;
+    },
+    // 调试用：读当前混音状态
     _mix: () => ({
       zoomT,
       focusType,
       focusGenus,
-      seen: [...seenTypes],
-      // 每个物种现在有几个声音在响。voices 上限就是拿它数的。
-      byType: { ...byType },
-      agcScale,
-      ambTargetEnergy,
-      ambMeasured,
-      bgmMeasured,
+      weights: lastSpatial.weights,
+      audible: lastSpatial.audible,
+      // 每个物种：当前增益（节点上的真值）与目标增益。
+      // 「平滑渐变」就是看 cur 一格一格走向 target，而不是一步跳过去。
+      gains: Object.fromEntries(
+        Object.keys(speciesBus).map((k) => [k, +speciesBus[k].gain.value.toFixed(4)]),
+      ),
+      targets: Object.fromEntries(
+        Object.keys(speciesBus).map((k) => [
+          k,
+          +((busGainState[k] ? busGainState[k].target : 0) || 0).toFixed(4),
+        ]),
+      ),
+      // 每个物种的片段链播了多少段。验收"80 条都参与随机池"看这个有没有长。
+      clips: Object.fromEntries(Object.entries(voices).map(([k, v]) => [k, v.clips])),
       ambPlaying,
       recordPlays,
       viewHooked: !!view,
@@ -1655,16 +2024,12 @@
       mixCalls,
       observeCalls,
       mixLog: mixLog.slice(),
-      // 每个总线的实际增益。上面那些是"算出来的意图"，这里是"节点上的真值"——
-      // 验证线性过渡有没有真的到位，只能看这个。
-      genusGains: Object.fromEntries(
-        Object.keys(genusBus).map((g) => [g, +genusBus[g].gain.value.toFixed(4)]),
-      ),
+      ambMeasured,
+      bgmMeasured,
       ctxState: ctx ? ctx.state : null,
       ctxTime: ctx ? +ctx.currentTime.toFixed(3) : null,
     }),
-    // 场上真的有、且有录音的物种 / 镜头看得见的物种。调度和混音都靠这两个。
-    _liveTypes: liveTypes,
-    _visibleTypes: () => [...visibleTypes()],
+    // 现在还在播片段链的物种。
+    _voices: () => Object.keys(voices),
   };
 })(globalThis);

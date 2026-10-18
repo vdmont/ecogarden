@@ -34,6 +34,18 @@ assets/bgm/bgm-*.mp3
 assets/bgm/bgm2-*.mp3
 assets/bgm/ace/
 
+# music/ 素材包里的三块重复内容（文件仍留在本地盘上，只是不进仓库）：
+#   sfx/wav/     14 MB。mp3 版本就在旁边，内容等价，游戏只用 mp3。
+#   waveforms/   80 张 PNG 波形图。试听页用的，游戏里没有任何地方读它。
+#   audition.html 5.3 MB。它把同样那 80 条音频又内嵌了一遍，
+#                而 assets/calls/ 里已经有同一批文件。
+# 保留在仓库里的是：sfx/mp3/（游戏真正用的那 80 条）、manifest.json、
+# sfx-map.json、LICENSES.md、credits.md、README.md、处理报告.md、pending/。
+# 两个生成器（scripts/gen-sfxmap.cjs、gen-licenses.cjs）只读上面这些。
+music/sfx/wav/
+music/waveforms/
+music/audition.html
+
 # AI 助手 / 代理留下的本地临时目录
 # 这些是各工具的中间产物，不是工程内容，不要上传。
 # 新旧目录名都留着：不同工具版本用的名字不一样。
