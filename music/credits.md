@@ -42,19 +42,7 @@
 ## CC BY-SA 4.0
 
 - “Capivara” by Sidnei Dantas — https://www.inaturalist.org/observations/39058843
-
-## CC BY-NC 4.0
-
-- “欧亚红松鼠-东北亚种” by xiaopt — https://www.inaturalist.org/observations/90544559
-- “Domestic Cat” by Misha Zitser — https://www.inaturalist.org/observations/307429196
-- “Domestic Dog” by Ajay Malik. — https://www.inaturalist.org/observations/332995861
-- “Carpincho” by Malena Maroli — https://www.inaturalist.org/observations/399708700
-- “Capybara” by Pablo Alejandro Pla — https://www.inaturalist.org/observations/147566645
-- “Butsnudet frø” by petersc — https://www.inaturalist.org/observations/268026297
-- “Nitticora” by mauro_fioretto — https://www.inaturalist.org/observations/266361769
-- “Black-crowned Night Heron” by eleggua — https://www.inaturalist.org/observations/263036346
-- “Aegithalos caudatus caudatus” by Maksymilian Wojtkiewicz — https://www.inaturalist.org/observations/146888741
-- “Rosaflamingo” by Παναγιώτης Ραφαηλίδης — https://www.inaturalist.org/observations/104482453
+- “Long-tailed Tit — call, duet” by Benoît Van Hecke — https://xeno-canto.org/701097
 
 ## CC0 1.0
 
@@ -95,4 +83,43 @@
 - “Dragon: Several roars, growls and snarls” by Breviceps — https://freesound.org/people/Breviceps/sounds/479380/
 
 修改：截取、滤波、降噪（部分）、响度保持、峰值限幅、首尾淡化；蜜蜂/蟋蟀保留循环交叉淡化。
+
+---
+
+## 以下来自第二批素材 `animal_sounds/`（2026-10-19 并入）
+
+这批是自己找、自己裁、自己做响度归一的：按 0.1 秒步长的能量包络选最集中的窗口
+（取 4–12 秒），两遍 loudnorm 到 −16 LUFS / 真峰值 −1.5 dBTP，统一 44.1 kHz / 192 kbps，
+首尾淡化 0.15–0.25 秒。所以每一条都是**演绎**（裁切 + 改动）。
+
+同许可的条目（CC BY / BY-SA）在改编后必须继续用同许可共享。
+
+### CC BY 4.0
+
+- “2019209_flamingos.wav” by dobroide — https://freesound.org/s/496891/
+- “Black-crowned Night Heron — nocturnal flight call” by Matthias Keller — https://xeno-canto.org/1160373
+
+### CC BY-SA 4.0
+
+- “Long-tailed Tit — call, duet” by Benoît Van Hecke — https://xeno-canto.org/701097
+
+### CC0 1.0
+
+- “capybara（家养水豚现场声）” by Капыбара_12345 — https://freesound.org/people/%D0%9A%D0%B0%D0%BF%D1%8B%D0%B1%D0%B0%D1%80%D0%B0_12345/sounds/849980/
+- “Squeaking Guinea Pigs” by Breviceps — https://freesound.org/people/Breviceps/sounds/583078/ （水豚的替代：豚鼠与水豚同科，听感几乎一样）
+- “San Bernard dog bark” by Primitv094 — https://freesound.org/people/Primitv094/sounds/784914/
+- “Dog Bark” by aunrea — https://freesound.org/people/aunrea/sounds/495658/
+- “Greater Flamingo — flight calls” by Grégoire Chauvot — https://xeno-canto.org/797505
+- “Green frog, croaking.wav” by SpliceSound — https://freesound.org/people/SpliceSound/sounds/188195/
+- “frog croaking field recording” by Garuda1982 — https://freesound.org/people/Garuda1982/sounds/428536/
+- “Long-tailed Tit — call” by Lionel Triboulin — https://xeno-canto.org/1186424
+- “Black-crowned Night Heron — nocturnal flight call” by Philippe Grange — https://xeno-canto.org/1186284
+- “Red Squirrel chatter” by philberts — https://freesound.org/people/philberts/sounds/111393/
+- “Squirrel, cry call / squeal” by TRP — https://freesound.org/people/TRP/sounds/717582/
+- “Squirrel, Grey alarm calls” by genghisattenborough — https://freesound.org/people/genghisattenborough/sounds/744596/
+- “cat meow” by tuberatanka — https://freesound.org/people/tuberatanka/sounds/110011/
+- “Cat Meows 7x” by Kinoton — https://freesound.org/people/Kinoton/sounds/584895/
+
+> ⚠ 这批里另外 2 条水豚录音（`capybara_main`、`capybara_alt_bark`）是 **CC BY-NC-SA**，
+> 已经**排除**，游戏里用不到，也不需要署名。
 

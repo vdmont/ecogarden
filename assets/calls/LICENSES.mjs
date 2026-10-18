@@ -12,7 +12,7 @@
 //   modified     素材包对它做了什么（裁切、降噪、限幅……改了就是演绎）
 //   sha1         我们这份 mp3 的哈希，任何人拿它都能复核"台账里这条就是这条"
 //
-// 本批 69 条的许可分布：{"CC0 1.0":34,"CC BY 4.0":34,"CC BY-SA 4.0":1}
+// 本批 86 条的许可分布：{"CC0 1.0":48,"CC BY 4.0":36,"CC BY-SA 4.0":2}
 
 const ASSET_LICENSES = [
   {
@@ -316,6 +316,46 @@ const ASSET_LICENSES = [
     "sha1": "e6492ed16ee80bd588a6561f157c2ba21beeced2"
   },
   {
+    "file": "calls/capybara_cc0.mp3",
+    "usedBy": [
+      "capybara"
+    ],
+    "label": "卡皮巴拉",
+    "title": "capybara（家养水豚现场声）",
+    "license": "CC0 1.0",
+    "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+    "author": "Капыбара_12345",
+    "source": "Freesound",
+    "sourceUrl": "https://freesound.org/people/%D0%9A%D0%B0%D0%BF%D1%8B%D0%B1%D0%B0%D1%80%D0%B0_12345/sounds/849980/",
+    "modified": "44.1kHz/192kbps mp3（animal_sounds 素材包已做过能量选窗裁剪、−16 LUFS 响度归一、真峰值 ≤ −1.5 dBTP、首尾 0.15–0.25s 淡化）；本次接入时未再改动波形。台账里的 lufs/true_peak/peak/noise/snr 由 .dsh-reports/measure-clips.mjs 实测（BS.1770-4 K 计权 + 门限，真峰值为 4 倍过采样），与素材包原有 69 条的算法不完全一致，仅供核对参考",
+    "durSec": 5.5,
+    "lufs": -16.8,
+    "truePeakDb": -3.03,
+    "noiseFloorDb": -99.11,
+    "snrDb": 75.39,
+    "sha1": "28a473ff3d40d1295cf405181b2b919347dbd686"
+  },
+  {
+    "file": "calls/capybara_substitute_guineapig.mp3",
+    "usedBy": [
+      "capybara"
+    ],
+    "label": "卡皮巴拉",
+    "title": "Squeaking Guinea Pigs",
+    "license": "CC0 1.0",
+    "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+    "author": "Breviceps",
+    "source": "Freesound",
+    "sourceUrl": "https://freesound.org/people/Breviceps/sounds/583078/",
+    "modified": "44.1kHz/192kbps mp3（animal_sounds 素材包已做过能量选窗裁剪、−16 LUFS 响度归一、真峰值 ≤ −1.5 dBTP、首尾 0.15–0.25s 淡化）；本次接入时未再改动波形。台账里的 lufs/true_peak/peak/noise/snr 由 .dsh-reports/measure-clips.mjs 实测（BS.1770-4 K 计权 + 门限，真峰值为 4 倍过采样），与素材包原有 69 条的算法不完全一致，仅供核对参考",
+    "durSec": 12,
+    "lufs": -14.08,
+    "truePeakDb": -1.76,
+    "noiseFloorDb": -42.13,
+    "snrDb": 29.86,
+    "sha1": "45537220c2089d7bd93feb022f70f6fc64317a76"
+  },
+  {
     "file": "calls/cat_063.mp3",
     "usedBy": [
       "abyssinian"
@@ -394,6 +434,52 @@ const ASSET_LICENSES = [
     "noiseFloorDb": -34.98,
     "snrDb": 19.21,
     "sha1": "580fd6fea7d524d20fcb14261a74b668486737ab"
+  },
+  {
+    "file": "calls/cat_alt_single.mp3",
+    "usedBy": [
+      "abyssinian",
+      "ragdoll",
+      "tabby",
+      "orangeCat"
+    ],
+    "label": "猫",
+    "title": "cat meow",
+    "license": "CC0 1.0",
+    "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+    "author": "tuberatanka",
+    "source": "Freesound",
+    "sourceUrl": "https://freesound.org/people/tuberatanka/sounds/110011/",
+    "modified": "44.1kHz/192kbps mp3（animal_sounds 素材包已做过能量选窗裁剪、−16 LUFS 响度归一、真峰值 ≤ −1.5 dBTP、首尾 0.15–0.25s 淡化）；本次接入时未再改动波形。台账里的 lufs/true_peak/peak/noise/snr 由 .dsh-reports/measure-clips.mjs 实测（BS.1770-4 K 计权 + 门限，真峰值为 4 倍过采样），与素材包原有 69 条的算法不完全一致，仅供核对参考",
+    "durSec": 1.54,
+    "lufs": -16.17,
+    "truePeakDb": -10.69,
+    "noiseFloorDb": -50.63,
+    "snrDb": 33.74,
+    "sha1": "5f938d9b0b3d7ba9221f4753013b4f044553c3e4"
+  },
+  {
+    "file": "calls/cat_main.mp3",
+    "usedBy": [
+      "abyssinian",
+      "ragdoll",
+      "tabby",
+      "orangeCat"
+    ],
+    "label": "猫",
+    "title": "Cat Meows 7x",
+    "license": "CC0 1.0",
+    "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+    "author": "Kinoton",
+    "source": "Freesound",
+    "sourceUrl": "https://freesound.org/people/Kinoton/sounds/584895/",
+    "modified": "44.1kHz/192kbps mp3（animal_sounds 素材包已做过能量选窗裁剪、−16 LUFS 响度归一、真峰值 ≤ −1.5 dBTP、首尾 0.15–0.25s 淡化）；本次接入时未再改动波形。台账里的 lufs/true_peak/peak/noise/snr 由 .dsh-reports/measure-clips.mjs 实测（BS.1770-4 K 计权 + 门限，真峰值为 4 倍过采样），与素材包原有 69 条的算法不完全一致，仅供核对参考",
+    "durSec": 12,
+    "lufs": -19.14,
+    "truePeakDb": -6.02,
+    "noiseFloorDb": -240,
+    "snrDb": 160.18,
+    "sha1": "8bfa39517bc59c08dc9dc4e4735bcb451b0dbcc9"
   },
   {
     "file": "calls/chicken_001.mp3",
@@ -596,6 +682,46 @@ const ASSET_LICENSES = [
     "sha1": "743c2304a7fb31ac47307c36b9963ba7d9c8cc2b"
   },
   {
+    "file": "calls/dog_alt.mp3",
+    "usedBy": [
+      "samoyed"
+    ],
+    "label": "狗",
+    "title": "Dog Bark",
+    "license": "CC0 1.0",
+    "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+    "author": "aunrea",
+    "source": "Freesound",
+    "sourceUrl": "https://freesound.org/people/aunrea/sounds/495658/",
+    "modified": "44.1kHz/192kbps mp3（animal_sounds 素材包已做过能量选窗裁剪、−16 LUFS 响度归一、真峰值 ≤ −1.5 dBTP、首尾 0.15–0.25s 淡化）；本次接入时未再改动波形。台账里的 lufs/true_peak/peak/noise/snr 由 .dsh-reports/measure-clips.mjs 实测（BS.1770-4 K 计权 + 门限，真峰值为 4 倍过采样），与素材包原有 69 条的算法不完全一致，仅供核对参考",
+    "durSec": 3.97,
+    "lufs": -13.14,
+    "truePeakDb": -3.68,
+    "noiseFloorDb": -68.13,
+    "snrDb": 51.99,
+    "sha1": "f4d0ee6b07f87fea8ec3437ede09b55aa7b7911a"
+  },
+  {
+    "file": "calls/dog_main.mp3",
+    "usedBy": [
+      "samoyed"
+    ],
+    "label": "狗",
+    "title": "San Bernard dog bark",
+    "license": "CC0 1.0",
+    "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+    "author": "Primitv094",
+    "source": "Freesound",
+    "sourceUrl": "https://freesound.org/people/Primitv094/sounds/784914/",
+    "modified": "44.1kHz/192kbps mp3（animal_sounds 素材包已做过能量选窗裁剪、−16 LUFS 响度归一、真峰值 ≤ −1.5 dBTP、首尾 0.15–0.25s 淡化）；本次接入时未再改动波形。台账里的 lufs/true_peak/peak/noise/snr 由 .dsh-reports/measure-clips.mjs 实测（BS.1770-4 K 计权 + 门限，真峰值为 4 倍过采样），与素材包原有 69 条的算法不完全一致，仅供核对参考",
+    "durSec": 4.03,
+    "lufs": -14,
+    "truePeakDb": -5.77,
+    "noiseFloorDb": -54.45,
+    "snrDb": 42.63,
+    "sha1": "c36ce9162c65a271589ace90de7306469550a8a0"
+  },
+  {
     "file": "calls/dragon_126.mp3",
     "usedBy": [
       "dragon",
@@ -718,6 +844,46 @@ const ASSET_LICENSES = [
     "noiseFloorDb": -30.96,
     "snrDb": 12.16,
     "sha1": "8667617e4567bbe6ff815c0c39648e219910b63a"
+  },
+  {
+    "file": "calls/flamingo_alt.mp3",
+    "usedBy": [
+      "flamingo"
+    ],
+    "label": "火烈鸟",
+    "title": "2019209_flamingos.wav",
+    "license": "CC BY 4.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+    "author": "dobroide",
+    "source": "Freesound",
+    "sourceUrl": "https://freesound.org/s/496891/",
+    "modified": "44.1kHz/192kbps mp3（animal_sounds 素材包已做过能量选窗裁剪、−16 LUFS 响度归一、真峰值 ≤ −1.5 dBTP、首尾 0.15–0.25s 淡化）；本次接入时未再改动波形。台账里的 lufs/true_peak/peak/noise/snr 由 .dsh-reports/measure-clips.mjs 实测（BS.1770-4 K 计权 + 门限，真峰值为 4 倍过采样），与素材包原有 69 条的算法不完全一致，仅供核对参考",
+    "durSec": 12,
+    "lufs": -17.11,
+    "truePeakDb": -1.78,
+    "noiseFloorDb": -25.71,
+    "snrDb": 8.37,
+    "sha1": "edbd4008fdf77823f66d77cffc5364626fd907a9"
+  },
+  {
+    "file": "calls/flamingo_main.mp3",
+    "usedBy": [
+      "flamingo"
+    ],
+    "label": "火烈鸟",
+    "title": "Greater Flamingo — flight calls",
+    "license": "CC0 1.0",
+    "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+    "author": "Grégoire Chauvot",
+    "source": "xeno-canto",
+    "sourceUrl": "https://xeno-canto.org/797505",
+    "modified": "44.1kHz/192kbps mp3（animal_sounds 素材包已做过能量选窗裁剪、−16 LUFS 响度归一、真峰值 ≤ −1.5 dBTP、首尾 0.15–0.25s 淡化）；本次接入时未再改动波形。台账里的 lufs/true_peak/peak/noise/snr 由 .dsh-reports/measure-clips.mjs 实测（BS.1770-4 K 计权 + 门限，真峰值为 4 倍过采样），与素材包原有 69 条的算法不完全一致，仅供核对参考",
+    "durSec": 12,
+    "lufs": -16.61,
+    "truePeakDb": -1.65,
+    "noiseFloorDb": -37.07,
+    "snrDb": 21.88,
+    "sha1": "eb084a7beb3cc163e8ddbabdf3be5abbf8305b1c"
   },
   {
     "file": "calls/fox_033.mp3",
@@ -900,6 +1066,46 @@ const ASSET_LICENSES = [
     "sha1": "9011c4f685c5990e184e05f490308afaf9311cb3"
   },
   {
+    "file": "calls/frog_alt.mp3",
+    "usedBy": [
+      "frog"
+    ],
+    "label": "青蛙",
+    "title": "frog croaking field recording",
+    "license": "CC0 1.0",
+    "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+    "author": "Garuda1982",
+    "source": "Freesound",
+    "sourceUrl": "https://freesound.org/people/Garuda1982/sounds/428536/",
+    "modified": "44.1kHz/192kbps mp3（animal_sounds 素材包已做过能量选窗裁剪、−16 LUFS 响度归一、真峰值 ≤ −1.5 dBTP、首尾 0.15–0.25s 淡化）；本次接入时未再改动波形。台账里的 lufs/true_peak/peak/noise/snr 由 .dsh-reports/measure-clips.mjs 实测（BS.1770-4 K 计权 + 门限，真峰值为 4 倍过采样），与素材包原有 69 条的算法不完全一致，仅供核对参考",
+    "durSec": 12,
+    "lufs": -14.17,
+    "truePeakDb": -1.76,
+    "noiseFloorDb": -30.67,
+    "snrDb": 17.39,
+    "sha1": "3d1d28d78d411e236b8e002378ad2b0abc4b0d04"
+  },
+  {
+    "file": "calls/frog_main.mp3",
+    "usedBy": [
+      "frog"
+    ],
+    "label": "青蛙",
+    "title": "Green frog, croaking.wav",
+    "license": "CC0 1.0",
+    "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+    "author": "SpliceSound",
+    "source": "Freesound",
+    "sourceUrl": "https://freesound.org/people/SpliceSound/sounds/188195/",
+    "modified": "44.1kHz/192kbps mp3（animal_sounds 素材包已做过能量选窗裁剪、−16 LUFS 响度归一、真峰值 ≤ −1.5 dBTP、首尾 0.15–0.25s 淡化）；本次接入时未再改动波形。台账里的 lufs/true_peak/peak/noise/snr 由 .dsh-reports/measure-clips.mjs 实测（BS.1770-4 K 计权 + 门限，真峰值为 4 倍过采样），与素材包原有 69 条的算法不完全一致，仅供核对参考",
+    "durSec": 12,
+    "lufs": -16.5,
+    "truePeakDb": -1.73,
+    "noiseFloorDb": -60.1,
+    "snrDb": 45.04,
+    "sha1": "7136c205575462a5f4cdfa0b9bb2281e3f7a35ac"
+  },
+  {
     "file": "calls/hedgehog_056.mp3",
     "usedBy": [
       "hedgehog"
@@ -960,6 +1166,46 @@ const ASSET_LICENSES = [
     "sha1": "0c83cf1a7382143261b081357630ff043af9d31d"
   },
   {
+    "file": "calls/long_tailed_tit_alt.mp3",
+    "usedBy": [
+      "longtail"
+    ],
+    "label": "北长尾山雀",
+    "title": "Long-tailed Tit — call, duet",
+    "license": "CC BY-SA 4.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0/",
+    "author": "Benoît Van Hecke",
+    "source": "xeno-canto",
+    "sourceUrl": "https://xeno-canto.org/701097",
+    "modified": "44.1kHz/192kbps mp3（animal_sounds 素材包已做过能量选窗裁剪、−16 LUFS 响度归一、真峰值 ≤ −1.5 dBTP、首尾 0.15–0.25s 淡化）；本次接入时未再改动波形。台账里的 lufs/true_peak/peak/noise/snr 由 .dsh-reports/measure-clips.mjs 实测（BS.1770-4 K 计权 + 门限，真峰值为 4 倍过采样），与素材包原有 69 条的算法不完全一致，仅供核对参考",
+    "durSec": 12,
+    "lufs": -18.87,
+    "truePeakDb": -4,
+    "noiseFloorDb": -48.97,
+    "snrDb": 30.08,
+    "sha1": "67ab6b082a5f69d3bd5cb79ff319da2630f18090"
+  },
+  {
+    "file": "calls/long_tailed_tit_main.mp3",
+    "usedBy": [
+      "longtail"
+    ],
+    "label": "北长尾山雀",
+    "title": "Long-tailed Tit — call",
+    "license": "CC0 1.0",
+    "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+    "author": "Lionel Triboulin",
+    "source": "xeno-canto",
+    "sourceUrl": "https://xeno-canto.org/1186424",
+    "modified": "44.1kHz/192kbps mp3（animal_sounds 素材包已做过能量选窗裁剪、−16 LUFS 响度归一、真峰值 ≤ −1.5 dBTP、首尾 0.15–0.25s 淡化）；本次接入时未再改动波形。台账里的 lufs/true_peak/peak/noise/snr 由 .dsh-reports/measure-clips.mjs 实测（BS.1770-4 K 计权 + 门限，真峰值为 4 倍过采样），与素材包原有 69 条的算法不完全一致，仅供核对参考",
+    "durSec": 12,
+    "lufs": -17.46,
+    "truePeakDb": -1.02,
+    "noiseFloorDb": -28.5,
+    "snrDb": 12.34,
+    "sha1": "8f4fd510c5858efab45eb905388fd7f3b5f822f4"
+  },
+  {
     "file": "calls/longtail_109.mp3",
     "usedBy": [
       "longtail"
@@ -1018,6 +1264,46 @@ const ASSET_LICENSES = [
     "noiseFloorDb": -40.06,
     "snrDb": 20.44,
     "sha1": "4cc84a10a81a60adbc5f4249f6d00df8bfbed673"
+  },
+  {
+    "file": "calls/night_heron_alt.mp3",
+    "usedBy": [
+      "nightHeron"
+    ],
+    "label": "夜鹭",
+    "title": "Black-crowned Night Heron — nocturnal flight call",
+    "license": "CC0 1.0",
+    "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+    "author": "Philippe Grange",
+    "source": "xeno-canto",
+    "sourceUrl": "https://xeno-canto.org/1186284",
+    "modified": "44.1kHz/192kbps mp3（animal_sounds 素材包已做过能量选窗裁剪、−16 LUFS 响度归一、真峰值 ≤ −1.5 dBTP、首尾 0.15–0.25s 淡化）；本次接入时未再改动波形。台账里的 lufs/true_peak/peak/noise/snr 由 .dsh-reports/measure-clips.mjs 实测（BS.1770-4 K 计权 + 门限，真峰值为 4 倍过采样），与素材包原有 69 条的算法不完全一致，仅供核对参考",
+    "durSec": 1.15,
+    "lufs": -12.46,
+    "truePeakDb": -2.62,
+    "noiseFloorDb": -21.87,
+    "snrDb": 7.91,
+    "sha1": "c83b07455e277b78b595d8eefb6e43e9c377185d"
+  },
+  {
+    "file": "calls/night_heron_main.mp3",
+    "usedBy": [
+      "nightHeron"
+    ],
+    "label": "夜鹭",
+    "title": "Black-crowned Night Heron — nocturnal flight call",
+    "license": "CC BY 4.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+    "author": "Matthias Keller",
+    "source": "xeno-canto",
+    "sourceUrl": "https://xeno-canto.org/1160373",
+    "modified": "44.1kHz/192kbps mp3（animal_sounds 素材包已做过能量选窗裁剪、−16 LUFS 响度归一、真峰值 ≤ −1.5 dBTP、首尾 0.15–0.25s 淡化）；本次接入时未再改动波形。台账里的 lufs/true_peak/peak/noise/snr 由 .dsh-reports/measure-clips.mjs 实测（BS.1770-4 K 计权 + 门限，真峰值为 4 倍过采样），与素材包原有 69 条的算法不完全一致，仅供核对参考",
+    "durSec": 9.29,
+    "lufs": -17.74,
+    "truePeakDb": -1.76,
+    "noiseFloorDb": -27.31,
+    "snrDb": 10.14,
+    "sha1": "99cfdb8b3b4d79b832972721bb0322380cc0436d"
   },
   {
     "file": "calls/rabbit_021.mp3",
@@ -1280,6 +1566,66 @@ const ASSET_LICENSES = [
     "sha1": "c0bc8e069ad05079685f198e3a2ec2ecef53e4d5"
   },
   {
+    "file": "calls/squirrel_alt_alarm.mp3",
+    "usedBy": [
+      "squirrel"
+    ],
+    "label": "松鼠",
+    "title": "Squirrel, Grey alarm calls",
+    "license": "CC0 1.0",
+    "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+    "author": "genghisattenborough",
+    "source": "Freesound",
+    "sourceUrl": "https://freesound.org/people/genghisattenborough/sounds/744596/",
+    "modified": "44.1kHz/192kbps mp3（animal_sounds 素材包已做过能量选窗裁剪、−16 LUFS 响度归一、真峰值 ≤ −1.5 dBTP、首尾 0.15–0.25s 淡化）；本次接入时未再改动波形。台账里的 lufs/true_peak/peak/noise/snr 由 .dsh-reports/measure-clips.mjs 实测（BS.1770-4 K 计权 + 门限，真峰值为 4 倍过采样），与素材包原有 69 条的算法不完全一致，仅供核对参考",
+    "durSec": 12,
+    "lufs": -18.85,
+    "truePeakDb": -2.81,
+    "noiseFloorDb": -48.42,
+    "snrDb": 28.54,
+    "sha1": "832721dcb792b2e06584d0d124651561f1742408"
+  },
+  {
+    "file": "calls/squirrel_alt_squeal.mp3",
+    "usedBy": [
+      "squirrel"
+    ],
+    "label": "松鼠",
+    "title": "Squirrel, cry call / squeal (Toronto backyard)",
+    "license": "CC0 1.0",
+    "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+    "author": "TRP",
+    "source": "Freesound",
+    "sourceUrl": "https://freesound.org/people/TRP/sounds/717582/",
+    "modified": "44.1kHz/192kbps mp3（animal_sounds 素材包已做过能量选窗裁剪、−16 LUFS 响度归一、真峰值 ≤ −1.5 dBTP、首尾 0.15–0.25s 淡化）；本次接入时未再改动波形。台账里的 lufs/true_peak/peak/noise/snr 由 .dsh-reports/measure-clips.mjs 实测（BS.1770-4 K 计权 + 门限，真峰值为 4 倍过采样），与素材包原有 69 条的算法不完全一致，仅供核对参考",
+    "durSec": 12,
+    "lufs": -18.16,
+    "truePeakDb": -4.23,
+    "noiseFloorDb": -74.29,
+    "snrDb": 54.31,
+    "sha1": "0e788fba1a2473e3e408f8e92a89280a0d4b3a34"
+  },
+  {
+    "file": "calls/squirrel_main.mp3",
+    "usedBy": [
+      "squirrel"
+    ],
+    "label": "松鼠",
+    "title": "Red Squirrel chatter",
+    "license": "CC0 1.0",
+    "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+    "author": "philberts",
+    "source": "Freesound",
+    "sourceUrl": "https://freesound.org/people/philberts/sounds/111393/",
+    "modified": "44.1kHz/192kbps mp3（animal_sounds 素材包已做过能量选窗裁剪、−16 LUFS 响度归一、真峰值 ≤ −1.5 dBTP、首尾 0.15–0.25s 淡化）；本次接入时未再改动波形。台账里的 lufs/true_peak/peak/noise/snr 由 .dsh-reports/measure-clips.mjs 实测（BS.1770-4 K 计权 + 门限，真峰值为 4 倍过采样），与素材包原有 69 条的算法不完全一致，仅供核对参考",
+    "durSec": 12,
+    "lufs": -18.83,
+    "truePeakDb": -1.37,
+    "noiseFloorDb": -30.05,
+    "snrDb": 11.08,
+    "sha1": "648500fd602c6098897a0a7908ebe5a063cfd72c"
+  },
+  {
     "file": "calls/wolf_040.mp3",
     "usedBy": [
       "wolf"
@@ -1403,4 +1749,4 @@ const ASSET_LICENSES = [
 
 // 一眼能查的两件事：哪条是 NC（将来要删）、哪条要署名。
 const NON_COMMERCIAL = [];
-const ATTRIBUTION_REQUIRED = ["calls/bee_089.mp3","calls/bird_006.mp3","calls/bird_007.mp3","calls/boar_050.mp3","calls/boar_051.mp3","calls/boar_052.mp3","calls/butterfly_095.mp3","calls/capybara_075.mp3","calls/capybara_079.mp3","calls/cat_066.mp3","calls/chicken_003.mp3","calls/dog_070.mp3","calls/dog_072.mp3","calls/flamingo_121.mp3","calls/flamingo_122.mp3","calls/flamingo_123.mp3","calls/fox_033.mp3","calls/fox_037.mp3","calls/frog_082.mp3","calls/frog_083.mp3","calls/hedgehog_056.mp3","calls/hedgehog_057.mp3","calls/longtail_109.mp3","calls/longtail_110.mp3","calls/nightHeron_103.mp3","calls/rabbit_024.mp3","calls/redstart_104.mp3","calls/redstart_107.mp3","calls/sheep_013.mp3","calls/sheep_014.mp3","calls/squirrel_046.mp3","calls/wolf_040.mp3","calls/wren_115.mp3","calls/wren_116.mp3","calls/wren_118.mp3"];
+const ATTRIBUTION_REQUIRED = ["calls/bee_089.mp3","calls/bird_006.mp3","calls/bird_007.mp3","calls/boar_050.mp3","calls/boar_051.mp3","calls/boar_052.mp3","calls/butterfly_095.mp3","calls/capybara_075.mp3","calls/capybara_079.mp3","calls/cat_066.mp3","calls/chicken_003.mp3","calls/dog_070.mp3","calls/dog_072.mp3","calls/flamingo_121.mp3","calls/flamingo_122.mp3","calls/flamingo_123.mp3","calls/flamingo_alt.mp3","calls/fox_033.mp3","calls/fox_037.mp3","calls/frog_082.mp3","calls/frog_083.mp3","calls/hedgehog_056.mp3","calls/hedgehog_057.mp3","calls/long_tailed_tit_alt.mp3","calls/longtail_109.mp3","calls/longtail_110.mp3","calls/nightHeron_103.mp3","calls/night_heron_main.mp3","calls/rabbit_024.mp3","calls/redstart_104.mp3","calls/redstart_107.mp3","calls/sheep_013.mp3","calls/sheep_014.mp3","calls/squirrel_046.mp3","calls/wolf_040.mp3","calls/wren_115.mp3","calls/wren_116.mp3","calls/wren_118.mp3"];

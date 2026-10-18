@@ -150,10 +150,57 @@ npm run demo:water   # 重新生成 docs/水流演示.json
 ### 9.0 当前在用的素材包：`music/`（2026-10-18 起取代旧的 27 条）
 
 `music/` 是项目所有者放进来的成品音效包（原 80 条 / 31 种，**2026-10-19 删掉 10 条 NC 后
-是 70 条 / 30 种**，同日又按所有者要求删掉 `deer_029`（小鹿那条），**现在是 69 条 / 29 种**，
+是 70 条 / 30 种**，同日又按所有者要求删掉 `deer_029`（小鹿那条），先降到 **69 条 / 29 种**，
 48 kHz / 16-bit / 单声道，带 `manifest.json` 逐条记录了裁切、降噪、响度）。
 它**整体取代**了原先那 27 条从 Commons/iNaturalist 裁来的野外录音 —— 后者底噪高、
 要自己找"哪一秒在叫"，而这个包是录完就切好的游戏音效。
+
+**2026-10-19 晚又并进了一批 `animal_sounds/`**（项目所有者新放进仓库根目录的，
+8 个物种 / 19 条 mp3）：现在库里有 **86 条 / 30 种**。那批的规格和原包不一样，见下。
+
+#### ✅ `animal_sounds/` 那批（2026-10-19 并入，17 条）
+
+规格与原包**不一致**，别拿原包的经验去推断：
+
+| | 原包（69 条） | animal_sounds（17 条） |
+| --- | --- | --- |
+| 采样率 | 48 kHz | 44.1 kHz |
+| 声道 | 全单声道 | **11 条是立体声** |
+| 时长 | 0.54–4.28 秒，中位 2.0 | **11 条是 12 秒** |
+| 响度处理 | −18 LUFS / −3.2 dBTP | −16 LUFS / −1.5 dBTP |
+
+- **其中 2 条是 CC BY-NC-SA（`capybara_main`、`capybara_alt_bark`），没收** ——
+  按 9.1 的规矩 NC 一律排除。素材包自己的 README 许可表里就标了"仅限非商业"，
+  接入脚本 `.dsh-reports/ingest-animal-sounds.mjs` 按 `manifest.json` 的 `nc` 字段挡下来的。
+- **小鹿 `deer` 不在这批里**，仍然是唯一没有录音的物种。
+- **12 秒片段的后果**（真实浏览器实测）：一个 voice 会**连着播满 12 秒**才交叉淡化换下一条
+  （`pumpVoice` 只在 `结束前 xfadeSec` 才排下一段）。同物种并发上限是 2，
+  所以两只松鼠同时在范围内就是两层 12 秒 chatter 叠着。动物走出视野时
+  `stopVoice(t, 0.25)` 会淡出后立刻停，不会拖尾。
+- 归一化没问题：17/17 落在 RMS 0.2–0.4，峰值最高 0.8421，不削波
+  （`.dsh-reports/research/probe-newmix.mjs` 实测）。
+
+三份脚本在 `.dsh-reports/`（不进仓库），按顺序用：
+
+```bash
+node .dsh-reports\measure-clips.mjs        # 实测台账里 lufs/true_peak/peak/noise/snr
+node .dsh-reports\ingest-animal-sounds.mjs # 拷进 music/sfx/mp3 与 assets/calls（挡 NC、核对 SHA-256）
+node .dsh-reports\patch-sources.mjs        # 按行补两份源台账（--dry 可试跑）
+node .dsh-reports\research\probe-newmix.mjs # 真实浏览器里看归一化结果
+```
+
+> ⚠ **改 `music/manifest.json` 千万别整个重写。** 原文件是 Python 写的，
+> `1.0` / `0.0` 保留小数点，而 `JSON.stringify` 会压成 `1` / `0` ——
+> 拿它重排 `sfx-map.json` 有 286 行会变样、`manifest.json` 差 344 个字符，diff 全红。
+> 用 `.dsh-reports/jsonfmt.cjs`（认得哪些字段是浮点），`node .dsh-reports\jsonfmt.cjs --check`
+> 会验证它能把现有 80 条逐字节还原，通过了再拿它写新行。
+
+> ⚠ **台账里 `lufs/noise/snr` 三个字段没有任何代码在读**（`src/` 全库搜过），
+> 是给人看的登记项。`animal_sounds` 那 17 条的数字是
+> `.dsh-reports/measure-clips.mjs` 实测的（BS.1770-4 K 计权 + 门限，真峰值取 4 倍过采样），
+> 与原包 69 条的测量方法**不完全一致**：拿它去对原包，真峰值中位差 0.29 dB（吻合），
+> 但 `snr` 对不上（原包没写自己怎么算的），个别片段 `lufs` 差 6.9 dB。
+> 两批数字不能直接横向比较。
 
 三条规矩：
 
@@ -186,14 +233,15 @@ npm run demo:water   # 重新生成 docs/水流演示.json
 原因：NC 是**单向门**。将来收费时再删，**不能消除**已经发生的违约，所以只能提前删。
 （2026-10-18 曾经决定"非商业期间全用"，2026-10-19 推翻，改成直接删干净。）
 
-**现在剩下的许可分布**：CC0 × 34、CC BY × 34、CC BY-SA × 1，**不含 NC**。
+**现在剩下的许可分布**：CC0 × 48、CC BY × 36、CC BY-SA × 2，**不含 NC**（86 条）。
 
-**代价（已实测，不是估的）**：两个物种归零 ——
+**代价（已实测，不是估的）**：删 NC 那天有两个物种归零 ——
 **萨摩耶 `samoyed`**（NC 的 `dog_073` 是它唯一一条）和**小鹿 `deer`**（`deer_029` 是它
-唯一一条，所有者 2026-10-19 试听后说"这个音频也不行"一并删掉，它是 CC0 不涉及许可问题）。
-它们都不会报错，退回实时合成叫（`tests/audio.cjs` 里有对应断言）。
-所有者计划次日补素材，补上后要把 `tests/audio.cjs` 里 `NO_RECORDING` 例外名单的对应条目删掉
-（名单是双向的：补上素材还不删，测试会反过来报错提醒）。
+唯一一条，所有者 2026-10-19 试听后说"这个音频不行"一并删掉，它是 CC0 不涉及许可问题）。
+`animal_sounds` 那批补上了萨摩耶（两条 CC0 狗叫）；**小鹿那批里没有，仍然是空的**，
+走实时合成叫（`tests/audio.cjs` 的 `NO_RECORDING` 里留着它）。
+补上素材后要把 `NO_RECORDING` 的对应条目删掉（名单是双向的：补上素材还不删，
+测试会反过来报错提醒）。
 
 > ⚠ 删素材之前先看一眼它在 `music/sfx-map.json` 里是不是某个物种的**唯一**一条。
 > 这种物种删完会直接归零，用 `node scripts\check-nc-removal.cjs` 的末尾那段能列出当前所有
@@ -203,8 +251,10 @@ npm run demo:water   # 重新生成 docs/水流演示.json
 > 以前是"预测删掉 NC 会怎样"的表，现在是**闸门**：NC 只要在映射里、素材目录里、
 > 或离线产物 `dist/index.html` 里被搜到，退出码就是 1。
 
-> 另外有 1 条 CC BY-SA（`capybara_079`）和 34 条 CC BY，都要求**在关于页署名**。
-> 清单在 `assets/calls/LICENSES.mjs`，`credits.md` 是可直接粘贴的署名文本。
+> 另外有 2 条 CC BY-SA（`capybara_079`、`long_tailed_tit_alt`）和 36 条 CC BY，
+> 共 **38 条要求在关于页署名**。清单在 `assets/calls/LICENSES.mjs`，
+> `music/credits.md` 是可直接粘贴的署名文本（**注意：那个文件里的 CC BY-NC 一节
+> 已经失效了**——那 10 条都删掉了，别再照着它署名）。
 
 ### 9.1 许可门槛：允许再分发 + 允许商用，且**不禁止我们用 AI 筛选**
 

@@ -96,7 +96,10 @@
    "files": [
     "squirrel_046",
     "squirrel_047",
-    "squirrel_048"
+    "squirrel_048",
+    "squirrel_main",
+    "squirrel_alt_squeal",
+    "squirrel_alt_alarm"
    ],
    "rate": 1.0,
    "gain": 1.0,
@@ -128,7 +131,9 @@
   "capybara": {
    "files": [
     "capybara_075",
-    "capybara_079"
+    "capybara_079",
+    "capybara_cc0",
+    "capybara_substitute_guineapig"
    ],
    "rate": 1.0,
    "gain": 1.0,
@@ -141,7 +146,9 @@
     "frog_081",
     "frog_082",
     "frog_083",
-    "frog_085"
+    "frog_085",
+    "frog_main",
+    "frog_alt"
    ],
    "rate": 1.0,
    "gain": 1.0,
@@ -174,7 +181,9 @@
   },
   "nightHeron": {
    "files": [
-    "nightHeron_103"
+    "nightHeron_103",
+    "night_heron_main",
+    "night_heron_alt"
    ],
    "rate": 1.0,
    "gain": 1.0,
@@ -195,7 +204,9 @@
   "longtail": {
    "files": [
     "longtail_109",
-    "longtail_110"
+    "longtail_110",
+    "long_tailed_tit_main",
+    "long_tailed_tit_alt"
    ],
    "rate": 1.0,
    "gain": 1.0,
@@ -219,7 +230,9 @@
    "files": [
     "flamingo_121",
     "flamingo_122",
-    "flamingo_123"
+    "flamingo_123",
+    "flamingo_main",
+    "flamingo_alt"
    ],
    "rate": 1.0,
    "gain": 1.0,
@@ -244,7 +257,9 @@
   },
   "abyssinian": {
    "files": [
-    "cat_063"
+    "cat_063",
+    "cat_main",
+    "cat_alt_single"
    ],
    "rate": 1.12,
    "gain": 1.0,
@@ -253,7 +268,9 @@
   },
   "ragdoll": {
    "files": [
-    "cat_064"
+    "cat_064",
+    "cat_main",
+    "cat_alt_single"
    ],
    "rate": 0.93,
    "gain": 1.0,
@@ -262,7 +279,9 @@
   },
   "tabby": {
    "files": [
-    "cat_065"
+    "cat_065",
+    "cat_main",
+    "cat_alt_single"
    ],
    "rate": 1.0,
    "gain": 1.0,
@@ -271,7 +290,9 @@
   },
   "orangeCat": {
    "files": [
-    "cat_066"
+    "cat_066",
+    "cat_main",
+    "cat_alt_single"
    ],
    "rate": 1.06,
    "gain": 1.0,
@@ -299,6 +320,8 @@
   },
   "samoyed": {
    "files": [
+    "dog_main",
+    "dog_alt"
    ],
    "rate": 1.15,
    "gain": 1.0,

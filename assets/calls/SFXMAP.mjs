@@ -93,7 +93,10 @@
                 "files": [
                       "assets/calls/squirrel_046.mp3",
                       "assets/calls/squirrel_047.mp3",
-                      "assets/calls/squirrel_048.mp3"
+                      "assets/calls/squirrel_048.mp3",
+                      "assets/calls/squirrel_main.mp3",
+                      "assets/calls/squirrel_alt_squeal.mp3",
+                      "assets/calls/squirrel_alt_alarm.mp3"
                 ],
                 "rate": 1,
                 "gain": 1,
@@ -125,7 +128,9 @@
           "capybara": {
                 "files": [
                       "assets/calls/capybara_075.mp3",
-                      "assets/calls/capybara_079.mp3"
+                      "assets/calls/capybara_079.mp3",
+                      "assets/calls/capybara_cc0.mp3",
+                      "assets/calls/capybara_substitute_guineapig.mp3"
                 ],
                 "rate": 1,
                 "gain": 1,
@@ -138,7 +143,9 @@
                       "assets/calls/frog_081.mp3",
                       "assets/calls/frog_082.mp3",
                       "assets/calls/frog_083.mp3",
-                      "assets/calls/frog_085.mp3"
+                      "assets/calls/frog_085.mp3",
+                      "assets/calls/frog_main.mp3",
+                      "assets/calls/frog_alt.mp3"
                 ],
                 "rate": 1,
                 "gain": 1,
@@ -171,7 +178,9 @@
           },
           "nightHeron": {
                 "files": [
-                      "assets/calls/nightHeron_103.mp3"
+                      "assets/calls/nightHeron_103.mp3",
+                      "assets/calls/night_heron_main.mp3",
+                      "assets/calls/night_heron_alt.mp3"
                 ],
                 "rate": 1,
                 "gain": 1,
@@ -192,7 +201,9 @@
           "longtail": {
                 "files": [
                       "assets/calls/longtail_109.mp3",
-                      "assets/calls/longtail_110.mp3"
+                      "assets/calls/longtail_110.mp3",
+                      "assets/calls/long_tailed_tit_main.mp3",
+                      "assets/calls/long_tailed_tit_alt.mp3"
                 ],
                 "rate": 1,
                 "gain": 1,
@@ -216,7 +227,9 @@
                 "files": [
                       "assets/calls/flamingo_121.mp3",
                       "assets/calls/flamingo_122.mp3",
-                      "assets/calls/flamingo_123.mp3"
+                      "assets/calls/flamingo_123.mp3",
+                      "assets/calls/flamingo_main.mp3",
+                      "assets/calls/flamingo_alt.mp3"
                 ],
                 "rate": 1,
                 "gain": 1,
@@ -241,7 +254,9 @@
           },
           "abyssinian": {
                 "files": [
-                      "assets/calls/cat_063.mp3"
+                      "assets/calls/cat_063.mp3",
+                      "assets/calls/cat_main.mp3",
+                      "assets/calls/cat_alt_single.mp3"
                 ],
                 "rate": 1.12,
                 "gain": 1,
@@ -250,7 +265,9 @@
           },
           "ragdoll": {
                 "files": [
-                      "assets/calls/cat_064.mp3"
+                      "assets/calls/cat_064.mp3",
+                      "assets/calls/cat_main.mp3",
+                      "assets/calls/cat_alt_single.mp3"
                 ],
                 "rate": 0.93,
                 "gain": 1,
@@ -259,7 +276,9 @@
           },
           "tabby": {
                 "files": [
-                      "assets/calls/cat_065.mp3"
+                      "assets/calls/cat_065.mp3",
+                      "assets/calls/cat_main.mp3",
+                      "assets/calls/cat_alt_single.mp3"
                 ],
                 "rate": 1,
                 "gain": 1,
@@ -268,7 +287,9 @@
           },
           "orangeCat": {
                 "files": [
-                      "assets/calls/cat_066.mp3"
+                      "assets/calls/cat_066.mp3",
+                      "assets/calls/cat_main.mp3",
+                      "assets/calls/cat_alt_single.mp3"
                 ],
                 "rate": 1.06,
                 "gain": 1,
@@ -290,6 +311,16 @@
                       "assets/calls/dog_072.mp3"
                 ],
                 "rate": 0.92,
+                "gain": 1,
+                "voices": 2,
+                "loops": []
+          },
+          "samoyed": {
+                "files": [
+                      "assets/calls/dog_main.mp3",
+                      "assets/calls/dog_alt.mp3"
+                ],
+                "rate": 1.15,
                 "gain": 1,
                 "voices": 2,
                 "loops": []
@@ -523,6 +554,32 @@
                 "noise": -51.55,
                 "snr": 32.72
           },
+          "capybara_cc0": {
+                "license": "CC0 1.0",
+                "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+                "author": "Капыбара_12345",
+                "title": "capybara（家养水豚现场声）",
+                "source": "Freesound",
+                "sourceUrl": "https://freesound.org/people/%D0%9A%D0%B0%D0%BF%D1%8B%D0%B1%D0%B0%D1%80%D0%B0_12345/sounds/849980/",
+                "dur": 5.5,
+                "lufs": -16.8,
+                "truePeak": -3.03,
+                "noise": -99.11,
+                "snr": 75.39
+          },
+          "capybara_substitute_guineapig": {
+                "license": "CC0 1.0",
+                "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+                "author": "Breviceps",
+                "title": "Squeaking Guinea Pigs",
+                "source": "Freesound",
+                "sourceUrl": "https://freesound.org/people/Breviceps/sounds/583078/",
+                "dur": 12,
+                "lufs": -14.08,
+                "truePeak": -1.76,
+                "noise": -42.13,
+                "snr": 29.86
+          },
           "cat_063": {
                 "license": "CC0 1.0",
                 "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
@@ -574,6 +631,32 @@
                 "truePeak": -3.2,
                 "noise": -34.98,
                 "snr": 19.21
+          },
+          "cat_alt_single": {
+                "license": "CC0 1.0",
+                "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+                "author": "tuberatanka",
+                "title": "cat meow",
+                "source": "Freesound",
+                "sourceUrl": "https://freesound.org/people/tuberatanka/sounds/110011/",
+                "dur": 1.54,
+                "lufs": -16.17,
+                "truePeak": -10.69,
+                "noise": -50.63,
+                "snr": 33.74
+          },
+          "cat_main": {
+                "license": "CC0 1.0",
+                "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+                "author": "Kinoton",
+                "title": "Cat Meows 7x",
+                "source": "Freesound",
+                "sourceUrl": "https://freesound.org/people/Kinoton/sounds/584895/",
+                "dur": 12,
+                "lufs": -19.14,
+                "truePeak": -6.02,
+                "noise": -240,
+                "snr": 160.18
           },
           "chicken_001": {
                 "license": "CC0 1.0",
@@ -705,6 +788,32 @@
                 "noise": -77.17,
                 "snr": 62.08
           },
+          "dog_alt": {
+                "license": "CC0 1.0",
+                "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+                "author": "aunrea",
+                "title": "Dog Bark",
+                "source": "Freesound",
+                "sourceUrl": "https://freesound.org/people/aunrea/sounds/495658/",
+                "dur": 3.97,
+                "lufs": -13.14,
+                "truePeak": -3.68,
+                "noise": -68.13,
+                "snr": 51.99
+          },
+          "dog_main": {
+                "license": "CC0 1.0",
+                "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+                "author": "Primitv094",
+                "title": "San Bernard dog bark",
+                "source": "Freesound",
+                "sourceUrl": "https://freesound.org/people/Primitv094/sounds/784914/",
+                "dur": 4.03,
+                "lufs": -14,
+                "truePeak": -5.77,
+                "noise": -54.45,
+                "snr": 42.63
+          },
           "dragon_126": {
                 "license": "CC0 1.0",
                 "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
@@ -782,6 +891,32 @@
                 "truePeak": -3.2,
                 "noise": -30.96,
                 "snr": 12.16
+          },
+          "flamingo_alt": {
+                "license": "CC BY 4.0",
+                "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+                "author": "dobroide",
+                "title": "2019209_flamingos.wav",
+                "source": "Freesound",
+                "sourceUrl": "https://freesound.org/s/496891/",
+                "dur": 12,
+                "lufs": -17.11,
+                "truePeak": -1.78,
+                "noise": -25.71,
+                "snr": 8.37
+          },
+          "flamingo_main": {
+                "license": "CC0 1.0",
+                "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+                "author": "Grégoire Chauvot",
+                "title": "Greater Flamingo — flight calls",
+                "source": "xeno-canto",
+                "sourceUrl": "https://xeno-canto.org/797505",
+                "dur": 12,
+                "lufs": -16.61,
+                "truePeak": -1.65,
+                "noise": -37.07,
+                "snr": 21.88
           },
           "fox_033": {
                 "license": "CC BY 4.0",
@@ -900,6 +1035,32 @@
                 "noise": -63.28,
                 "snr": 46
           },
+          "frog_alt": {
+                "license": "CC0 1.0",
+                "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+                "author": "Garuda1982",
+                "title": "frog croaking field recording",
+                "source": "Freesound",
+                "sourceUrl": "https://freesound.org/people/Garuda1982/sounds/428536/",
+                "dur": 12,
+                "lufs": -14.17,
+                "truePeak": -1.76,
+                "noise": -30.67,
+                "snr": 17.39
+          },
+          "frog_main": {
+                "license": "CC0 1.0",
+                "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+                "author": "SpliceSound",
+                "title": "Green frog, croaking.wav",
+                "source": "Freesound",
+                "sourceUrl": "https://freesound.org/people/SpliceSound/sounds/188195/",
+                "dur": 12,
+                "lufs": -16.5,
+                "truePeak": -1.73,
+                "noise": -60.1,
+                "snr": 45.04
+          },
           "hedgehog_056": {
                 "license": "CC BY 4.0",
                 "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
@@ -939,6 +1100,32 @@
                 "noise": -24.8,
                 "snr": 10.63
           },
+          "long_tailed_tit_alt": {
+                "license": "CC BY-SA 4.0",
+                "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0/",
+                "author": "Benoît Van Hecke",
+                "title": "Long-tailed Tit — call, duet",
+                "source": "xeno-canto",
+                "sourceUrl": "https://xeno-canto.org/701097",
+                "dur": 12,
+                "lufs": -18.87,
+                "truePeak": -4,
+                "noise": -48.97,
+                "snr": 30.08
+          },
+          "long_tailed_tit_main": {
+                "license": "CC0 1.0",
+                "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+                "author": "Lionel Triboulin",
+                "title": "Long-tailed Tit — call",
+                "source": "xeno-canto",
+                "sourceUrl": "https://xeno-canto.org/1186424",
+                "dur": 12,
+                "lufs": -17.46,
+                "truePeak": -1.02,
+                "noise": -28.5,
+                "snr": 12.34
+          },
           "longtail_109": {
                 "license": "CC BY 4.0",
                 "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
@@ -977,6 +1164,32 @@
                 "truePeak": -3.2,
                 "noise": -40.06,
                 "snr": 20.44
+          },
+          "night_heron_alt": {
+                "license": "CC0 1.0",
+                "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+                "author": "Philippe Grange",
+                "title": "Black-crowned Night Heron — nocturnal flight call",
+                "source": "xeno-canto",
+                "sourceUrl": "https://xeno-canto.org/1186284",
+                "dur": 1.15,
+                "lufs": -12.46,
+                "truePeak": -2.62,
+                "noise": -21.87,
+                "snr": 7.91
+          },
+          "night_heron_main": {
+                "license": "CC BY 4.0",
+                "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+                "author": "Matthias Keller",
+                "title": "Black-crowned Night Heron — nocturnal flight call",
+                "source": "xeno-canto",
+                "sourceUrl": "https://xeno-canto.org/1160373",
+                "dur": 9.29,
+                "lufs": -17.74,
+                "truePeak": -1.76,
+                "noise": -27.31,
+                "snr": 10.14
           },
           "rabbit_021": {
                 "license": "CC0 1.0",
@@ -1146,6 +1359,45 @@
                 "truePeak": -5.16,
                 "noise": -45.21,
                 "snr": 25.24
+          },
+          "squirrel_alt_alarm": {
+                "license": "CC0 1.0",
+                "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+                "author": "genghisattenborough",
+                "title": "Squirrel, Grey alarm calls",
+                "source": "Freesound",
+                "sourceUrl": "https://freesound.org/people/genghisattenborough/sounds/744596/",
+                "dur": 12,
+                "lufs": -18.85,
+                "truePeak": -2.81,
+                "noise": -48.42,
+                "snr": 28.54
+          },
+          "squirrel_alt_squeal": {
+                "license": "CC0 1.0",
+                "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+                "author": "TRP",
+                "title": "Squirrel, cry call / squeal (Toronto backyard)",
+                "source": "Freesound",
+                "sourceUrl": "https://freesound.org/people/TRP/sounds/717582/",
+                "dur": 12,
+                "lufs": -18.16,
+                "truePeak": -4.23,
+                "noise": -74.29,
+                "snr": 54.31
+          },
+          "squirrel_main": {
+                "license": "CC0 1.0",
+                "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+                "author": "philberts",
+                "title": "Red Squirrel chatter",
+                "source": "Freesound",
+                "sourceUrl": "https://freesound.org/people/philberts/sounds/111393/",
+                "dur": 12,
+                "lufs": -18.83,
+                "truePeak": -1.37,
+                "noise": -30.05,
+                "snr": 11.08
           },
           "wolf_040": {
                 "license": "CC BY 4.0",

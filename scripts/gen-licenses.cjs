@@ -6,11 +6,11 @@
 //   · SFXMAP 里引用了、但台账里没登记的文件  → 失败
 //   · 台账里登记了、但磁盘上不存在的文件    → 失败
 //
-// 关于 CC BY-NC（仅限非商业）：本项目所有者已决定**全部 80 条都用**，包括这 10 条 NC。
-// 理由是本项目目前完全非商业（免费、不投放、无内购），NC 在这个前提下合法。
-// 但 NC 是**单向门**：将来一旦收费，这 10 条必须删掉，否则违约且补不回来。
-// 所以这个生成器每次都会把它们单独列出来，并把名单写进台账文件头——
-// 让"将来要删哪几条"永远是一条查得到的事实，而不是一段记忆。
+// 关于 CC BY-NC（仅限非商业）：本项目**一律不用**。
+// 2026-10-18 曾经决定"非商业期间全用"，2026-10-19 推翻——NC 是单向门：
+// 将来收费时再删，不能消除已经发生的违约，所以提前删干净。
+// 库里的 10 条 NC 已全部删除，由 scripts/check-nc-removal.cjs 守着这条线。
+// 所以这里如果扫出 NC 条目，那说明有人又把它塞回来了，必须报错而不是提醒。
 //
 // 用法：node scripts\gen-licenses.cjs [--check]
 const fs = require('fs');
@@ -76,10 +76,10 @@ for (const key of keys) {
 console.log('登记 ' + rows.length + ' 条（覆盖 ' + Object.keys(usedBy).length + ' 个素材文件）');
 console.log('许可分布：' + Object.entries(dist).map(([k, v]) => k + ' × ' + v).join('、'));
 if (ncKeys.length) {
-  console.log('⚠ 含 ' + ncKeys.length + ' 条 CC BY-NC（仅限非商业）：');
-  ncKeys.forEach((k) => console.log('     ' + k));
-  console.log('   本项目目前完全非商业，用着合法。将来一旦收费/投放/内购，');
-  console.log('   必须从 music/sfx-map.json 里删掉上面这 ' + ncKeys.length + ' 条并重跑两个生成器。');
+  console.log('❌ 含 ' + ncKeys.length + ' 条 CC BY-NC（仅限非商业）：' + ncKeys.join('、'));
+  console.log('   本项目一律不用 NC（单向门，将来收费删不回来）。');
+  console.log('   从 music/sfx-map.json 删掉上面这些 key，从 music/manifest.json 删掉对应条目，');
+  console.log('   然后重跑两个生成器。');
 }
 if (saKeys.length) {
   console.log('· 含 ' + saKeys.length + ' 条 CC BY-SA：' + saKeys.join('、'));
@@ -94,10 +94,10 @@ if (problems.length) {
 const distStr = JSON.stringify(dist);
 const ncNote = ncKeys.length
   ? `
-// ── 非商业素材（${ncKeys.length} 条，将来收费必须删）──────────────────────────────
-// 项目所有者 2026-10-18 决定：先全用。本项目完全非商业（免费、无广告、无内购），
-// NC 在这个前提下合法。但 NC 是单向门——一旦收费就是违约，且删不回来。
-// 要商业化时，从 music/sfx-map.json 删掉下面这些 key，然后依次跑：
+// ── 出了不该出的事：NC 素材又出现了（${ncKeys.length} 条）──────────────────────────
+// 本项目一律不用 NC：它是单向门，将来收费时再删已经来不及了。
+// 下面的条目不该出现在这里。查 music/sfx-map.json 与 music/manifest.json，
+// 删干净后依次跑：
 //   node scripts\\gen-sfxmap.cjs && node scripts\\gen-licenses.cjs && npm run build
 //
 // ${ncKeys.join('\n// ')}
