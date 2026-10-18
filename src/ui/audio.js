@@ -1147,8 +1147,44 @@
       ambientBus.connect(ambAnalyser);
       // 这条固定连 master：ambientBus 是整层的出口，不能跟着 synthOut 走。
       ambAnalyser.connect(master);
+      // 动物声的总音量就挂在这条总线上，新建时先按设置摆好，
+      // 否则解锁后的第一帧是"默认满音量"再被拉回去，听着像突然一响。
+      applySoundLevel(true);
     }
     return true;
+  }
+
+  const unit01 = (x, dft) => {
+    const n = typeof x === 'number' && Number.isFinite(x) ? x : dft;
+    return Math.max(0, Math.min(1, n));
+  };
+
+  // 动物声这一层的总音量。复选框和滑杆都走这里。
+  //
+  // ⚠ 以前这里是坏的：configure() 只处理音乐，**环境声混音回路压根没看
+  //   settings.sound**。表现就是设置里的「动物叫声与音效」点着没反应，
+  //   勾不勾小动物都在叫——只有"手动摸"那条路（pet 里判 s.sound）是对的。
+  //   挂 ambientBus 是因为环境声、手动摸的录音、没有录音时的实时合成叫，
+  //   三条路全都汇到这条总线，在这里拧一个旋钮就三边一起管住了。
+  function applySoundLevel(immediate) {
+    if (!ambientBus || !ctx) return;
+    const on = settings.sound !== false;
+    const vol = on ? 1 : 0;
+    const g = ambientBus.gain;
+    if (immediate) {
+      g.cancelScheduledValues(0);
+      g.value = vol;
+      return;
+    }
+    // 平滑过去：直接改 .value 会"啪"一下断掉
+    const now = ctx.currentTime;
+    try {
+      g.cancelScheduledValues(now);
+      g.setValueAtTime(g.value, now);
+      g.linearRampToValueAtTime(vol, now + (vol === 0 ? 0.2 : 0.1));
+    } catch {
+      g.value = vol;
+    }
   }
 
   function busFor(type) {
@@ -1690,9 +1726,11 @@
     }
 
     // BGM 让位：放大/锁定时压一点，但压不到 0。
+    // musicVolume 是设置里的「音乐音量」滑杆（0–1，默认 1）。
     if (bgmGain) {
       const duck = 1 - (1 - MIX.bgmDuckMin) * zoomT;
-      bgmGain.gain.value = lerpTo(bgmGain.gain.value, MUSIC_VOLUME * duck, dt, MIX.smoothTau);
+      const want = MUSIC_VOLUME * duck;
+      bgmGain.gain.value = lerpTo(bgmGain.gain.value, want, dt, MIX.smoothTau);
     }
 
     lastSpatial = { weights, locked: focusType, audible: [...want] };
@@ -1891,6 +1929,9 @@
       else if (active) ctx.resume();
     }
     try {
+      applySoundLevel();
+    } catch {}
+    try {
       syncMusic();
     } catch {}
   }
@@ -1964,6 +2005,9 @@
     _view: () => view,
     // 总线上那个 AudioParam 的活对象（不是快照）。诊断用。
     _busParam: (type) => (speciesBus[type] ? speciesBus[type].gain : null),
+    // 动物声那一层的总音量（复选框 + 「动物音量」滑杆拧的就是它）。
+    // 取不到是正常的：还没解锁、没进岛的时候没有这条总线。
+    _ambientGain: () => (ambientBus ? ambientBus.gain : null),
     // 空间模型算出来的权重（离视口中心越近越大）。验收"越近越大"看这个。
     _weights: () => ({ ...spatialWeights() }),
     // 归一化之后的能量报告：每条片段的平均能量有没有落在 0.2–0.4。

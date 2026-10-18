@@ -9,18 +9,33 @@ const bufferSources = [];
 
 // Web Audio 桩：发声层用到振荡器（含 detune / setPeriodicWave）、增益、滤波器、
 // 噪声缓冲、缓冲区源、以及卷积混响，全部要能造出来。
-const param = {
-  setValueAtTime() {},
-  linearRampToValueAtTime() {},
-  exponentialRampToValueAtTime() {},
-  value: 0,
-};
+//
+// ⚠ 每个节点的参数对象必须是**各自独立**的。原来全部分到同一个 `param` 上，
+//   读任何节点的 .gain.value 读到的都是"最后一次被谁写过"——
+//   拿它断言音量会得到一个看起来对、其实毫无意义的数字。
+//
+//   而且排程的方法要真的改 value：真实浏览器里 ramp 是渐变过去的，
+//   桩里没法模拟时间，就让它落到终点值——这样"目标音量有没有被拧过去"
+//   仍然验得到，而"过渡平滑不平滑"按文件开头的说明一律留给浏览器实测。
+const mkParam = (v = 0) => ({
+  value: v,
+  setValueAtTime(x) {
+    this.value = x;
+  },
+  linearRampToValueAtTime(x) {
+    this.value = x;
+  },
+  exponentialRampToValueAtTime(x) {
+    this.value = x;
+  },
+  cancelScheduledValues() {},
+});
 const node = () => ({
-  gain: param,
-  frequency: param,
-  detune: param,
-  playbackRate: param,
-  Q: param,
+  gain: mkParam(),
+  frequency: mkParam(),
+  detune: mkParam(),
+  playbackRate: mkParam(),
+  Q: mkParam(),
   type: '',
   buffer: null,
   connect() {
@@ -318,6 +333,42 @@ console.log(
     GardenAudio.MIX.xfadeSec +
     's',
 );
+
+// ══════════════ 设置里的开关与滑杆：真的拧得动吗 ══════════════
+//
+// 这一段是被项目所有者发现的 bug 逼出来的：设置里的「动物叫声与音效」
+// 点着没反应，勾不勾小动物都在叫。根因是 configure() 只处理音乐，
+// 环境声那一层压根没看 settings.sound。
+//
+// 这里断言的是**真实的总线增益**，所以测试桩里每个节点的 gain 必须是
+// 独立对象——共用一个的话读到的永远是"最后一个写过它的人"。
+{
+  const amb = GardenAudio._ambientGain();
+  assert(amb, '没有拿到动物声总线的增益参数');
+  const base = { music: true, sound: true, musicVolume: 1, callVolume: 1 };
+  GardenAudio.configure(base);
+  assert(Math.abs(amb.value - 1) < 1e-6, '默认音量应该是 1，实际 ' + amb.value);
+
+  // 取消勾选 → 整层静音
+  GardenAudio.configure({ ...base, sound: false });
+  assert(amb.value === 0, '取消「动物叫声与音效」之后动物声没有归零，实际 ' + amb.value);
+
+  // 勾回来 → 恢复满音量
+  GardenAudio.configure(base);
+  assert(Math.abs(amb.value - 1) < 1e-6, '勾回来之后没有恢复满音量，实际 ' + amb.value);
+
+  // 老存档里没有这个字段 → 回到默认满音量，而不是 0（哑掉）
+  GardenAudio.configure({ music: true });
+  assert(Math.abs(amb.value - 1) < 1e-6, '缺 sound 字段的老设置没有回到默认音量，实际 ' + amb.value);
+
+  // BGM 那一层不在这儿断言：它的目标值是在 updateSpatial 里按"让位系数 ×
+  // 音乐音量"算的，而那个函数靠真实经过的时间往前推。Node 桩里时间是假的，
+  // 断言会得到一个看起来合理的假数字。音乐滑杆在浏览器探针里量
+  // （probe-settings.mjs）。
+
+  GardenAudio.configure(base);
+}
+console.log('PASS 设置里的「动物叫声与音效」开关真的管得住环境声');
 
 // ══════════════ 素材包映射：每个物种都有录音，多条的要能随机 ══════════════
 {
