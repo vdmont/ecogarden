@@ -263,19 +263,20 @@
             ? ''
             : locked
               ? '🔒 ' + threshold + ' 生态'
-              : (world.level === 5 ? '0' : t.cost) + ' 能量',
+              : (world.level === 5 ? '' : t.cost + ' 能量'),
         ),
       );
       b.onclick = () => chooseTool(k);
       bar.append(b);
     }
-    const back = el('button', 'tool');
+    $('undoBtn')?.remove();
+    const back = el('button', 'tool previousStep');
     back.id = 'undoBtn';
     back.disabled = !undoSnapshot;
     back.title = '撤回上一步（整次拖动），恢复操作前的花园';
-    back.append(el('span', 'toolIcon', '↶'), el('span', 'toolName', '撤回'));
+    back.append(el('span', 'toolIcon', '↶'), el('span', 'toolName', '上一步'));
     back.onclick = undo;
-    bar.append(back);
+    document.querySelector('.toolCaption').before(back);
     text(
       'selectedTool',
       E.TOOL[tool].name + (world.level !== 5 && E.TOOL[tool].cost ? ' · ' + E.TOOL[tool].cost : ''),
@@ -323,6 +324,7 @@
         paintReason = r.reason;
       } else if (batch) {
         strokeCount++;
+        view.dirty = true;
       } else {
         sound(tool === 'water' ? 650 : 450);
         view.draw(performance.now());
@@ -484,7 +486,7 @@
           ? ''
           : locked
             ? '🔒 ' + n + ' 生态'
-            : (world.level === 5 ? 0 : E.TOOL[k].cost) + ' 能量';
+            : (world.level === 5 ? '' : E.TOOL[k].cost + ' 能量');
     }
     text(
       'combo',
