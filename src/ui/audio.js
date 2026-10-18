@@ -997,37 +997,23 @@
     kindMyth: 'pixiu', // pixiu / baize 同类
   };
 
-  // 真实录音。文件在 assets/calls/，来源与许可登记在同目录的 LICENSES.mjs。
-  // 没有条目的属一律走实时合成，不用这一层。
-  const CALL_FILES = {
-    bird: ['assets/calls/bird-0.mp3'],
-    nightHeron: ['assets/calls/nightHeron-0.mp3'],
-    redstart: ['assets/calls/redstart-0.mp3'],
-    longtail: ['assets/calls/longtail-0.mp3', 'assets/calls/longtail-1.mp3'],
-    wren: ['assets/calls/wren-0.mp3'],
-    flamingo: ['assets/calls/flamingo-0.mp3'],
-    sheep: ['assets/calls/sheep-0.mp3', 'assets/calls/sheep-1.mp3', 'assets/calls/sheep-2.mp3'],
-    chicken: ['assets/calls/chicken-0.mp3', 'assets/calls/chicken-1.mp3'],
-    rabbit: ['assets/calls/rabbit-0.mp3'],
-    deer: ['assets/calls/deer-0.mp3'],
-    fox: ['assets/calls/fox-0.mp3'],
-    canis: ['assets/calls/canis-0.mp3'],
-    cat: [
-      'assets/calls/cat-0.mp3',
-      'assets/calls/cat-1.mp3',
-      'assets/calls/cat-2.mp3',
-      'assets/calls/cat-3.mp3',
-      'assets/calls/cat-4.mp3',
-    ],
-    squirrel: [
-      'assets/calls/squirrel-0.mp3',
-      'assets/calls/squirrel-1.mp3',
-      'assets/calls/squirrel-2.mp3',
-    ],
-    hedgehog: ['assets/calls/hedgehog-0.mp3'],
-    frog: ['assets/calls/frog-0.mp3'],
-    bee: ['assets/calls/bee-0.mp3'],
-  };
+  // 真实录音的文件在 assets/calls/，物种 → 文件的映射由 assets/calls/SFXMAP.mjs
+  // 提供（那个文件由 scripts/gen-sfxmap.cjs 从 music/ 里的素材包生成，勿手改）。
+  //
+  // 总线按**物种**分，不再按属分：素材包里 4 种猫、3 种狗各自有独立录音和变调，
+  // 合成一属就没法用上各自的 rate 了。genusOf() 仍然保留，作为"这个物种没有录音"
+  // 时的退路（神话生物之外的漏网之鱼），以及给测试用。
+  const ECO = root.EcoCalls || { species: {}, licenses: {}, masterGain: 1 };
+  const CALL_FILES = {};
+  const CALL_META = {};
+  for (const [type, s] of Object.entries(ECO.species)) {
+    CALL_FILES[type] = s.files.slice();
+    CALL_META[type] = s;
+  }
+  // 这个物种走真实录音吗？（没有就退回实时合成）
+  function hasCall(type) {
+    return !!CALL_FILES[type] || !!CALL_FILES[genusOf(type)];
+  }
 
   // species key（访客是 visitor key，常驻是物种 key）→ 属
   function genusOf(type) {
@@ -1056,8 +1042,11 @@
   //     等 rebase 完成后，应该改成 app.js 显式调 GardenAudio.setMix()。
   const MIX = {
     base: 0.2, // 全局视角：动物声能量 / BGM 能量
-    focusK: 2.0, // 聚焦的那个属 ×2 → 0.2 × 2 = 0.4
-    otherK: 0.5, // 其他属 ×0.5 → 0.2 × 0.5 = 0.1
+    focusK: 2.0, // 聚焦的那个物种 ×2 → 0.2 × 2 = 0.4
+    // 镜头里**看得见但没聚焦**的那些：抬到 1.6 倍（0.2 × 1.6 = 0.32）。
+    // 项目所有者要的是"一片生机"，不是"孤零零一只"，所以看得到的都该浮出来一点。
+    seenK: 1.6,
+    otherK: 0.5, // 完全看不到的 ×0.5 → 0.2 × 0.5 = 0.1
     zoomBoost: 1.5, // 拉到最近时整体再抬这么多倍（即最多 ×2.5）
     ceiling: 0.85, // 能量比上限，防止拉满后盖过背景音乐
     rampSec: 1.2, // 线性过渡时长
@@ -1066,6 +1055,12 @@
     minConcurrent: 3, // 环境声同时在响的只数下限
     maxConcurrent: 5, // 上限
     gapMs: [4000, 22000], // 两次发声之间的随机间隔
+    // 镜头正在看的那只：间隔比别的短得多，所以它几乎一直在叫。
+    focusGapMs: 2600,
+    focusDb: -1, // 比背景声稍大一点，够突出又不吵
+    // 「看得见」的判定半径（以正交相机画面半高 extent 为 1 倍）。
+    // 1.15 是放宽了一点：相机有俯角，动物又有高度，站在画面边上的也该算看见。
+    seenRadius: 1.15,
   };
 
   let ambientBus = null,
@@ -1083,7 +1078,9 @@
   let observeCalls = 0; // observeView 被调了几次（应该等于渲染帧数）
   let view = null; // GardenView 实例（由包一层 render 拿到）
   let viewHooked = false;
-  let focusGenus = '';
+  let focusType = ''; // 镜头正在看的那只（type key），没有就是空串
+  let focusGenus = ''; // 它的属，只作为"这个物种没录音"时的退路
+  let seenTypes = new Set(); // 镜头看得见的物种集合
   let zoomT = 0; // 0 = 最远，1 = 最近
   let ambTargetEnergy = MIX.base;
   let ambMeasured = 0;
@@ -1169,25 +1166,55 @@
   // 表现是开场几声鸟叫之后再也不响。真实浏览器里量到的 ambPlaying 恒为 9、
   // 30 秒 recordPlays 零增长，就是这个。
   // 计数时机取"源真的开始发声"，而不是"决定要发声"：加载失败的那次不该占位。
-  function playRecord(genus, extraDb) {
-    const bus = busFor(genus);
+  function pickFile(type, wantLoop) {
+    const list = CALL_FILES[type];
+    if (!list || !list.length) return null;
+    const meta = CALL_META[type];
+    // wantLoop：这个物种有没有标了「适合连续播」的文件（蟋蟀、蜜蜂、狐狸那声带混响的）。
+    // 有就从里面挑，没有就退回普通变体。
+    const loops = (meta && meta.loops) || [];
+    const pool = wantLoop && loops.length ? loops : list;
+    return pool[Math.floor(Math.random() * pool.length)];
+  }
+
+  // 放一段录音。走物种总线，所以聚焦/远近的混音对它同样生效。
+  //
+  // ambPlaying 的增减**只在这里做**，调用方一律不许碰。踩过的坑：原来
+  // playRecord 自己加一、scheduleAmbient 又加一，而结束时只减一次；pet() 那条路
+  // 更是只加不减。计数器只涨不跌，涨过 maxConcurrent 之后调度被永久挡死——
+  // 表现是开场几声鸟叫之后再也不响。真实浏览器里量到的 ambPlaying 恒为 9、
+  // 30 秒 recordPlays 零增长，就是这个。
+  // 计数时机取"源真的开始发声"，而不是"决定要发声"：加载失败的那次不该占位。
+  // force=true 是"玩家主动摸"用的。并发上限（voices）只该管**环境声**：
+  // 环境声是程序自己排的，堆到三只同类以上会糊成一片；而玩家摸一下必须出声，
+  // 摸第三只同类就哑掉是明显的故障感。
+  function playRecord(type, extraDb, force) {
+    const bus = busFor(type);
     if (!bus) return null;
-    const path = pickFile(genus);
+    const meta = CALL_META[type] || {};
+    // 同物种在响的只数上限。素材包统一给 2：一只在叫时远处再来一只同类，
+    // 叠到三只以上就成"一片糊"了。
+    if (!force && playingFor(type) >= (meta.voices || 2)) return null;
+    const path = pickFile(type, false);
     if (!path) return null;
     recordPlays++;
     return loadBuffer(path).then((buf) => {
       if (!buf) return null;
       const src = ctx.createBufferSource();
       src.buffer = buf;
-      // 同一属多条素材随机变调播放，免得重复听得出来。±8% 是听不出明显失真的范围。
-      src.playbackRate.value = 0.92 + Math.random() * 0.16;
+      // 变调：素材包给的大小差异（猫狗体型、貔貅白泽）为主，再叠一点随机，
+      // 免得同一条素材反复听出来。±3% 是听不出明显失真的范围。
+      const base = meta.rate || 1;
+      src.playbackRate.value = base * (0.985 + Math.random() * 0.03);
       const g = ctx.createGain();
-      g.gain.value = Math.pow(10, (extraDb || 0) / 20);
+      g.gain.value = (meta.gain === undefined ? 1 : meta.gain) * Math.pow(10, (extraDb || 0) / 20);
       src.connect(g);
       g.connect(bus);
       ambPlaying++;
+      byType[type] = (byType[type] || 0) + 1;
       src.onended = () => {
         ambPlaying--;
+        byType[type] = Math.max(0, (byType[type] || 1) - 1);
         try {
           src.disconnect();
           g.disconnect();
@@ -1198,35 +1225,106 @@
     });
   }
 
+  // 某个物种现在有几个声音在响
+  function playingFor(type) {
+    return byType[type] || 0;
+  }
+
+  const byType = {}; // type → 正在发声的条数（voices 上限就是拿它数的）
+
   let ambPlaying = 0;
   let recordPlays = 0;
   let ambTimer = 0;
-  const ambCooldown = {}; // genus → 下次可发声的时间戳
+  const ambCooldown = {}; // type → 下次可发声的时间戳
 
-  // 场上真的有的属。羊都迁走了就不该再咩咩叫。
-  function liveGenera() {
-    const out = new Set();
+  // 场上真的有、而且有录音的物种。羊都迁走了就不该再咩咩叫。
+  // 返回 type 而不是属：素材包给的是**每种动物**独立的录音与变调。
+  function liveTypes() {
     const w = view?.world;
-    if (!w || !w.cells) return [...Object.keys(GENUS)];
+    if (!w || !w.cells) return Object.keys(CALL_FILES);
+    const out = new Set();
     for (const c of w.cells) {
       const a = c && c.animal;
-      if (a && a.type) out.add(genusOf(a.type));
+      if (!a || !a.type) continue;
+      if (CALL_FILES[a.type]) out.add(a.type);
+      else if (CALL_FILES[genusOf(a.type)]) out.add(genusOf(a.type));
     }
     return [...out];
   }
 
-  // 调度：维持 3–5 只在响，每次随机挑一个冷却过的属。
+  // 镜头看得见的物种。这是"抬高看得见的、压低看不到的"那条需求的判据。
+  //
+  // 判据用**离镜头注视点的世界距离**而不是投影到屏幕坐标，因为正交相机的
+  // 可视范围就是一个以注视点为中心、按 zoom 放大的矩形（见 scene.js 的
+  // updateCamera：extent = max(...) * zoom）。照抄那个公式量出来的半径，
+  // 和画面实际大小是一致的；再乘 1.15 把画面边上的也算进来。
+  //
+  // 动物位置优先从 view.motion 里读——那是渲染时真正在用的坐标，动物会走动；
+  // 读不到（还没被画过）才退回按格子下标推算的位置。
+  function visibleTypes() {
+    const v = view;
+    const w = v && v.world;
+    if (!w || !w.cells) return new Set(liveTypes());
+    const aspect = (v.width || 1) / (v.height || 1);
+    const extent =
+      Math.max((w.w * 0.65) / Math.max(0.65, aspect), w.h * 0.73, 8) * (v.zoom || v.targetZoom || 1);
+    const radius = extent * MIX.seenRadius;
+    const lx = (v.look && v.look.x) || 0;
+    const lz = (v.look && v.look.z) || 0;
+    const out = new Set();
+    for (let i = 0; i < w.cells.length; i++) {
+      const c = w.cells[i];
+      const a = c && c.animal;
+      if (!a || !a.type) continue;
+      const st = v.motion && v.motion.get(a);
+      const x = st ? st.x : i % w.w - w.w / 2 + 0.5;
+      const z = st ? st.z : Math.floor(i / w.w) - w.h / 2 + 0.5;
+      if ((x - lx) * (x - lx) + (z - lz) * (z - lz) > radius * radius) continue;
+      if (CALL_FILES[a.type]) out.add(a.type);
+      else if (CALL_FILES[genusOf(a.type)]) out.add(genusOf(a.type));
+    }
+    return out;
+  }
+
+  // 调度。项目所有者要的是「镜头移到哪，哪只动物就一直叫」：
+  //   · 镜头正在看的那只（focusType）**优先**，冷却比别的短得多，所以它几乎一直在叫；
+  //     镜头上秒看羊、下秒看松鼠，羊停了、松鼠接上。
+  //   · 剩下的名额给"镜头看得见的其他动物"随机挑，维持 3–5 个声音在响，
+  //     才有生机盎然的感觉；完全没有在看的就退回场上任意物种。
+  // 同物种多条素材由 pickFile 随机挑，所以听不出在重复。
   function scheduleAmbient() {
     if (!ambientBus || !active || settings.sound === false) return;
     const now = performance.now();
     const want =
       MIX.minConcurrent + Math.floor(Math.random() * (MIX.maxConcurrent - MIX.minConcurrent + 1));
     if (ambPlaying >= want) return;
-    const pool = liveGenera().filter((g) => CALL_FILES[g] && (ambCooldown[g] || 0) < now);
-    if (!pool.length) return;
-    const g = pool[Math.floor(Math.random() * pool.length)];
-    ambCooldown[g] = now + MIX.gapMs[0] + Math.random() * (MIX.gapMs[1] - MIX.gapMs[0]);
-    playRecord(g, -3); // ambPlaying 由 playRecord 自己管，这里不要再加减
+
+    const live = liveTypes();
+    if (!live.length) return;
+    const inView = visibleTypes();
+    const onCooldown = (t, gap) => (ambCooldown[t] || 0) >= now + gap;
+    const markCooldown = (t, gap) => {
+      ambCooldown[t] = now + gap + Math.random() * MIX.gapMs[1] * 0.5;
+    };
+    const gapFor = (t) => (t === focusType ? MIX.focusGapMs : MIX.gapMs[0] + Math.random() * (MIX.gapMs[1] - MIX.gapMs[0]));
+
+    // 1) 镜头正在看的那只：只要冷却到了就给它一个位置，不管 want 还剩多少。
+    if (focusType && CALL_FILES[focusType] && !onCooldown(focusType, 0)) {
+      markCooldown(focusType, MIX.focusGapMs);
+      playRecord(focusType, MIX.focusDb);
+      if (ambPlaying >= want) return;
+    }
+
+    // 2) 其余名额：先在"镜头看得见的"里挑，没有可见动物再从全场挑。
+    const pickFrom = (list) => {
+      const pool = list.filter((t) => CALL_FILES[t] && !onCooldown(t, 0));
+      if (!pool.length) return null;
+      const t = pool[Math.floor(Math.random() * pool.length)];
+      markCooldown(t, gapFor(t));
+      playRecord(t, -3); // ambPlaying 由 playRecord 自己管，这里不要再加减
+      return t;
+    };
+    if (!pickFrom(inView)) pickFrom(live);
   }
 
   // 能量修正回路：把环境声的实际能量慢慢拉到目标（相对 BGM）。
@@ -1265,14 +1363,20 @@
     const entry = {
       t: +t.toFixed(2),
       zoomT: +zoomT.toFixed(3),
-      focus: focusGenus || '-',
+      focus: focusType || '-',
       gen: {},
       tgt: {},
       was: {},
     };
     for (const g of Object.keys(genusBus)) {
-      const focused = focusGenus && g === focusGenus;
-      const k = focusGenus ? (focused ? MIX.focusK : MIX.otherK) : 1;
+      // 三档：镜头正在看的那只最高，镜头里看得见的次之，完全看不到的压低。
+      // 项目所有者要的是"生机盎然"——看得到的一起响，看不到的退到后面去。
+      const focused = !!focusType && (g === focusType || g === focusGenus);
+      let k;
+      if (!focusType) k = 1;
+      else if (focused) k = MIX.focusK;
+      else if (seenTypes.has(g)) k = MIX.seenK;
+      else k = MIX.otherK;
       const energy = Math.min(MIX.ceiling, MIX.base * boost * k);
       const target = Math.sqrt(energy);
       const p = genusBus[g].gain;
@@ -1285,7 +1389,7 @@
     }
     mixLog.push(entry);
     if (mixLog.length > LOG_MAX) mixLog.shift();
-    ambTargetEnergy = Math.min(MIX.ceiling, MIX.base * boost * (focusGenus ? MIX.otherK : 1));
+    ambTargetEnergy = Math.min(MIX.ceiling, MIX.base * boost * (focusType ? MIX.otherK : 1));
   }
 
   // 逐帧读视图状态。只在这里读，不改 scene.js / app.js。
@@ -1297,12 +1401,18 @@
     const lo = Math.log(0.14),
       hi = Math.log(1.8);
     const t = Math.max(0, Math.min(1, (hi - Math.log(tz)) / (hi - lo)));
-    // 聚焦对象 → 它的属。followAnimal 是 visitor key 或常驻物种 key。
+    // 聚焦对象 → 它的物种。followAnimal 是动物对象（也可能直接是 key）。
+    // 主键用 type 而不是属：素材包里 4 种猫各有自己的录音与变调，合到一属
+    // 就没法做到"镜头看阿比西尼亚猫时只响它那两条"。
     const fa = v.followAnimal;
-    const g = fa ? genusOf(fa) : '';
-    if (t !== zoomT || g !== focusGenus) {
+    const ty = fa ? fa.type || fa : '';
+    const seen = visibleTypes();
+    const seenChanged = seen.size !== seenTypes.size || [...seen].some((x) => !seenTypes.has(x));
+    if (t !== zoomT || ty !== focusType || seenChanged) {
       zoomT = t;
-      focusGenus = g;
+      focusType = ty;
+      focusGenus = ty ? genusOf(ty) : '';
+      seenTypes = seen;
       applyMix(false);
     }
   }
@@ -1455,15 +1565,16 @@
   function pet(type, s) {
     unlock(s);
     if (!ctx || s.sound === false) return;
-    const g = genusOf(type);
-    // 有真实录音的属走文件，没有的走实时合成；两者都从属总线出去，
+    // 有真实录音的走文件，没有的走实时合成；两者都从总线出去，
     // 所以聚焦/远近的混音对它们一视同仁。
     // 手动摸摸是明确的交互，给 +5 dB 让它从环境声里浮出来。
-    if (CALL_FILES[g]) {
-      playRecord(g, 5);
+    const key = CALL_FILES[type] ? type : genusOf(type);
+    if (CALL_FILES[key]) {
+      // force=true：并发上限只管环境声，玩家主动摸一律出声。
+      playRecord(key, 5, true);
       return;
     }
-    const bus = busFor(g);
+    const bus = busFor(key);
     if (!bus) {
       const t = ctx.currentTime + 0.02;
       for (const ev of callEvents(type)) play(ev, t);
@@ -1486,10 +1597,12 @@
     const lo = Math.log(0.14),
       hi = Math.log(1.8);
     const t = Math.max(0, Math.min(1, (hi - Math.log(tz)) / (hi - lo)));
-    const g = state.focus ? genusOf(state.focus) : '';
-    if (t === zoomT && g === focusGenus) return;
+    const g = state.focus ? state.focus : '';
+    if (t === zoomT && g === focusType) return;
     zoomT = t;
-    focusGenus = g;
+    focusType = g;
+    focusGenus = g ? genusOf(g) : '';
+    if (state.seen) seenTypes = new Set(state.seen);
     applyMix(false);
   }
 
@@ -1504,8 +1617,11 @@
     renderOffline,
     GENUS,
     CALL_FILES,
+    CALL_META,
+    ECO,
     MIX,
     genusOf,
+    hasCall,
     MUSIC_TRACKS,
     MUSIC_VOLUME,
     // 音乐接进 WebAudio 之后，音量由节点控制而不是元素属性（否则会被乘两次）。
@@ -1523,7 +1639,11 @@
     // 调试用：读当前混音状态，验证线性过渡真的到位了
     _mix: () => ({
       zoomT,
+      focusType,
       focusGenus,
+      seen: [...seenTypes],
+      // 每个物种现在有几个声音在响。voices 上限就是拿它数的。
+      byType: { ...byType },
       agcScale,
       ambTargetEnergy,
       ambMeasured,
@@ -1535,7 +1655,7 @@
       mixCalls,
       observeCalls,
       mixLog: mixLog.slice(),
-      // 每个属总线的实际增益。上面那些是"算出来的意图"，这里是"节点上的真值"——
+      // 每个总线的实际增益。上面那些是"算出来的意图"，这里是"节点上的真值"——
       // 验证线性过渡有没有真的到位，只能看这个。
       genusGains: Object.fromEntries(
         Object.keys(genusBus).map((g) => [g, +genusBus[g].gain.value.toFixed(4)]),
@@ -1543,5 +1663,8 @@
       ctxState: ctx ? ctx.state : null,
       ctxTime: ctx ? +ctx.currentTime.toFixed(3) : null,
     }),
+    // 场上真的有、且有录音的物种 / 镜头看得见的物种。调度和混音都靠这两个。
+    _liveTypes: liveTypes,
+    _visibleTypes: () => [...visibleTypes()],
   };
 })(globalThis);

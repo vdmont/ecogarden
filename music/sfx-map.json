@@ -1,0 +1,351 @@
+{
+ "version": 2,
+ "basePath": "sfx/mp3/",
+ "masterGain": 0.9,
+ "cooldownMs": 120,
+ "randomRate": 0.03,
+ "species": {
+  "chicken": {
+   "files": [
+    "chicken_001",
+    "chicken_003",
+    "chicken_004",
+    "chicken_005"
+   ],
+   "rate": 1.0,
+   "gain": 1.0,
+   "voices": 2,
+   "loops": []
+  },
+  "bird": {
+   "files": [
+    "bird_006",
+    "bird_007",
+    "bird_010"
+   ],
+   "rate": 1.0,
+   "gain": 1.0,
+   "voices": 2,
+   "loops": []
+  },
+  "sheep": {
+   "files": [
+    "sheep_011",
+    "sheep_012",
+    "sheep_013",
+    "sheep_014",
+    "sheep_016"
+   ],
+   "rate": 1.0,
+   "gain": 1.0,
+   "voices": 2,
+   "loops": []
+  },
+  "alpaca": {
+   "files": [
+    "alpaca_017",
+    "alpaca_018"
+   ],
+   "rate": 1.0,
+   "gain": 1.0,
+   "voices": 2,
+   "loops": []
+  },
+  "rabbit": {
+   "files": [
+    "rabbit_021",
+    "rabbit_024"
+   ],
+   "rate": 1.0,
+   "gain": 1.0,
+   "voices": 2,
+   "loops": []
+  },
+  "deer": {
+   "files": [
+    "deer_029"
+   ],
+   "rate": 1.0,
+   "gain": 1.0,
+   "voices": 2,
+   "loops": []
+  },
+  "fox": {
+   "files": [
+    "fox_033",
+    "fox_034",
+    "fox_035",
+    "fox_037"
+   ],
+   "rate": 1.0,
+   "gain": 1.0,
+   "voices": 2,
+   "loops": [
+    "fox_035"
+   ]
+  },
+  "wolf": {
+   "files": [
+    "wolf_040"
+   ],
+   "rate": 1.0,
+   "gain": 1.0,
+   "voices": 2,
+   "loops": []
+  },
+  "squirrel": {
+   "files": [
+    "squirrel_046",
+    "squirrel_047",
+    "squirrel_048",
+    "squirrel_049"
+   ],
+   "rate": 1.0,
+   "gain": 1.0,
+   "voices": 2,
+   "loops": []
+  },
+  "boar": {
+   "files": [
+    "boar_050",
+    "boar_051",
+    "boar_052"
+   ],
+   "rate": 1.0,
+   "gain": 1.0,
+   "voices": 2,
+   "loops": []
+  },
+  "hedgehog": {
+   "files": [
+    "hedgehog_056",
+    "hedgehog_057",
+    "hedgehog_058"
+   ],
+   "rate": 1.0,
+   "gain": 1.0,
+   "voices": 2,
+   "loops": []
+  },
+  "capybara": {
+   "files": [
+    "capybara_075",
+    "capybara_076",
+    "capybara_078",
+    "capybara_079"
+   ],
+   "rate": 1.0,
+   "gain": 1.0,
+   "voices": 2,
+   "loops": []
+  },
+  "frog": {
+   "files": [
+    "frog_080",
+    "frog_081",
+    "frog_082",
+    "frog_083",
+    "frog_084",
+    "frog_085"
+   ],
+   "rate": 1.0,
+   "gain": 1.0,
+   "voices": 2,
+   "loops": []
+  },
+  "bee": {
+   "files": [
+    "bee_087",
+    "bee_089"
+   ],
+   "rate": 1.0,
+   "gain": 1.0,
+   "voices": 2,
+   "loops": [
+    "bee_087",
+    "bee_089"
+   ]
+  },
+  "butterfly": {
+   "files": [
+    "butterfly_095",
+    "butterfly_096",
+    "butterfly_097"
+   ],
+   "rate": 1.0,
+   "gain": 1.0,
+   "voices": 2,
+   "loops": []
+  },
+  "nightHeron": {
+   "files": [
+    "nightHeron_101",
+    "nightHeron_102",
+    "nightHeron_103"
+   ],
+   "rate": 1.0,
+   "gain": 1.0,
+   "voices": 2,
+   "loops": []
+  },
+  "redstart": {
+   "files": [
+    "redstart_104",
+    "redstart_106",
+    "redstart_107"
+   ],
+   "rate": 1.0,
+   "gain": 1.0,
+   "voices": 2,
+   "loops": []
+  },
+  "longtail": {
+   "files": [
+    "longtail_109",
+    "longtail_110",
+    "longtail_112"
+   ],
+   "rate": 1.0,
+   "gain": 1.0,
+   "voices": 2,
+   "loops": []
+  },
+  "wren": {
+   "files": [
+    "wren_114",
+    "wren_115",
+    "wren_116",
+    "wren_117",
+    "wren_118"
+   ],
+   "rate": 1.0,
+   "gain": 1.0,
+   "voices": 2,
+   "loops": []
+  },
+  "flamingo": {
+   "files": [
+    "flamingo_121",
+    "flamingo_122",
+    "flamingo_123",
+    "flamingo_124"
+   ],
+   "rate": 1.0,
+   "gain": 1.0,
+   "voices": 2,
+   "loops": []
+  },
+  "bug": {
+   "files": [
+    "cricket_090",
+    "cricket_091",
+    "cricket_093"
+   ],
+   "rate": 1.0,
+   "gain": 1.0,
+   "voices": 2,
+   "loops": [
+    "cricket_090",
+    "cricket_091",
+    "cricket_093"
+   ],
+   "note": "幼虫不发声，用蟋蟀/虫鸣代替"
+  },
+  "abyssinian": {
+   "files": [
+    "cat_063",
+    "cat_067"
+   ],
+   "rate": 1.12,
+   "gain": 1.0,
+   "voices": 2,
+   "loops": []
+  },
+  "ragdoll": {
+   "files": [
+    "cat_064"
+   ],
+   "rate": 0.93,
+   "gain": 1.0,
+   "voices": 2,
+   "loops": []
+  },
+  "tabby": {
+   "files": [
+    "cat_065"
+   ],
+   "rate": 1.0,
+   "gain": 1.0,
+   "voices": 2,
+   "loops": []
+  },
+  "orangeCat": {
+   "files": [
+    "cat_066"
+   ],
+   "rate": 1.06,
+   "gain": 1.0,
+   "voices": 2,
+   "loops": []
+  },
+  "borderCollie": {
+   "files": [
+    "dog_070",
+    "dog_074"
+   ],
+   "rate": 1.05,
+   "gain": 1.0,
+   "voices": 2,
+   "loops": []
+  },
+  "golden": {
+   "files": [
+    "dog_072"
+   ],
+   "rate": 0.92,
+   "gain": 1.0,
+   "voices": 2,
+   "loops": []
+  },
+  "samoyed": {
+   "files": [
+    "dog_073"
+   ],
+   "rate": 1.15,
+   "gain": 1.0,
+   "voices": 2,
+   "loops": []
+  },
+  "dragon": {
+   "files": [
+    "dragon_126",
+    "dragon_128",
+    "dragon_129"
+   ],
+   "rate": 1.0,
+   "gain": 1.0,
+   "voices": 2,
+   "loops": []
+  },
+  "pixiu": {
+   "files": [
+    "dragon_126",
+    "dragon_128"
+   ],
+   "rate": 0.82,
+   "gain": 0.95,
+   "voices": 2,
+   "loops": []
+  },
+  "baize": {
+   "files": [
+    "dragon_129",
+    "dragon_126"
+   ],
+   "rate": 1.12,
+   "gain": 0.9,
+   "voices": 2,
+   "loops": []
+  }
+ }
+}

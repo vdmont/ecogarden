@@ -192,8 +192,8 @@ console.log(
     `60 次换曲无重复、缺文件会跳过（共 ${TRACKS.reduce((s, t) => s + Math.round(fs.statSync(assetOf(t)).size / 1024), 0)} KB）`,
 );
 
-// ══════════════ 叫声：属级分组 + 录音/合成两条路 ══════════════
-// 有真实录音的属走文件（不发合成音），没有的走实时合成。两条都要能出声。
+// ══════════════ 叫声：按物种分组 + 录音/合成两条路 ══════════════
+// 有真实录音的物种走文件（不发合成音），没有的走实时合成。两条都要能出声。
 GardenAudio.configure({ music: false, sound: true });
 const before = notes;
 GardenAudio.pet('ragdoll', { music: false, sound: false });
@@ -206,26 +206,27 @@ for (const type of species) {
   const g = GardenAudio.genusOf(type);
   assert(g, type + ' 没有分到属');
   const n = notes;
-  const fetchedBefore = fetched.length;
   GardenAudio.pet(type, { music: false, sound: true });
-  if (GardenAudio.CALL_FILES[g]) {
+  // 录音表是**按物种**建的（素材包给每种动物独立录音与变调），不是按属。
+  // 所以这里问的是这个物种有没有录音，而不是它那个属有没有。
+  if (GardenAudio.hasCall(type)) {
     // 录音是异步加载的（先 fetch 再 decode），所以这里看"有没有发起一次录音播放"，
     // 而不是等它真的响——那是浏览器里的事。
     const rp = GardenAudio._mix().recordPlays;
     GardenAudio.pet(type, { music: false, sound: true });
     assert(
       GardenAudio._mix().recordPlays > rp || notes > n,
-      type + ' 的属 ' + g + ' 有录音，却什么都没响',
+      type + ' 有录音，却什么都没响',
     );
-    withRecording.add(g);
+    withRecording.add(type);
   } else {
     assert(notes > n, type + ' 没有录音也没发出合成音');
-    withoutRecording.add(g);
+    withoutRecording.add(type);
   }
 }
 console.log(
-  `PASS 音效开关；${withRecording.size} 个属用真实录音（${[...withRecording].join(' ')}），` +
-    `${withoutRecording.size} 个属继续用实时合成（${[...withoutRecording].join(' ')}）`,
+  `PASS 音效开关；${withRecording.size} 个物种用真实录音，` +
+    `${withoutRecording.size} 个物种走实时合成（${[...withoutRecording].join(' ') || '无'}）`,
 );
 
 // —— 属级分组必须符合分类学，不能为了省事乱合并 ——
@@ -261,19 +262,69 @@ for (const [g, list] of Object.entries(GardenAudio.CALL_FILES)) {
   }
 }
 
-// —— 混音曲线：全局 0.2、聚焦 0.4、其他 0.1，且 0.2/0.4 是能量比要开根号 ——
+// —— 混音曲线：全局 0.2、聚焦 0.4、看得见 0.32、其他 0.1，且都要开根号 ——
 {
   const M = GardenAudio.MIX;
   assert.equal(M.base, 0.2, '全局基准不是 0.2');
   assert.equal(M.base * M.focusK, 0.4, '聚焦时不是 0.4');
-  assert.equal(M.base * M.otherK, 0.1, '其他属不是 0.1');
+  // 0.2 × 1.6 在浮点里是 0.32000000000000006，用容差比而不是相等
+  assert(Math.abs(M.base * M.seenK - 0.32) < 1e-9, '镜头里看得见但没聚焦的不是 0.32');
+  assert.equal(M.base * M.otherK, 0.1, '完全看不见的不是 0.1');
   // 增益是振幅比 = sqrt(能量比)
   assert(Math.abs(Math.sqrt(0.2) - 0.4472) < 1e-3);
   assert(Math.abs(Math.sqrt(0.4) - 0.6325) < 1e-3);
+  assert(Math.abs(Math.sqrt(0.32) - 0.5657) < 1e-3);
   assert(Math.abs(Math.sqrt(0.1) - 0.3162) < 1e-3);
   assert(M.ceiling >= 0.4, '上限低于聚焦时的 0.4，等于聚焦没效果');
+  // 三档必须真的分得开，否则"抬高看得见的、压低看不见的"就是一句空话
+  assert(M.focusK > M.seenK && M.seenK > 1 && M.otherK < 1, '三档没有拉开差距');
 }
-console.log('PASS 属级分组符合分类学、录音文件都在盘上、混音曲线 0.2→0.4/0.1 且按能量开根号');
+console.log(
+  'PASS 属级分组符合分类学、录音文件都在盘上、混音三档 0.4/0.32/0.1 且按能量开根号',
+);
+
+// ══════════════ 素材包映射：每个物种都有录音，多条的要能随机 ══════════════
+{
+  const S = GardenAudio.CALL_FILES;
+  const M = GardenAudio.CALL_META;
+  const types = [...Object.keys(Eco.LIFE), ...Object.keys(EcoData.VISITORS)];
+  for (const type of types) {
+    assert(S[type] && S[type].length > 0, type + ' 在素材映射里没有录音');
+    assert(M[type], type + ' 缺播放参数');
+    assert(M[type].rate > 0.5 && M[type].rate < 2, type + ' 的变调倍率离谱：' + M[type].rate);
+    assert(M[type].voices >= 1, type + ' 的同物种并发上限是 0，等于永远不叫');
+    for (const f of S[type]) {
+      assert(assetOf(f) && fs.existsSync(assetOf(f)), type + ' 的录音不在盘上：' + f);
+      assert(f.startsWith('assets/calls/'), '路径必须以 assets/calls/ 开头，构建靠它内联：' + f);
+    }
+    // loops 里点名的必须确实在 files 里，否则循环播那条永远取不到
+    for (const l of M[type].loops || [])
+      assert(S[type].includes(l), type + ' 的循环文件 ' + l + ' 不在它的 files 里');
+  }
+  // 4 种猫共用猫录音但各自分到不同的条目，且变调互不相同——
+  // 否则"镜头看阿比西尼亚猫"和"看橘猫"听起来会一模一样。
+  const cats = ['abyssinian', 'ragdoll', 'tabby', 'orangeCat'];
+  const catRates = cats.map((c) => M[c].rate);
+  assert.equal(new Set(catRates).size, cats.length, '4 种猫的变调倍率有重复：' + catRates.join('/'));
+  // 多条的物种必须能随机取到不同文件：抽 400 次，应当覆盖该物种的全部变体。
+  // 判据用"覆盖率 = 全部"而不是"至少 2 个"——后者会让"有 4 条却永远只抽到
+  // 2 条"的物种照样通过，是那种安静地少报、不会报错的检查。
+  const multi = Object.keys(S).filter((t) => S[t].length > 1);
+  assert(multi.length >= 20, '多条变体的物种太少，随机机制没东西可随机');
+  for (const t of ['fox', 'sheep', 'frog', 'wren']) {
+    const list = S[t];
+    const seenFiles = new Set();
+    for (let i = 0; i < 400; i++) seenFiles.add(list[Math.floor(Math.random() * list.length)]);
+    assert(
+      seenFiles.size === list.length,
+      t + ' 的随机挑选 400 次只取到 ' + seenFiles.size + '/' + list.length + ' 个变体',
+    );
+  }
+  console.log(
+    `PASS ${types.length} 个物种都有录音且文件在盘上；` +
+      `${multi.length} 个物种有多个变体可随机；4 种猫变调互不相同（${catRates.join('/')}）`,
+  );
+}
 
 // —— 每种叫声都要有内容，且参数合法 ——
 const all = [...Object.keys(Eco.LIFE), ...Object.keys(EcoData.VISITORS)];
@@ -305,7 +356,7 @@ for (const t of ['bug', 'bee']) {
   assert(noiseCarrier.length > 0, t + ' 不是以噪声为主的调幅，听起来会是电子音');
 }
 console.log(
-  `PASS ${all.length} 种合成叫声的事件参数合法；` +
+  `PASS 合成叫声（现在的兜底路径）${all.length} 种事件参数合法；` +
     `青蛙脉冲率 ${(1 / gap).toFixed(2)}/s（实测 5.9）；蝉与蜂以噪声为载波`,
 );
 
@@ -324,14 +375,18 @@ console.log(
   const before = GardenAudio._mix().ambPlaying;
   const mark = bufferSources.length; // 只认自己起的源，别把前面测试留下的算进来
   const n = 5;
-  for (let i = 0; i < n; i++) GardenAudio.pet('cat', { sound: true, music: true });
+  // 用真的物种 key。'cat' 现在只是分类学上的属名，游戏里传进来的是
+  // abyssinian / ragdoll / tabby / orangeCat 其中之一——拿属名去摸，
+  // 走不到录音那条路（以前能走通只是因为老表正好按属建）。
+  const PET_TYPE = 'tabby';
+  for (let i = 0; i < n; i++) GardenAudio.pet(PET_TYPE, { sound: true, music: true });
   await new Promise((r) => setTimeout(r, 0));
   await new Promise((r) => setImmediate(r));
   const playing = GardenAudio._mix().ambPlaying;
   assert.equal(
     playing - before,
     n,
-    `摸了 ${n} 次猫，应该有 ${n} 段录音在响，实际只数 ${playing - before}`,
+    `摸了 ${n} 次${PET_TYPE}，应该有 ${n} 段录音在响，实际只数 ${playing - before}`,
   );
   // 自己起的那些放完之后，只数必须回到出发时的数
   const live = bufferSources.slice(mark);
@@ -353,9 +408,9 @@ console.log(
     '在响的只数多算了：摸了 ' + n + ' 次，却数成 ' + (playing - before),
   );
   // 「同时不超过 5 只」这条约束是靠环境声调度实现的，它要场上真有动物
-  // （liveGenera 读视图里的 world），桩里没有视图，所以这条留给真实浏览器验。
+  // （_liveTypes 读视图里的 world），桩里没有视图，所以这条留给真实浏览器验。
   console.log(
-    `PASS 在响的只数会归零（摸 ${n} 次猫 → ${playing - before} 段 → 放完回到基线 ${before}）`,
+    `PASS 在响的只数会归零（摸 ${n} 次${PET_TYPE} → ${playing - before} 段 → 放完回到基线 ${before}）`,
   );
 })();
 

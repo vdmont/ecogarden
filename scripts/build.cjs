@@ -89,12 +89,25 @@ for (const t of tracks) {
   musicUris.set(t, 'data:' + mime + ';base64,' + buf.toString('base64'));
 }
 
-// 2) 动物录音：src/ui/audio.js 的 CALL_FILES 里点名的那些。
+// 2) 动物录音：assets/calls/SFXMAP.mjs 里列出的那些。
 //    缺一个同样直接失败——否则离线版里那属动物会安静得像被静音了。
-const callBlock = audioSrc.match(/CALL_FILES\s*=\s*\{([\s\S]*?)\n\s*\};/);
-if (!callBlock) throw new Error('src/ui/audio.js 里找不到 CALL_FILES');
-const callFiles = [...callBlock[1].matchAll(/'([^']*assets\/calls\/[^']+)'/g)].map((m) => m[1]);
-if (!callFiles.length) throw new Error('CALL_FILES 里一个录音路径都没有');
+//
+//    为什么从 SFXMAP.mjs 读而不是从 audio.js 读：CALL_FILES 现在是由 SFXMAP.mjs
+//    在运行时拼出来的，audio.js 源码里已经没有字面路径了，扫它只会扫到 0 条。
+//    那道"一个路径都没有就失败"的检查因此更该留着——它现在正是防"表读空了"
+//    的最后一道闸。
+const sfxmapPath = path.join(base, 'assets', 'calls', 'SFXMAP.mjs');
+if (!fs.existsSync(sfxmapPath)) {
+  throw new Error('assets/calls/SFXMAP.mjs 不存在，先跑 node scripts\\gen-sfxmap.cjs');
+}
+const sfxmapSrc = fs.readFileSync(sfxmapPath, 'utf8');
+//    引号两种都要认：SFXMAP.mjs 是 JSON.stringify 出来的，用的是**双引号**。
+//    这里曾经只匹配单引号，于是扫到 0 条——好在下面那道"一个都没有就失败"抓住了，
+//    否则会悄悄产出一个没有任何动物声的离线版。
+const callFiles = [
+  ...new Set([...sfxmapSrc.matchAll(/["'](assets\/calls\/[^"']+)["']/g)].map((m) => m[1])),
+].sort();
+if (!callFiles.length) throw new Error('SFXMAP.mjs 里一个录音路径都没有');
 
 const callUris = new Map();
 let callBytes = 0;
@@ -156,6 +169,21 @@ const rewriteRefs = (code, map, label) => {
   return out;
 };
 
+// SFXMAP.mjs 用的是另一个规矩：同一条录音会在表里出现多次
+// （既在 species[x].files 里，又可能在 loops 里；貔貅白泽还和龙共用文件），
+// 所以这里要**全部替换**、并要求至少命中一次。引号也得两种都认——
+// 这个文件是 JSON.stringify 出来的，用双引号。
+const rewriteRefsAll = (code, map, label) => {
+  let out = code;
+  for (const [from, to] of map) {
+    const quoted = new RegExp('(["\'])' + from.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '\\1', 'g');
+    const n = (out.match(quoted) || []).length;
+    if (n < 1) throw new Error(label + ' 里找不到 "' + from + '"（0 次）');
+    out = out.replace(quoted, '"' + to + '"');
+  }
+  return out;
+};
+
 let replaced = 0;
 // 所有替换都走这个函数：要求恰好命中一次，否则报错（避免标记写错却仍然构建"成功"）
 const replaceOnce = (needle, make) => {
@@ -169,13 +197,12 @@ const replaceOnce = (needle, make) => {
 // 4) 内联样式（字体的 data URI 已经在上面扫 @font-face 时替换掉了）
 replaceOnce('<link rel="stylesheet" href="src/ui/style.css">', () => '<style>' + css + '</style>');
 
-// 5) 按 files.json 的顺序内联脚本，并逐个做语法检查（音乐与录音都在 audio.js 这一步改写）
+// 5) 按 files.json 的顺序内联脚本，并逐个做语法检查。
+//    音乐路径在 audio.js 里，录音路径在 SFXMAP.mjs 里，两个都要改写成 data URI。
 for (const file of scripts) {
   let code = fs.readFileSync(path.join(base, file), 'utf8');
-  if (file === 'src/ui/audio.js') {
-    code = rewriteRefs(code, musicUris, file);
-    code = rewriteRefs(code, callUris, file);
-  }
+  if (file === 'src/ui/audio.js') code = rewriteRefs(code, musicUris, file);
+  if (file === 'assets/calls/SFXMAP.mjs') code = rewriteRefsAll(code, callUris, file);
   new vm.Script(code, { filename: file });
   replaceOnce(
     '<script src="' + file + '"></script>',

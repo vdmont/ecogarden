@@ -28,6 +28,7 @@
   "src/ui/mount.js",
   "src/render/scene.js",
   "src/ui/journey.js",
+  "assets/calls/SFXMAP.mjs",
   "src/ui/audio.js",
   "src/ui/app.js"
 ]
