@@ -1,7 +1,8 @@
 // 生态花园 · ecogarden —— 构建：把模块化工程内联成单文件离线版 dist/index.html
 // 输入：根 index.html + src/ui/style.css + scripts/files.json 列出的每个脚本
-//       + src/ui/audio.js 曲库里点名的背景音乐 + style.css 里 @font-face 引用的字体
-// 输出：dist/index.html —— 一个文件，代码、样式、音乐、字体全在里面，拷走就能玩
+//       + src/ui/audio.js 曲库里点名的背景音乐 + 同一文件 CALL_FILES 里点名的动物录音
+//         + style.css 里 @font-face 引用的字体
+// 输出：dist/index.html —— 一个文件，代码、样式、音乐、动物录音、字体全在里面，拷走就能玩
 // 用法：node scripts/build.cjs [输出目录]
 //
 // 关于「单文件」：产物不许依赖旁边的任何东西，双击就能玩，所以代码、样式、音频、
@@ -9,6 +10,8 @@
 // 而且产物本身变得没法直接读、git diff 会很难看。所以真正的规矩是**别把没必要的
 // 字节塞进来**：
 //   · 音乐只放曲库里点名的几首，不要整包丢进去；
+//   · 动物录音只放 CALL_FILES 里点名的那些。开发时抓回来的原始素材有 50 条、100 MB，
+//     成品 27 条、不到 400 KB；整包丢进去会让离线版凭空多出一大截没人会播的字节。
 //   · 字体必须先裁剪到"源码里实际用到的字"。整份中文字库内联能到 30 MB 以上，
 //     裁完只有 0.4 MB。超过 FONT_INLINE_MAX_BYTES 就直接构建失败，
 //     而不是默默产出一个没人打得开的巨型 html。
@@ -86,7 +89,27 @@ for (const t of tracks) {
   musicUris.set(t, 'data:' + mime + ';base64,' + buf.toString('base64'));
 }
 
-// 2) 字体：CSS 里 @font-face 的 src 指向仓库内文件时一并内联。
+// 2) 动物录音：src/ui/audio.js 的 CALL_FILES 里点名的那些。
+//    缺一个同样直接失败——否则离线版里那属动物会安静得像被静音了。
+const callBlock = audioSrc.match(/CALL_FILES\s*=\s*\{([\s\S]*?)\n\s*\};/);
+if (!callBlock) throw new Error('src/ui/audio.js 里找不到 CALL_FILES');
+const callFiles = [...callBlock[1].matchAll(/'([^']*assets\/calls\/[^']+)'/g)].map((m) => m[1]);
+if (!callFiles.length) throw new Error('CALL_FILES 里一个录音路径都没有');
+
+const callUris = new Map();
+let callBytes = 0;
+for (const f of callFiles) {
+  const mime = AUDIO_MIME[path.extname(f).toLowerCase()];
+  if (!mime) throw new Error('CALL_FILES 里的音频格式不认识：' + f);
+  const from = path.join(base, f);
+  if (!fs.existsSync(from)) throw new Error('CALL_FILES 里的录音不存在：' + f);
+  const buf = fs.readFileSync(from);
+  if (buf.length < 512) throw new Error('录音文件小得可疑（小于 512 字节）：' + f);
+  callBytes += buf.length;
+  callUris.set(f, 'data:' + mime + ';base64,' + buf.toString('base64'));
+}
+
+// 3) 字体：CSS 里 @font-face 的 src 指向仓库内文件时一并内联。
 //    CSS 的 url() 是相对**样式表自己**解析的，所以基准目录是 src/ui/。
 //    这里在扫到的当场就替换掉，不留到后面做字符串查找——url() 可以带引号也可以不带，
 //    靠找 "'路径'" 会漏掉不带引号的那种，然后误报成"出现 0 次"。
@@ -143,13 +166,16 @@ const replaceOnce = (needle, make) => {
   replaced++;
 };
 
-// 3) 内联样式（字体的 data URI 已经在上面扫 @font-face 时替换掉了）
+// 4) 内联样式（字体的 data URI 已经在上面扫 @font-face 时替换掉了）
 replaceOnce('<link rel="stylesheet" href="src/ui/style.css">', () => '<style>' + css + '</style>');
 
-// 4) 按 files.json 的顺序内联脚本，并逐个做语法检查（曲库在 audio.js 这一步改写）
+// 5) 按 files.json 的顺序内联脚本，并逐个做语法检查（音乐与录音都在 audio.js 这一步改写）
 for (const file of scripts) {
   let code = fs.readFileSync(path.join(base, file), 'utf8');
-  if (file === 'src/ui/audio.js') code = rewriteRefs(code, musicUris, file);
+  if (file === 'src/ui/audio.js') {
+    code = rewriteRefs(code, musicUris, file);
+    code = rewriteRefs(code, callUris, file);
+  }
   new vm.Script(code, { filename: file });
   replaceOnce(
     '<script src="' + file + '"></script>',
@@ -157,7 +183,7 @@ for (const file of scripts) {
   );
 }
 
-// 5) 收尾校验：内联数量与外部引用
+// 6) 收尾校验：内联数量与外部引用
 if (replaced !== scripts.length + 1) {
   throw new Error(
     '内联 ' +
@@ -183,6 +209,10 @@ if (strays.length)
 for (const t of tracks) {
   if (html.includes("'" + t + "'"))
     throw new Error('曲库路径 ' + t + ' 没被改写成 data URI，离线版会听不到音乐');
+}
+for (const f of callFiles) {
+  if (html.includes("'" + f + "'"))
+    throw new Error('录音路径 ' + f + ' 没被改写成 data URI，离线版会听不到该属的叫声');
 }
 
 fs.mkdirSync(out, { recursive: true });
@@ -222,6 +252,7 @@ console.log(
     ' 首音乐 ' +
     kb(musicBytes) +
     ' KB' +
+    (callUris.size ? ' + ' + callUris.size + ' 条动物录音 ' + kb(callBytes) + ' KB' : '') +
     (fontUris.size ? ' + ' + fontUris.size + ' 份字体 ' + kb(fontBytes) + ' KB' : '') +
     '） → ' +
     out,
