@@ -12,6 +12,43 @@
 // 猫：家猫 meow 平均基频约 609Hz（非洲野猫祖先约 255Hz），音高轮廓是拱形的。
 // 猫呼噜：20–150Hz 的有节奏振动，吸气和呼气都不间断。
 // 蜜蜂：翅膀拍频在低百 Hz，给宽带噪声做调幅，这才是「嗡嗡」的物理来源。
+// ══════════════════════════════════════════════════════════════════════
+// 🎛️ 听感微调 —— 改这两行就行，别的不用动
+// ══════════════════════════════════════════════════════════════════════
+//
+// 项目所有者 2026-10-19 明确要求：「这两个东西肯定有一个地方可以统一调的，
+// 不然每次都要走一轮对话，很麻烦。」
+//
+// 怎么用：
+//   1. 改下面这两个数字（带 + / − 号，单位是分贝）
+//   2. 浏览器按 Ctrl+F5 强制刷新（普通刷新可能吃缓存）
+//   3. 听，觉得对了就把最终值告诉我，我写进提交里
+//
+//   musicDb  背景音乐。+3 就是比现在响一倍（3 分贝 ≈ 音量 ×1.41）
+//   callsDb  动物叫声。−3 就是比现在轻一半（−3 分贝 ≈ 音量 ×0.71）
+//
+// 这两个是**总音量微调**，和设置面板里那两个滑杆（音乐音量 / 动物音量）
+// 是**乘**的关系，不是同一个东西：滑杆是玩家自己调的，这里是我们定基准。
+// 两个都可以用：比如觉得「音乐太吵、动物太轻」，就 musicDb: -3、callsDb: +3。
+//
+// 为什么不用「直接写 0.9 / 0.3 这种倍数」而要用分贝：
+// 人耳朵对音量的感知接近对数，「大了 3 分贝」比「乘以 1.2」直观得多，
+// 而且你回报的时候说的就是分贝，写成同一个单位不用来回换算。
+// 下面每行后面都注明了换算成倍数是多少，可以对照着算。
+const TUNE = {
+  musicDb: 0, // dB → 倍数 1.00（改这里：+3 ≈ 响一倍，−3 ≈ 轻一半）
+  callsDb: 0, // dB → 倍数 1.00（改这里：+3 ≈ 响一倍，−3 ≈ 轻一半）
+};
+
+// 分贝 → 线性倍数。写在越界之外就夹回来：写错一个字符不该让整条音轨变哑。
+function dbToGain(db, what) {
+  const v = typeof db === 'number' && Number.isFinite(db) ? db : 0;
+  if (v !== db) console.warn('[audio] ' + what + ' 不是数字，当作 0 dB 处理');
+  return Math.pow(10, Math.max(-24, Math.min(12, v)) / 20);
+}
+const MUSIC_TRIM = dbToGain(TUNE.musicDb, 'musicDb');
+const CALLS_TRIM = dbToGain(TUNE.callsDb, 'callsDb');
+
 (function (root) {
   'use strict';
 
@@ -1169,7 +1206,10 @@
   function applySoundLevel(immediate) {
     if (!ambientBus || !ctx) return;
     const on = settings.sound !== false;
-    const vol = on ? unit01(settings.callVolume, 1) : 0;
+    // CALLS_TRIM 是文件顶部那个「动物叫声多少分贝」的微调旋钮。
+    // 它乘在最外层，所以环境声、手动摸、实时合成叫三边一起变，
+    // 而设置面板里的「动物音量」滑杆仍然独立生效。
+    const vol = on ? CALLS_TRIM * unit01(settings.callVolume, 1) : 0;
     const g = ambientBus.gain;
     if (immediate) {
       g.cancelScheduledValues(0);
@@ -1730,7 +1770,8 @@
     if (bgmGain) {
       const duck = 1 - (1 - MIX.bgmDuckMin) * zoomT;
       // musicVolume 是设置里的「音乐音量」滑杆（0–1，默认 1）。
-      const want = MUSIC_VOLUME * unit01(settings.musicVolume, 1) * duck;
+      // MUSIC_TRIM 是文件顶部那个「音乐放大多少分贝」的微调旋钮。
+      const want = MUSIC_VOLUME * MUSIC_TRIM * unit01(settings.musicVolume, 1) * duck;
       bgmGain.gain.value = lerpTo(bgmGain.gain.value, want, dt, MIX.smoothTau);
     }
 
@@ -2015,6 +2056,13 @@
     // 动物声那一层的总音量（复选框 + 「动物音量」滑杆拧的就是它）。
     // 取不到是正常的：还没解锁、没进岛的时候没有这条总线。
     _ambientGain: () => (ambientBus ? ambientBus.gain : null),
+    // 顶部那两行微调旋钮现在是多少（分贝 + 换算成倍数），诊断用。
+    _tune: () => ({
+      musicDb: TUNE.musicDb,
+      callsDb: TUNE.callsDb,
+      musicTrim: +MUSIC_TRIM.toFixed(4),
+      callsTrim: +CALLS_TRIM.toFixed(4),
+    }),
     // BGM 那一层的总音量（音乐滑杆 × 让位系数）。
     _bgmGain: () => (bgmGain ? bgmGain.gain : null),
     // 空间模型算出来的权重（离视口中心越近越大）。验收"越近越大"看这个。

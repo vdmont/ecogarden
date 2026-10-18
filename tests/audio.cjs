@@ -382,6 +382,31 @@ console.log(
 
   GardenAudio.configure(base);
 }
+// ══════════════ 听感微调旋钮（TUNE.musicDb / TUNE.callsDb）══════════════
+//
+// 文件顶部那两行是给项目所有者手动调的。他会直接编辑这两个数字，
+// 所以这里要保证「写错也不会把音轨调成哑的」：写错类型、写成字符串、
+// 写到离谱大，都必须夹回安全范围，而不是产生 NaN 把整条音轨弄没。
+{
+  const t = GardenAudio._tune();
+  assert(t, '没有暴露 TUNE 微调旋钮的读数');
+  for (const k of ['musicDb', 'callsDb']) {
+    assert(
+      typeof t[k] === 'number' && Number.isFinite(t[k]),
+      k + ' 不是有限数字（改了之后必须仍是数字）：' + JSON.stringify(t[k]),
+    );
+    assert(t[k] >= -24 && t[k] <= 12, k + ' 超出安全范围（−24…12 dB）：' + t[k]);
+    // 换算必须与 dbToGain 的公式一致，别让注释里的倍数和实际对不上
+    const expect = Math.pow(10, t[k] / 20);
+    const key = k === 'musicDb' ? 'musicTrim' : 'callsTrim';
+    assert(Math.abs(t[key] - expect) < 1e-4, k + ' 换算对不上：' + t[key] + ' vs ' + expect);
+  }
+  // 当前是 0 dB 时，两边都不该有额外增减——否则「改之前」和「改之后」没法比
+  console.log(
+    'PASS 听感微调旋钮：音乐 ' + t.musicDb + ' dB（×' + t.musicTrim + '）、动物 ' +
+      t.callsDb + ' dB（×' + t.callsTrim + '）',
+  );
+}
 console.log('PASS 音量滑杆：静音生效、比例生效、越界被夹住、开关优先于滑杆、老存档回默认');
 
 // ══════════════ 素材包映射：有录音的逐条核对，没有的必须在例外名单里 ══════════════
