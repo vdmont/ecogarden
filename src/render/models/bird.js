@@ -18,8 +18,8 @@ GardenModels.registry['bird'] = function ({ a, part, phase, t, i }) {
       h,
       d,
       col,
-      tilt + P.tilt + H.pitch,
-      pitch,
+      tilt + P.tilt,
+      H.pitch + pitch,
     );
   };
   const eye = (dx, y, dz, w, h, d, col) => {

@@ -45,8 +45,8 @@ for (const [type, [name, kind, color]] of Object.entries(EcoData.VISITORS))
         h * scale,
         d * scale,
         c,
-        tilt + P.earTilt + P.tilt + H.pitch,
-        pitch,
+        tilt + P.earTilt + P.tilt,
+        H.pitch + pitch,
       );
     };
     const eye = (y, z) => {
@@ -209,13 +209,10 @@ for (const [type, [name, kind, color]] of Object.entries(EcoData.VISITORS))
       follow = a.habit === 3;
     if (!capy) {
       if (chase)
-        // z 用 −0.38 不是 −0.46：身子后缘在 z=−0.33，尾巴再靠后就有一段浮空，
-        // 侧视角下看得很清楚（像贴了块板在屁股后面）。
         p(0, 0.6 * P.bodyY + P.lift, -0.38, 0.1, 0.54 * P.bodyY, 0.12, color);
       else if (follow)
         p(
           Math.sin(a.phase * 5.2) * 0.15,
-          // 压到 0.58、高 0.46：和身子有 0.27 交叠，看上去才接在屁股上。
           0.58 * P.bodyY + P.lift,
           -0.36,
           0.1,

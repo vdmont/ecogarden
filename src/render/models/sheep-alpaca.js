@@ -44,8 +44,8 @@ GardenModels.registry['sheep-alpaca'] = function ({ a, part, phase, t, i }) {
       h * sc,
       d * sc,
       col,
-      tilt + P.earTilt + P.tilt + H.pitch,
-      pitch,
+      tilt + P.earTilt + P.tilt,
+      H.pitch + pitch,
     );
   };
   // 眼睛：睡着时眯成一条

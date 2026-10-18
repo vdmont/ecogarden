@@ -17,8 +17,8 @@ GardenModels.registry['deer'] = function ({ a, part, phase, t, i }) {
       h * (P.asleep ? 1 : P.eyeH),
       d,
       col,
-      tilt + P.earTilt + P.tilt + H.pitch,
-      pitch,
+      tilt + P.earTilt + P.tilt,
+      H.pitch + pitch,
     );
   };
   const eye = (dx, y, dz, w, h, d, col) => head(dx, y, dz, w, h * P.eyeH, d, col);

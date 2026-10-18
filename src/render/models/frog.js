@@ -27,8 +27,8 @@ GardenModels.registry['frog'] = function ({ a, part, phase, t, i }) {
       h * P.bodyY,
       d,
       col,
-      tilt + P.earTilt + P.tilt + H.pitch,
-      pitch,
+      tilt + P.earTilt + P.tilt,
+      H.pitch + pitch,
     );
   };
   // 眼睛：睡着时眼睛往后缩进脑袋（青蛙闭眼是眼皮盖住，不是变瞎）
