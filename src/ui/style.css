@@ -839,3 +839,19 @@ footer { gap: 18px; min-width: 0; flex-basis: 114px; padding: 0 24px; }
   #gardenerGuide b { font-size: 21px; }
   #gardenerGuide p, #gardenerGuide #guideOK { font-size: 16px; }
 }
+
+/* 右侧抽屉：只保留两枚梯形拉手，不遮住花园。 */
+.right { position: fixed; right: 0; top: 20%; bottom: auto; width: 28px; transform: none; gap: 12px; z-index: 12; overflow: visible; }
+.right .edgeDrawer { display: flex; align-items: flex-start; justify-content: flex-end; align-self: flex-end; width: 288px; max-width: calc(100vw - 16px); pointer-events: none; }
+.right .drawerHandle { flex: 0 0 28px; height: 52px; padding: 0 0 0 4px; border: 0; border-radius: 0; clip-path: polygon(28% 0,100% 0,100% 100%,28% 100%,0 78%,0 22%); background: #e8dfc4; color: #40513e; font-size: 15px; cursor: pointer; pointer-events: auto; }
+.right .drawerHandle:hover { background: #dbcfac; }
+.right .drawerHandle:focus-visible { outline: none; background: #cbd5b7; box-shadow: inset 0 0 0 3px #687b56; }
+.drawerContent { width: 260px; min-width: 0; max-height: 29vh; overflow: auto; background: var(--card); box-shadow: 0 4px 16px #3c301c26; pointer-events: auto; }
+.drawerContent[hidden] { display: none; }
+.drawerContent .inspector, .drawerContent .eventCard { max-height: none; overflow: visible; box-shadow: none; padding: 14px; }
+.drawerContent #cellTitle, .drawerContent .eventCard h3 { font-size: 18px; }
+.drawerContent #cellDesc, .drawerContent #cellFacts, .drawerContent .eventCard p { font-size: 14px; line-height: 1.6; }
+.drawerContent #focusBtn, .drawerContent #petBtn, .drawerContent #inspectClose, .drawerContent .eventCard button { font-size: 14px; }
+.drawerContent .fact, .drawerContent .lifeRow, .drawerContent .fertilityFact { font-size: 13px; }
+.drawerEmpty { margin: 0; padding: 18px; font-size: 14px; }
+@media(max-width: 820px) { .right { top: 26%; width: 28px; } .drawerContent { max-height: 26vh; width: 238px; } .right .edgeDrawer { width: 266px; } }
