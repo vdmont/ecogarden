@@ -66,15 +66,6 @@
                 "voices": 2,
                 "loops": []
           },
-          "deer": {
-                "files": [
-                      "assets/calls/deer_029.mp3"
-                ],
-                "rate": 1,
-                "gain": 1,
-                "voices": 2,
-                "loops": []
-          },
           "fox": {
                 "files": [
                       "assets/calls/fox_033.mp3",
@@ -674,19 +665,6 @@
                 "truePeak": -3.2,
                 "noise": -37.43,
                 "snr": 13.51
-          },
-          "deer_029": {
-                "license": "CC0 1.0",
-                "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
-                "author": "ferventtorpor",
-                "title": "Deer_Bark_5_s",
-                "source": "Freesound",
-                "sourceUrl": "https://freesound.org/people/ferventtorpor/sounds/696776/",
-                "dur": 0.82,
-                "lufs": -18.43,
-                "truePeak": -3.2,
-                "noise": -34.46,
-                "snr": 16.95
           },
           "dog_070": {
                 "license": "CC BY 4.0",

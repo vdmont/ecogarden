@@ -12,7 +12,7 @@
 //   modified     素材包对它做了什么（裁切、降噪、限幅……改了就是演绎）
 //   sha1         我们这份 mp3 的哈希，任何人拿它都能复核"台账里这条就是这条"
 //
-// 本批 70 条的许可分布：{"CC0 1.0":35,"CC BY 4.0":34,"CC BY-SA 4.0":1}
+// 本批 69 条的许可分布：{"CC0 1.0":34,"CC BY 4.0":34,"CC BY-SA 4.0":1}
 
 const ASSET_LICENSES = [
   {
@@ -534,26 +534,6 @@ const ASSET_LICENSES = [
     "noiseFloorDb": -37.43,
     "snrDb": 13.51,
     "sha1": "722f029bbea6539a986a7030febbeeaf3c13af15"
-  },
-  {
-    "file": "calls/deer_029.mp3",
-    "usedBy": [
-      "deer"
-    ],
-    "label": "小鹿",
-    "title": "Deer_Bark_5_s",
-    "license": "CC0 1.0",
-    "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
-    "author": "ferventtorpor",
-    "source": "Freesound",
-    "sourceUrl": "https://freesound.org/people/ferventtorpor/sounds/696776/",
-    "modified": "48kHz/16bit/单声道；LUFS 归一化；真峰值 ≤ −3.2 dBTP；首尾淡化",
-    "durSec": 0.82,
-    "lufs": -18.43,
-    "truePeakDb": -3.2,
-    "noiseFloorDb": -34.46,
-    "snrDb": 16.95,
-    "sha1": "6153fcb71a42b8a23cf3c389a37369f2255259fc"
   },
   {
     "file": "calls/dog_070.mp3",

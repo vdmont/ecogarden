@@ -387,10 +387,11 @@ console.log('PASS 音量滑杆：静音生效、比例生效、越界被夹住�
 // ══════════════ 素材包映射：有录音的逐条核对，没有的必须在例外名单里 ══════════════
 //
 // 2026-10-19 起，库里 10 条 CC BY-NC 素材被全部删掉（项目所有者决定），
-// 萨摩耶因此归零——它只有 dog_073 一条。
+// 萨摩耶因此归零——它只有 dog_073 一条。同日小鹿的 deer_029 也因为
+// 「素材本身不行」被所有者点名删掉，小鹿同样只剩那一条，也归零。
 // 例外名单是**双向**的：名单里的物种一旦补上素材，测试会反过来报
 // 「已经有录音了，把这条从名单里删掉」，不会悄悄放过。
-const NO_RECORDING = new Set(['samoyed']);
+const NO_RECORDING = new Set(['samoyed', 'deer']);
 {
   const S = GardenAudio.CALL_FILES;
   const M = GardenAudio.CALL_META;
