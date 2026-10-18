@@ -23,6 +23,82 @@
     1024: { bias: -0.002, normalBias: 0.025 },
     2048: { bias: -0.0004, normalBias: 0.025 },
   };
+  // ── 云的形状 ──────────────────────────────────────────────────
+  // 用值噪声 fBm 切出云团，方法来自 Perlin 1985《An Image Synthesizer》与 2002 年的
+  // 改进（插值曲线换成五次式，首末两阶导数都为 0，看不出格子边界），
+  // 多层按"频率 ×2、振幅 ×0.5"叠加就是分形布朗运动，《The Book of Shaders》第 13 章。
+  // 关键的一步是再乘一个"离中心越远越低"的权重：只切噪声会得到铺满整个格子的雾，
+  // 乘上衰减才聚成一坨，轮廓自然蓬松不规则——而不是几个方块排成一行。
+  function fade5(t) {
+    return t * t * t * (t * (t * 6 - 15) + 10);
+  }
+  // 格点伪随机值：纯整数哈希，不依赖 Math.random，也绝不碰模拟那条 rand(s) 随机流
+  // （碰了会把后面所有生态事件整体平移，存档对不上）。
+  function lattice(ix, iy, iz, seed) {
+    let h = Math.imul(ix, 374761393) + Math.imul(iy, 668265263) + Math.imul(iz, 1442695041);
+    h = (h + Math.imul(seed, 1274126177)) | 0;
+    h = Math.imul(h ^ (h >>> 13), 1274126177);
+    return ((h ^ (h >>> 16)) >>> 0) / 4294967296;
+  }
+  function valueNoise3(x, y, z, seed) {
+    const ix = Math.floor(x),
+      iy = Math.floor(y),
+      iz = Math.floor(z);
+    const fx = fade5(x - ix),
+      fy = fade5(y - iy),
+      fz = fade5(z - iz);
+    const mix = (a, b, t) => a + (b - a) * t;
+    const z0 = mix(
+      mix(lattice(ix, iy, iz, seed), lattice(ix + 1, iy, iz, seed), fx),
+      mix(lattice(ix, iy + 1, iz, seed), lattice(ix + 1, iy + 1, iz, seed), fx),
+      fy,
+    );
+    const z1 = mix(
+      mix(lattice(ix, iy, iz + 1, seed), lattice(ix + 1, iy, iz + 1, seed), fx),
+      mix(lattice(ix, iy + 1, iz + 1, seed), lattice(ix + 1, iy + 1, iz + 1, seed), fx),
+      fy,
+    );
+    return mix(z0, z1, fz);
+  }
+  function fbm3(x, y, z, seed, octaves) {
+    let sum = 0,
+      amp = 1,
+      norm = 0,
+      freq = 1;
+    for (let o = 0; o < octaves; o++) {
+      sum += amp * valueNoise3(x * freq, y * freq, z * freq, seed + o);
+      norm += amp;
+      amp *= 0.5;
+      freq *= 2;
+    }
+    return sum / norm;
+  }
+  // 在 gw×gh×gd 的格子里切一团云，返回相对中心的方块坐标列表。
+  // lump 越大团越紧实，cut 越大越稀疏。
+  function makeCloudShape(seed, gw, gh, gd, lump, cut) {
+    const blocks = [];
+    const hx = (gw - 1) / 2,
+      hy = (gh - 1) / 2,
+      hz = (gd - 1) / 2;
+    for (let iy = 0; iy < gh; iy++)
+      for (let iz = 0; iz < gd; iz++)
+        for (let ix = 0; ix < gw; ix++) {
+          const r =
+            Math.max(
+              Math.abs((ix - hx) / (hx + 0.001)),
+              Math.abs((iy - hy) / (hy + 0.001)),
+              Math.abs((iz - hz) / (hz + 0.001)),
+            );
+          if (r >= 1) continue;
+          const n = fbm3(ix * 0.44 + seed * 3.7, iy * 0.52 + seed * 1.3, iz * 0.44 + seed * 2.9, seed * 17 + 1, 4);
+          if (n * Math.pow(1 - r, lump) < cut) continue;
+          blocks.push([ix - hx, iy - hy, iz - hz]);
+        }
+    return blocks;
+  }
+  // 云的数量：上方那层多而小，下方那层少而大。
+  const CLOUD_UP = 10,
+    CLOUD_LOW = 6;
   // 昼夜四个关键帧（phase 0=清晨、0.25=正午、0.5=黄昏、0.75=夜晚）。
   // 动态模式会在它们之间平滑插值；也可以定格到某一档。
   const DAY_KEYS = [
@@ -235,15 +311,26 @@
         BUDGET.rings,
       );
       this.scene.add(this.rings);
-      // 轻云：一组方块拼的云团，缓慢横移并绕回来（数量克制，8 团 × 5 块）
+      // 云分两套：岛面上方的一层半透明（看得见后面的天空，压得住但不抢戏）；
+      // 岛面下方 y<0 的一层不透明，给这座悬空岛一个"底下也有云"的厚度感。
+      // 半透明那套必须 depthWrite:false，否则它会挡住自己后面的方块，整片云糊成一坨。
       this.cloud = this.makeMesh(
         this.box,
-        new THREE.MeshLambertMaterial({ color: 0xffffff }),
+        new THREE.MeshLambertMaterial({
+          color: 0xffffff,
+          transparent: true,
+          opacity: 0.62,
+          depthWrite: false,
+        }),
         BUDGET.clouds,
       );
       this.cloud.castShadow = false;
       this.cloud.receiveShadow = false;
       this.scene.add(this.cloud);
+      this.cloudLow = this.makeMesh(this.box, new THREE.MeshLambertMaterial({ color: 0xffffff }), BUDGET.clouds);
+      this.cloudLow.castShadow = false;
+      this.cloudLow.receiveShadow = false;
+      this.scene.add(this.cloudLow);
       this.flames = this.makeMesh(
         new THREE.ConeGeometry(1, 1, 5),
         new THREE.MeshBasicMaterial({
@@ -383,6 +470,7 @@
       this.cliff.instanceColor.needsUpdate = true;
       this.scene.add(this.cliff);
       this.resize();
+      this.clouds = this.buildClouds(s);
       this.draw(0);
     }
     // 光影应用：太阳/半球光/曝光/阴影范围/画布天空底色
@@ -994,37 +1082,95 @@
       m.instanceMatrix.needsUpdate = true;
       m.instanceColor.needsUpdate = true;
     }
-    // 轻云：8 团云在岛上方缓慢横移，位置只跟时间有关，不参与模拟
-    drawClouds(t) {
-      const m = this.cloud;
-      if (!m) return;
-      m.count = 0;
-      const drift = t * 0.00035;
-      for (let k = 0; k < 8; k++) {
-        const span = 74;
-        let cx = ((k * 9.3 + drift * (0.6 + (k % 3) * 0.18)) % span + span) % span;
-        cx -= span / 2;
-        const cy = 8.6 + (k % 3) * 1.5 + Math.sin(t * 0.0002 + k) * 0.12;
-        const cz = -16 + ((k * 7.1) % 32) + Math.cos(t * 0.00017 + k * 2) * 0.4;
-        const tint = k % 2 ? 0xfdfbf3 : 0xf3f7ef;
-        for (let b2 = 0; b2 < 5; b2++) {
-          const ox = (b2 - 2) * 0.9 + Math.sin(k * 3 + b2) * 0.25;
-          const oy = b2 === 2 ? 0.28 : 0;
-          const oz = Math.cos(k * 2 + b2 * 1.7) * 0.5;
-          this.put(
-            m,
-            cx + ox,
-            cy + oy,
-            cz + oz,
-            b2 === 2 ? 1.5 : 1.05,
-            0.5 + (b2 % 2) * 0.16,
-            1.05,
-            tint,
-          );
-        }
+    // 云的形状与散布方式只算一次，之后每帧只做平移。
+    // 上方那层：团多、个小、半透明，高度基准是全岛最高地表（见 cloudFloor，玩家堆山也会跟着抬）。
+    // 下方那层：团少、个大、不透明，散在岛的四周与正下方，y 一律小于 0。
+    buildClouds(s) {
+      const spanX = Math.max(60, s.w * 1.7),
+        spanZ = Math.max(44, s.h * 2.1);
+      const up = [],
+        low = [];
+      for (let k = 0; k < CLOUD_UP; k++) {
+        up.push({
+          blocks: makeCloudShape(k + 1, 7, 5, 7, 1.0, 0.2),
+          // 沿 x 均匀铺开再各自横向漂移，越界绕回来
+          x0: ((k + 0.35) / CLOUD_UP) * spanX - spanX / 2,
+          dy: 3.4 + (k % 3) * 2.1,
+          z: -spanZ / 2 + ((k * 5.3) % spanZ),
+          v: 0.45 + (k % 4) * 0.17,
+          tint: k % 3 === 0 ? 0xf6f1e4 : k % 3 === 1 ? 0xfdfbf5 : 0xeef2ea,
+        });
       }
-      m.instanceMatrix.needsUpdate = true;
-      m.instanceColor.needsUpdate = true;
+      for (let k = 0; k < CLOUD_LOW; k++) {
+        low.push({
+          blocks: makeCloudShape(101 + k, 7, 5, 7, 1.0, 0.2),
+          x0: -spanX / 2 + ((k + 0.5) / CLOUD_LOW) * spanX,
+          // 一律 y<0：云在岛的下面、外面，衬托这座悬空岛
+          y: -1.6 - (k % 3) * 1.5 - (k % 2) * 0.9,
+          z: -spanZ / 2 + ((k * 7.9 + 11) % spanZ),
+          v: 0.26 + (k % 3) * 0.13,
+          tint: 0xe7e9e2,
+        });
+      }
+      // 上下两套用同一个生成器，只是种子不同：形状一样蓬松，区别只在方块多大。
+      // 上方的方块边长定为下方的约一半——俯视投影面积按边长平方算，正好就是 1/4。
+      // 从实际块数反算边长，避免两组块数略有出入时比例对不上。
+      const meanUp = up.reduce((a, c) => a + c.blocks.length, 0) / Math.max(1, up.length);
+      const meanLow = low.reduce((a, c) => a + c.blocks.length, 0) / Math.max(1, low.length);
+      const bwLow = 1.45;
+      const bwUp = bwLow * Math.sqrt(0.25 * meanLow / Math.max(1e-6, meanUp));
+      for (const c of up) {
+        c.bw = bwUp;
+        c.bh = bwUp * 0.72;
+      }
+      for (const c of low) {
+        c.bw = bwLow;
+        c.bh = bwLow * 0.6;
+      }
+      const area = (arr, bw) =>
+        arr.reduce((a, c) => a + c.blocks.length * bw * bw, 0) / Math.max(1, arr.length);
+      return { up, low, areaRatio: area(up, bwUp) / Math.max(1e-6, area(low, bwLow)) };
+    }
+    // 上方那层云的高度基准：全岛当前最高的地表。
+    // 玩家可以堆山，所以这个值不能只在建世界时算一次——按 tick 变化重算，一拍一次就够，
+    // 不必每帧扫全岛。低于它的云会被山穿过去，那就不叫"在岛的上方"了。
+    cloudFloor() {
+      const s = this.world;
+      if (!s) return 0;
+      if (this.cloudFloorTick !== s.tick) {
+        let top = 0;
+        for (const c of s.cells) if (c) top = Math.max(top, Eco.surfaceHeight(c));
+        this.cloudFloorY = top;
+        this.cloudFloorTick = s.tick;
+      }
+      return this.cloudFloorY;
+    }
+    // 云：上半透明那层铺在岛面上方，下半不透明那层沉在 y<0，各自缓慢横移并绕回来。
+    drawClouds(t) {
+      const m = this.cloud,
+        mLow = this.cloudLow;
+      if (!m || !mLow) return;
+      m.count = 0;
+      mLow.count = 0;
+      const groups = this.clouds;
+      if (!groups) return;
+      const drift = t * 0.00035;
+      const place = (mesh, list, floor) => {
+        for (const c of list) {
+          const span = 74;
+          let cx = ((c.x0 + drift * c.v) % span + span) % span;
+          cx -= span / 2;
+          const cy = floor === null ? c.y : floor + c.dy;
+          for (const [ox, oy, oz] of c.blocks)
+            this.put(mesh, cx + ox * c.bw, cy + oy * c.bh, c.z + oz * c.bw, c.bw, c.bh, c.bw, c.tint);
+        }
+      };
+      place(m, groups.up, this.cloudFloor());
+      place(mLow, groups.low, null);
+      for (const mesh of [m, mLow]) {
+        mesh.instanceMatrix.needsUpdate = true;
+        mesh.instanceColor.needsUpdate = true;
+      }
     }
     drawEffects(t) {
       const s = this.world;
@@ -1163,6 +1309,8 @@
     }
   }
   GardenView.BUDGET = BUDGET;
+  // 供测试直接调：云的形状是纯函数，不用开浏览器就能验
+  GardenView.cloudShape = makeCloudShape;
   // 默认相机倾角（仰角）：与旧版固定构图一致（水平 45、高 36 → 约 38.66°）。
   GardenView.PITCH_DEFAULT = Math.atan2(36, 45);
   GardenView.PITCH_MIN = (20 * Math.PI) / 180;
