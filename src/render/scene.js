@@ -11,6 +11,18 @@
     fireCores: 4500,
     waterfalls: 10000,
   };
+  // 阴影参数按阴影图分辨率分档。
+  // 实测结论（.dsh-reports/shadow-ab.cjs：一只羊 + 全平地面，把地面痱子按连通块剔掉再量）：
+  //  · bias 从 -0.0012 一路调到 0，影子的"远边"一动不动（黄昏恒为 2.733 格、清晨恒为 1.800 格）。
+  //    也就是说交接文档里写的"清晨黄昏影子会与物体分离"，在这套参数下**量不出来**，
+  //    更像是早先某个版本的毛病。别再拿它当调 bias 的理由。
+  //  · 真正会变的是地面痱子（shadow acne）：分辨率越高越轻，而且对 bias 越不敏感。
+  //    2048 下痱子稳在 4.2%，-0.0002 到 -0.0012 全是一样；1024 下必须给到 -0.002 才压得住。
+  // 所以按分辨率配 bias，而不是全局一个值。
+  const SHADOW_TUNING = {
+    1024: { bias: -0.002, normalBias: 0.025 },
+    2048: { bias: -0.0004, normalBias: 0.025 },
+  };
   // 昼夜四个关键帧（phase 0=清晨、0.25=正午、0.5=黄昏、0.75=夜晚）。
   // 动态模式会在它们之间平滑插值；也可以定格到某一档。
   const DAY_KEYS = [
@@ -159,16 +171,21 @@
       this.sun.position.set(-12, 30, 18);
       this.sun.castShadow = true;
       this.sun.shadow.mapSize.set(1024, 1024);
+      // 近远面只要罩住整个岛就够：岛最大 44×30，角上离岛心约 26.6 格、峰顶再高约 9 格，
+      // 所以最远的投影物离岛心约 28 格；太阳本身离岛心 35~40 格。取 2 / 80 两侧都留足了余量。
+      // 原来写的是 0.1 / 200 —— 白白多出 2.5 倍深度范围。bias 是按深度比例生效的，
+      // 范围一大，同样的 bias 折算成"沿光线的世界偏移"也跟着变大（0.0012 × 199.9 = 0.24 格，
+      // 收紧后 0.002 × 78 = 0.156 格）。收紧后地面痱子持平、影子长度不变（实测），净赚的是精度。
       Object.assign(this.sun.shadow.camera, {
         left: -30,
         right: 30,
         top: 30,
         bottom: -30,
-        near: 0.1,
-        far: 100,
+        near: 2,
+        far: 80,
       });
-      this.sun.shadow.bias = -0.0012;
-      this.sun.shadow.normalBias = 0.025;
+      this.sun.shadow.bias = SHADOW_TUNING[1024].bias;
+      this.sun.shadow.normalBias = SHADOW_TUNING[1024].normalBias;
       this.scene.add(this.sun);
       this.camera = new THREE.OrthographicCamera(-12, 12, 12, -12, 1, 110);
       this.box = new THREE.BoxGeometry(1, 1, 1);
@@ -383,8 +400,10 @@
         right: p.shadowSpan,
         top: p.shadowSpan,
         bottom: -p.shadowSpan,
-        near: 0.1,
-        far: 200,
+        // 近远面跟构造器保持一致：只罩住岛 + 太阳就够，别把深度范围摊大，
+        // 否则 bias 折算到地面上的偏移会被放大（原来这里写的是 0.1 / 200）。
+        near: 2,
+        far: 80,
       });
       this.sun.shadow.camera.updateProjectionMatrix();
       if (this.canvas) this.canvas.style.background = p.sky;
@@ -417,7 +436,23 @@
     setQuality(q) {
       this.quality = q;
       this.renderer.shadowMap.enabled = q !== 'low';
+      // 只有"清晰"档付得起更细的阴影图；换分辨率要连 bias 一起换到匹配痱子的档位
+      if (q !== 'low') this.setShadowMapSize(q === 'high' ? 2048 : 1024);
       this.resize();
+    }
+    // 换阴影图分辨率：three.js 不会自己重建已经建好的阴影贴图，
+    // 必须把旧的 dispose 掉、置空，下一帧才会按新尺寸重新渲染一张。
+    setShadowMapSize(px) {
+      const sh = this.sun.shadow;
+      if (sh.mapSize.x === px) return;
+      sh.mapSize.set(px, px);
+      if (sh.map) {
+        sh.map.dispose();
+        sh.map = null;
+      }
+      const tune = SHADOW_TUNING[px] || SHADOW_TUNING[1024];
+      sh.bias = tune.bias;
+      sh.normalBias = tune.normalBias;
     }
     updateCamera(k) {
       if (!this.world) return;
