@@ -1226,7 +1226,13 @@
         }
       }
       const behavior = habit(s, i, a);
-      a.habit = behavior.rest ? behavior.kind : 0;
+      // 把习惯的种类**始终**告诉渲染层，不只是「停下来做」的那几个。
+      // 以前只在 behavior.rest 时才写，于是「追蝴蝶」「跟随羊群」这两个
+      // rest 恒为 false 的习惯渲染层永远收不到 —— 实测跑 4000 拍，
+      // a.habit 只有 0 和 2，追蝴蝶/跟随羊群一次都没出现过。
+      // 移动与判定用的是 behavior 本身（behavior.rest / behavior.targets），
+      // 不读 a.habit，所以这一行只是「把信息传出去」，不改任何行为。
+      a.habit = behavior.kind;
       if (
         a.state !== 'walk' &&
         !behavior.rest &&

@@ -200,10 +200,31 @@ for (const [type, [name, kind, color]] of Object.entries(EcoData.VISITORS))
       } else
         hd(side * 0.14, hy + (myth ? 0.24 : 0.13), hz - 0.04, 0.13, myth ? 0.2 : 0.17, 0.12, color);
     }
-    // 尾巴：走着左右摇，睡着垂到地上
+    // 尾巴：走着左右摇，睡着垂到地上。
+    const wag = P.walk ? Math.sin(a.phase * 3.1) * 0.12 : 0;
+    // 追蝴蝶（习惯 1）时猫把尾巴整个竖起来 —— 竖尾巴的猫一眼就是「锁定猎物了」，
+    // 不管它在不在走都成立；跟随羊群（习惯 3）时狗把尾巴翘起来、摇得更欢。
+    // 这两个习惯以前渲染层根本收不到（模拟只在 rest 时才写 a.habit），现在收到了。
+    const chase = a.habit === 1,
+      follow = a.habit === 3;
     if (!capy) {
-      const wag = P.walk ? Math.sin(a.phase * 3.1) * 0.12 : 0;
-      p(wag, 0.55 * P.bodyY + P.lift, -0.49, 0.1, (cat ? 0.46 : 0.23) * P.bodyY, 0.12, color);
+      if (chase)
+        // z 用 −0.38 不是 −0.46：身子后缘在 z=−0.33，尾巴再靠后就有一段浮空，
+        // 侧视角下看得很清楚（像贴了块板在屁股后面）。
+        p(0, 0.6 * P.bodyY + P.lift, -0.38, 0.1, 0.54 * P.bodyY, 0.12, color);
+      else if (follow)
+        p(
+          Math.sin(a.phase * 5.2) * 0.15,
+          // 压到 0.58、高 0.46：和身子有 0.27 交叠，看上去才接在屁股上。
+          0.58 * P.bodyY + P.lift,
+          -0.36,
+          0.1,
+          0.46 * P.bodyY,
+          0.12,
+          color,
+        );
+      else
+        p(wag, 0.55 * P.bodyY + P.lift, -0.49, 0.1, (cat ? 0.46 : 0.23) * P.bodyY, 0.12, color);
     }
     if (type === 'tabby' || type === 'orangeCat')
       for (let j = 0; j < 3; j++)
