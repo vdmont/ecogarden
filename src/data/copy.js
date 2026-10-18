@@ -1,22 +1,7 @@
-globalThis.GardenCopy={
- secrets:{drunk:[T.m163,T.m164],sober:[T.m165,T.m166],petDrunk:[T.m167,T.m168]},
- fieldGuide:T.m169,noResidents:T.m170,
- replay:T.m171,replayTitle:T.m172,replayBody:T.m173,
- help:[
- {level:0,title:T.m174,body:T.m175},
- {level:0,title:T.m176,body:T.m177},
- {level:0,title:T.m178,body:T.m179},
- {level:0,title:T.m180,body:T.m181},
- {level:0,seen:'bug',title:T.m182,body:T.m183},
- {level:0,seen:'tree',title:T.m184,body:T.m185},
- {level:1,title:T.m186,body:T.m187},
- {level:2,title:T.m188,body:T.m189},
- {level:3,title:T.m190,body:T.m191},
- {level:3,title:T.m192,body:T.m193},
- {level:3,title:T.m194,body:T.m195},
- {level:4,title:T.m196,body:T.m197},
- {level:4,title:T.m198,body:T.m199},
- {level:5,title:T.m105,body:T.m200}
- ],
- animals:{bug:T.m201,bird:T.m202,sheep:T.m203,alpaca:T.m204,rabbit:T.m205,deer:T.m206,fox:T.m207,butterfly:T.m208,bee:T.m208,chicken:T.m209,frog:T.m210,hedgehog:T.m211,wolf:T.m212,squirrel:T.m213,boar:T.m214}
+globalThis.GardenCopy = {
+  secrets: { drunk: [T.m163, T.m164], sober: [T.m165, T.m166], petDrunk: [T.m167, T.m168] },
+  noResidents: T.m170,
+  replay: T.m171,
+  replayTitle: T.m172,
+  replayBody: T.m173,
 };

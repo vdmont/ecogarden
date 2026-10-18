@@ -12,7 +12,9 @@
     "test": "node tests/behavior.cjs && node tests/render.cjs && node tests/journey.cjs && node tests/shape.cjs && node tests/flow.cjs && node tests/traits.cjs && node tests/visitors.cjs && node tests/audio.cjs && node tests/habits-undo.cjs && node tests/berries.cjs",
     "test:ecology": "node tests/ecology.cjs",
     "demo": "node scripts/landscape-demo.cjs",
-    "demo:water": "node scripts/water-demo.cjs"
+    "demo:water": "node scripts/water-demo.cjs",
+    "format": "prettier --write \"**/*.{js,mjs,cjs}\"",
+    "format:check": "prettier --check \"**/*.{js,mjs,cjs}\""
   },
   "engines": {
     "node": ">=18"
@@ -24,5 +26,8 @@
     "voxel",
     "offline"
   ],
-  "license": "SEE LICENSE IN THIRD-PARTY-NOTICES.txt"
+  "license": "SEE LICENSE IN THIRD-PARTY-NOTICES.txt",
+  "devDependencies": {
+    "prettier": "^3.9.10"
+  }
 }

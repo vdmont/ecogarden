@@ -25,6 +25,15 @@ const TYPES = {
   '.svg': 'image/svg+xml',
   '.woff2': 'font/woff2',
   '.ttf': 'font/ttf',
+  // 音频：背景音乐与动物叫声都在仓库里，不加这几行的话服务器会一律 404，
+  // 本地试玩和 npm run preview 就都听不到声音。
+  '.mp3': 'audio/mpeg',
+  '.ogg': 'audio/ogg',
+  '.oga': 'audio/ogg',
+  '.wav': 'audio/wav',
+  '.m4a': 'audio/mp4',
+  '.aac': 'audio/aac',
+  '.flac': 'audio/flac',
 };
 
 // root: 要对外提供的目录（绝对路径）；port: 监听端口；host: 仅本机
@@ -63,7 +72,10 @@ function serve(root, port, host = '127.0.0.1') {
         res.writeHead(404).end();
         return;
       }
-      res.writeHead(200, { 'Content-Type': TYPES[path.extname(file).toLowerCase()], 'Cache-Control': 'no-cache' });
+      res.writeHead(200, {
+        'Content-Type': TYPES[path.extname(file).toLowerCase()],
+        'Cache-Control': 'no-cache',
+      });
       fs.createReadStream(file).pipe(res);
     });
   });

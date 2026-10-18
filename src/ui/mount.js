@@ -1,1 +1,1 @@
-document.body.insertAdjacentHTML('afterbegin',GardenText.shell);
+document.body.insertAdjacentHTML('afterbegin', GardenText.shell);

@@ -1,6 +1,50 @@
-const assert=require('node:assert/strict');require('./load.cjs');require('../src/ui/journey.js');const E=Eco;
-assert.equal(E.LEVELS[0].name,'种子发芽');assert.equal(E.LEVELS[1].name,'小鸟来了');assert.equal(E.LEVELS[2].name,'浆果熟了');assert(!E.LEVELS[1].tools.includes('bush'));assert(!E.TOOL.fire);for(const l of E.LEVELS)assert(!l.tools.includes('fire'));assert(!E.ACHIEVEMENTS.some(a=>a[0]==='fire'));
-const p=E.defaultProfile();p.current=p.unlocked=2;const s=p.worlds[2]=E.makeWorld(2,undefined,42);s.rng=42;for(const c of s.cells)if(c){c.ground='soil';c.elevation=0;c.plant=null;c.animal=null;}
-const center=8*s.w+12;for(const off of [-1,1,-s.w,s.w])assert(E.place(s,'bush',center+off,p).ok);for(let t=0;t<82;t++)E.step(s,p);assert(E.place(s,'squirrel',center,p).ok);assert(!s.complete);for(let t=0;t<600&&!s.complete;t++)E.step(s,p);assert(s.metrics.berryMeals>=4);assert(s.complete);assert(p.achievements.berries);
-const old=JSON.parse(JSON.stringify(p));delete old.campaign;old.worlds[2].cells[center].ground='ash';old.worlds[2].cells[center].fire=5;old.worlds[2].cells[center].ash=12;old.tutorial.chapter2=true;old.worlds[2].events=[{id:'firstFire',title:'火后',text:'',i:center,tick:0}];const migrated=E.validateProfile(old);assert.equal(migrated.worlds[2].cells[center].fire,0);assert.equal(migrated.worlds[2].cells[center].ground,'soil');assert.equal(migrated.worlds[2].complete,false);assert.equal(migrated.worlds[2].metrics.berryMeals,0);assert(!migrated.tutorial.chapter2);assert.equal(migrated.unlocked,old.unlocked);assert.equal(migrated.worlds[2].events.length,0);assert.deepEqual(E.validateProfile(JSON.parse(JSON.stringify(migrated))),migrated);
-console.log('PASS new chapter progression, real berry meals, removed fire and idempotent legacy migration');
+const assert = require('node:assert/strict');
+require('./load.cjs');
+require('../src/ui/journey.js');
+const E = Eco;
+assert.equal(E.LEVELS[0].name, '种子发芽');
+assert.equal(E.LEVELS[1].name, '小鸟来了');
+assert.equal(E.LEVELS[2].name, '浆果熟了');
+assert(!E.LEVELS[1].tools.includes('bush'));
+assert(!E.TOOL.fire);
+for (const l of E.LEVELS) assert(!l.tools.includes('fire'));
+assert(!E.ACHIEVEMENTS.some((a) => a[0] === 'fire'));
+const p = E.defaultProfile();
+p.current = p.unlocked = 2;
+const s = (p.worlds[2] = E.makeWorld(2, undefined, 42));
+s.rng = 42;
+for (const c of s.cells)
+  if (c) {
+    c.ground = 'soil';
+    c.elevation = 0;
+    c.plant = null;
+    c.animal = null;
+  }
+const center = 8 * s.w + 12;
+for (const off of [-1, 1, -s.w, s.w]) assert(E.place(s, 'bush', center + off, p).ok);
+for (let t = 0; t < 82; t++) E.step(s, p);
+assert(E.place(s, 'squirrel', center, p).ok);
+assert(!s.complete);
+for (let t = 0; t < 600 && !s.complete; t++) E.step(s, p);
+assert(s.metrics.berryMeals >= 4);
+assert(s.complete);
+assert(p.achievements.berries);
+const old = JSON.parse(JSON.stringify(p));
+delete old.campaign;
+old.worlds[2].cells[center].ground = 'ash';
+old.worlds[2].cells[center].fire = 5;
+old.worlds[2].cells[center].ash = 12;
+old.tutorial.chapter2 = true;
+old.worlds[2].events = [{ id: 'firstFire', title: '火后', text: '', i: center, tick: 0 }];
+const migrated = E.validateProfile(old);
+assert.equal(migrated.worlds[2].cells[center].fire, 0);
+assert.equal(migrated.worlds[2].cells[center].ground, 'soil');
+assert.equal(migrated.worlds[2].complete, false);
+assert.equal(migrated.worlds[2].metrics.berryMeals, 0);
+assert(!migrated.tutorial.chapter2);
+assert.equal(migrated.unlocked, old.unlocked);
+assert.equal(migrated.worlds[2].events.length, 0);
+assert.deepEqual(E.validateProfile(JSON.parse(JSON.stringify(migrated))), migrated);
+console.log(
+  'PASS new chapter progression, real berry meals, removed fire and idempotent legacy migration',
+);
