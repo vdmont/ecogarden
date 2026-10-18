@@ -6,7 +6,9 @@
     terrain: 60000,
     animals: 50000,
     rings: 1800,
-    clouds: 400,
+    // 每层（半透明那层 / 不透明那层各自）的上限。实测 CLOUD_GRID=8 时一层用掉 541~611 块，
+    // 留到 900 是给关卡更大、陆地更多的情况兜底；两层的 makeMesh 都各自吃满这个数。
+    clouds: 900,
     flames: 9000,
     fireCores: 4500,
     waterfalls: 10000,
@@ -73,32 +75,42 @@
     }
     return sum / norm;
   }
-  // 在 gw×gh×gd 的格子里切一团云，返回相对中心的方块坐标列表。
-  // lump 越大团越紧实，cut 越大越稀疏。
-  function makeCloudShape(seed, gw, gh, gd, lump, cut) {
+  // 一团云：在单位球里用 fBm 切出蓬松的实心块，坐标归一化到 [-1,1]。
+  // 刻意先做成"接近球"，之后才由 buildClouds 按半轴拉成 x²/a²+y²/b²+z²/c²=1 的椭球。
+  // 半轴（a>c>b，宽而扁）才是云的长相，噪声只负责把轮廓啃得蓬松不规则——
+  // 否则每团云都是一个规规矩矩的光溜椭球，一看就是程序摆的。
+  // lump 越大团越紧实，cut 越大越稀疏。这两个值是拿实验台（.dsh-reports/cloud-lab.cjs，
+  // 画的是同一个 makeCloudShape）一格格试出来的：n=8 是最小的一档"还看得出是一团云"，
+  // 再小就散成几块浮渣；lump0.7/cut0.14 在实验台上轮廓蓬松、边缘参差，且六个种子形状各不相同。
+  // 这一组每团约 105~115 块，5 团下层 + 6 团上层分别约 541 / 611 块，所以 BUDGET.clouds 得是 900。
+  function makeCloudShape(seed, n, lump, cut) {
     const blocks = [];
-    const hx = (gw - 1) / 2,
-      hy = (gh - 1) / 2,
-      hz = (gd - 1) / 2;
-    for (let iy = 0; iy < gh; iy++)
-      for (let iz = 0; iz < gd; iz++)
-        for (let ix = 0; ix < gw; ix++) {
-          const r =
-            Math.max(
-              Math.abs((ix - hx) / (hx + 0.001)),
-              Math.abs((iy - hy) / (hy + 0.001)),
-              Math.abs((iz - hz) / (hz + 0.001)),
-            );
+    const half = (n - 1) / 2;
+    for (let iy = 0; iy < n; iy++)
+      for (let iz = 0; iz < n; iz++)
+        for (let ix = 0; ix < n; ix++) {
+          const nx = (ix - half) / half,
+            ny = (iy - half) / half,
+            nz = (iz - half) / half;
+          const r = Math.sqrt(nx * nx + ny * ny + nz * nz);
           if (r >= 1) continue;
-          const n = fbm3(ix * 0.44 + seed * 3.7, iy * 0.52 + seed * 1.3, iz * 0.44 + seed * 2.9, seed * 17 + 1, 4);
-          if (n * Math.pow(1 - r, lump) < cut) continue;
-          blocks.push([ix - hx, iy - hy, iz - hz]);
+          const f = fbm3(ix * 0.5 + seed * 3.7, iy * 0.58 + seed * 1.3, iz * 0.5 + seed * 2.9, seed * 17 + 1, 4);
+          if (f * Math.pow(1 - r, lump) < cut) continue;
+          blocks.push([nx, ny, nz]);
         }
     return blocks;
   }
-  // 云的数量：上方那层多而小，下方那层少而大。
-  const CLOUD_UP = 10,
-    CLOUD_LOW = 6;
+  // 云的参数。ASPECT 是 x 比 z 宽多少（a/c），FLAT 是 y 压得比 z 扁多少（b/c）。
+  // 上层半透明、下层不透明，两层用同一套比例，只是上层小一截。
+  // GRID 是切形用的格点数：6 太粗（球内只剩 56 个候选格，怎么调阈值都读不出"一团"），
+  // 8 是最小的一档还像云；再往上每层要 1500 块以上，帧时间就明显往上走了。
+  const CLOUD_UP = 6,
+    CLOUD_LOW = 5,
+    CLOUD_ASPECT = 1.4,
+    CLOUD_FLAT = 0.44,
+    CLOUD_GRID = 8,
+    CLOUD_LUMP = 0.7,
+    CLOUD_CUT = 0.14;
   // 昼夜四个关键帧（phase 0=清晨、0.25=正午、0.5=黄昏、0.75=夜晚）。
   // 动态模式会在它们之间平滑插值；也可以定格到某一档。
   const DAY_KEYS = [
@@ -644,9 +656,11 @@
     // 于是更高的山峰会遮挡其身后的格子。旧实现直接与 y=0 平面求交：相机俯角约 38.7°，
     // 6 格高的峰会让点选位置向后偏约 7.5 格（想在山顶点东西却点到山背后）。
     // 纯几何、不依赖 THREE，因此可在 Node 里用 Object.create(GardenView.prototype) 直接测试。
-    rayCell(origin, dir) {
+    // 除了格子下标，同时返回命中距离 t——判断"云有没有挡在岛前面"要用它。
+    rayGroundHit(origin, dir) {
+      const none = { cell: -1, t: -1 };
       const s = this.world;
-      if (!s || !dir || !(dir.y < 0)) return -1;
+      if (!s || !dir || !(dir.y < 0)) return none;
       const cellAt = (t) => {
         const x = Math.floor(origin.x + dir.x * t + s.w / 2),
           y = Math.floor(origin.z + dir.z * t + s.h / 2);
@@ -663,7 +677,7 @@
           lo = t;
           break;
         }
-      if (lo < 0) return -1;
+      if (lo < 0) return none;
       let hi = lo;
       lo = Math.max(0, lo - 0.2);
       for (let k = 0; k < 8; k++) {
@@ -672,7 +686,10 @@
         else lo = mid;
       }
       const i = cellAt(hi);
-      return i >= 0 && s.cells[i] ? i : -1;
+      return i >= 0 && s.cells[i] ? { cell: i, t: hi } : none;
+    }
+    rayCell(origin, dir) {
+      return this.rayGroundHit(origin, dir).cell;
     }
     bind() {
       let dragging = false,
@@ -1082,54 +1099,57 @@
       m.instanceMatrix.needsUpdate = true;
       m.instanceColor.needsUpdate = true;
     }
-    // 云的形状与散布方式只算一次，之后每帧只做平移。
-    // 上方那层：团多、个小、半透明，高度基准是全岛最高地表（见 cloudFloor，玩家堆山也会跟着抬）。
-    // 下方那层：团少、个大、不透明，散在岛的四周与正下方，y 一律小于 0。
+    // 云的形状与散布只算一次，之后每帧只做平移。
+    // 尺寸从"岛的面积"反解，而不是拍脑袋给边长：岛的 1/4 留给下方那层的大云，
+    // 上方那层再取它的 1/4。x 均匀铺满整个岛的宽度，风沿着 x 推，越界绕回来。
     buildClouds(s) {
-      const spanX = Math.max(60, s.w * 1.7),
-        spanZ = Math.max(44, s.h * 2.1);
-      const up = [],
-        low = [];
-      for (let k = 0; k < CLOUD_UP; k++) {
-        up.push({
-          blocks: makeCloudShape(k + 1, 7, 5, 7, 1.0, 0.2),
-          // 沿 x 均匀铺开再各自横向漂移，越界绕回来
-          x0: ((k + 0.35) / CLOUD_UP) * spanX - spanX / 2,
-          dy: 3.4 + (k % 3) * 2.1,
-          z: -spanZ / 2 + ((k * 5.3) % spanZ),
-          v: 0.45 + (k % 4) * 0.17,
-          tint: k % 3 === 0 ? 0xf6f1e4 : k % 3 === 1 ? 0xfdfbf5 : 0xeef2ea,
-        });
-      }
-      for (let k = 0; k < CLOUD_LOW; k++) {
-        low.push({
-          blocks: makeCloudShape(101 + k, 7, 5, 7, 1.0, 0.2),
-          x0: -spanX / 2 + ((k + 0.5) / CLOUD_LOW) * spanX,
-          // 一律 y<0：云在岛的下面、外面，衬托这座悬空岛
-          y: -1.6 - (k % 3) * 1.5 - (k % 2) * 0.9,
-          z: -spanZ / 2 + ((k * 7.9 + 11) % spanZ),
-          v: 0.26 + (k % 3) * 0.13,
-          tint: 0xe7e9e2,
-        });
-      }
-      // 上下两套用同一个生成器，只是种子不同：形状一样蓬松，区别只在方块多大。
-      // 上方的方块边长定为下方的约一半——俯视投影面积按边长平方算，正好就是 1/4。
-      // 从实际块数反算边长，避免两组块数略有出入时比例对不上。
-      const meanUp = up.reduce((a, c) => a + c.blocks.length, 0) / Math.max(1, up.length);
-      const meanLow = low.reduce((a, c) => a + c.blocks.length, 0) / Math.max(1, low.length);
-      const bwLow = 1.45;
-      const bwUp = bwLow * Math.sqrt(0.25 * meanLow / Math.max(1e-6, meanUp));
-      for (const c of up) {
-        c.bw = bwUp;
-        c.bh = bwUp * 0.72;
-      }
-      for (const c of low) {
-        c.bw = bwLow;
-        c.bh = bwLow * 0.6;
-      }
-      const area = (arr, bw) =>
-        arr.reduce((a, c) => a + c.blocks.length * bw * bw, 0) / Math.max(1, arr.length);
-      return { up, low, areaRatio: area(up, bwUp) / Math.max(1e-6, area(low, bwLow)) };
+      let land = 0;
+      for (const c of s.cells) if (c) land++;
+      // 风沿着 x 推，所以 x 铺满整个岛的宽度再各自漂移、越界绕回来；
+      // z 不动，只把各团错开铺在岛的 z 跨度上，免得全挤在一条线上。
+      const spanX = Math.max(s.w * 1.5, 60),
+        spanZ = Math.max(s.h * 1.2, 34);
+      // 由俯视面积 π·a·c 反解半轴：先定 a/c 与 b/c 的比例，再解出 c。
+      const axes = (area) => {
+        const cz = Math.sqrt(area / Math.PI / CLOUD_ASPECT);
+        return { a: CLOUD_ASPECT * cz, c: cz, b: cz * CLOUD_FLAT };
+      };
+      const lowAx = axes(land / 4),
+        upAx = axes(land / 16);
+      const step = 2 / (CLOUD_GRID - 1);
+      const fill = (arr, ax, seed0, yOf, tintOf) => {
+        for (let k = 0; k < arr.length; k++) {
+          const c = (arr[k] = arr[k] || {});
+          c.a = ax.a;
+          c.b = ax.b;
+          c.c = ax.c;
+          c.sx = ax.a * step;
+          c.sy = ax.b * step;
+          c.sz = ax.c * step;
+          // x 均匀铺满岛的宽度：每团之间错开，避免全挤在一头；x 也是风来的方向
+          c.x0 = -spanX / 2 + ((k + 0.5) / arr.length) * spanX;
+          c.z = -spanZ / 2 + ((k * 7.3 + 5) % spanZ);
+          c.y = yOf(k);
+          c.v = 0.5 + (k % 4) * 0.15;
+          c.tint = tintOf(k);
+          c.seed = seed0 + k;
+        }
+      };
+      const up = new Array(CLOUD_UP),
+        low = new Array(CLOUD_LOW);
+      fill(
+        up,
+        upAx,
+        1,
+        (k) => 3.8 + (k % 3) * 2.6,
+        (k) => (k % 3 === 0 ? 0xf6f1e4 : k % 3 === 1 ? 0xfdfbf5 : 0xeef2ea),
+      );
+      // 下方那层一律 y<0：云托在岛的下面，衬托这座悬空岛
+      fill(low, lowAx, 101, (k) => -1.8 - (k % 3) * 1.7 - (k % 2) * 1.1, () => 0xe7e9e2);
+      for (const c of up) c.blocks = makeCloudShape(c.seed, CLOUD_GRID, CLOUD_LUMP, CLOUD_CUT);
+      for (const c of low) c.blocks = makeCloudShape(c.seed, CLOUD_GRID, CLOUD_LUMP, CLOUD_CUT);
+      const footprint = (arr) => arr.reduce((a, c) => a + Math.PI * c.a * c.c, 0) / Math.max(1, arr.length);
+      return { up, low, spanX, spanZ, land, areaRatio: footprint(up) / Math.max(1e-6, footprint(low)) };
     }
     // 上方那层云的高度基准：全岛当前最高的地表。
     // 玩家可以堆山，所以这个值不能只在建世界时算一次——按 tick 变化重算，一拍一次就够，
@@ -1145,7 +1165,26 @@
       }
       return this.cloudFloorY;
     }
-    // 云：上半透明那层铺在岛面上方，下半不透明那层沉在 y<0，各自缓慢横移并绕回来。
+    // 云会不会挡住岛：从相机穿过云心打一条射线，看它先碰到什么。
+    //   先碰到地形（hit.t < d） = 云在岛后面，本来就被岛挡着，照样画；
+    //   先碰到云   （hit.t > d） = 云压在岛前面，挡住视线，藏起来；
+    //   根本没碰到地形（t < 0）  = 云在岛的旁边或者岛外，也照样画。
+    // 云没有碰撞箱，纯粹是给人看的，所以挡住视线就得让路。
+    // 注意这里比较的是「地形命中点比云心更远」——写反的话就成了"藏在岛后面的要藏起来"，
+    // 那条规则等于永远不生效（默认视角下实测 0 朵云在岛前面）。
+    cloudBlocksView(x, y, z) {
+      const cam = this.camera,
+        o = cam.position;
+      let dx = x - o.x,
+        dy = y - o.y,
+        dz = z - o.z;
+      const d = Math.hypot(dx, dy, dz);
+      if (d < 1e-6) return false;
+      const hit = this.rayGroundHit({ x: o.x, y: o.y, z: o.z }, { x: dx / d, y: dy / d, z: dz / d });
+      return hit.t >= 0 && hit.t > d;
+    }
+    // 云：上半透明那层铺在岛面上方，下半不透明那层沉在 y<0。
+    // 风沿着 x 推，所以只有 x 在动；z 保持铺在岛的 z 跨度上不动。
     drawClouds(t) {
       const m = this.cloud,
         mLow = this.cloudLow;
@@ -1155,18 +1194,19 @@
       const groups = this.clouds;
       if (!groups) return;
       const drift = t * 0.00035;
-      const place = (mesh, list, floor) => {
+      const floor = this.cloudFloor();
+      const place = (mesh, list, isUp) => {
         for (const c of list) {
-          const span = 74;
-          let cx = ((c.x0 + drift * c.v) % span + span) % span;
-          cx -= span / 2;
-          const cy = floor === null ? c.y : floor + c.dy;
+          let cx = ((c.x0 + drift * c.v) % groups.spanX + groups.spanX) % groups.spanX;
+          cx -= groups.spanX / 2;
+          const cy = isUp ? floor + c.y : c.y;
+          if (this.cloudBlocksView(cx, cy, c.z)) continue;
           for (const [ox, oy, oz] of c.blocks)
-            this.put(mesh, cx + ox * c.bw, cy + oy * c.bh, c.z + oz * c.bw, c.bw, c.bh, c.bw, c.tint);
+            this.put(mesh, cx + ox * c.a, cy + oy * c.b, c.z + oz * c.c, c.sx, c.sy, c.sz, c.tint);
         }
       };
-      place(m, groups.up, this.cloudFloor());
-      place(mLow, groups.low, null);
+      place(m, groups.up, true);
+      place(mLow, groups.low, false);
       for (const mesh of [m, mLow]) {
         mesh.instanceMatrix.needsUpdate = true;
         mesh.instanceColor.needsUpdate = true;
