@@ -80,6 +80,9 @@
         autoFocus: false,
         quality: 'auto',
         timeOfDay: 'dynamic',
+        // 两个音量滑杆，0–1。默认 1 = 和以前一样，不改变任何人的听感。
+        musicVolume: 1,
+        callVolume: 1,
       },
     };
   }

@@ -366,9 +366,23 @@ console.log(
   // 断言会得到一个看起来合理的假数字。音乐滑杆在浏览器探针里量
   // （probe-settings.mjs）。
 
+  // 勾回来但滑杆拉到 30% → 只剩三成
+  GardenAudio.configure({ ...base, callVolume: 0.3 });
+  assert(Math.abs(amb.value - 0.3) < 1e-6, '动物音量滑杆没生效，实际 ' + amb.value);
+
+  // 越界必须被夹住：坏存档里的 99 不能让一开声音就炸
+  GardenAudio.configure({ ...base, callVolume: 99 });
+  assert(amb.value === 1, '超出范围的音量没有被夹到 1，实际 ' + amb.value);
+  GardenAudio.configure({ ...base, callVolume: -3 });
+  assert(amb.value === 0, '负音量没有被夹到 0，实际 ' + amb.value);
+
+  // 静音优先于滑杆：滑杆拉满但开关关着，还是必须没声
+  GardenAudio.configure({ ...base, callVolume: 1, sound: false });
+  assert(amb.value === 0, '开关关着的时候滑杆不该把声音放出来');
+
   GardenAudio.configure(base);
 }
-console.log('PASS 设置里的「动物叫声与音效」开关真的管得住环境声');
+console.log('PASS 音量滑杆：静音生效、比例生效、越界被夹住、开关优先于滑杆、老存档回默认');
 
 // ══════════════ 素材包映射：每个物种都有录音，多条的要能随机 ══════════════
 {

@@ -61,13 +61,32 @@ assert.equal(data.get('ecogarden-manual-1'), before);
 assert.throws(() => GardenSlots.write(storage, 7, p));
 p.settings.music = false;
 p.settings.autosave = false;
+// 两个音量滑杆：必须能往返，范围写错会让玩家存档一开声音就炸
+p.settings.musicVolume = 0.25;
+p.settings.callVolume = 0.6;
 assert.equal(E.validateProfile(p).settings.music, false);
 assert.equal(E.validateProfile(p).settings.autosave, false);
+assert.equal(E.validateProfile(p).settings.musicVolume, 0.25);
+assert.equal(E.validateProfile(p).settings.callVolume, 0.6);
+// 越界与坏类型要退回默认，而不是让整份存档作废
+for (const bad of [99, -1, 'loud', NaN, null]) {
+  const s2 = JSON.parse(JSON.stringify(p));
+  s2.settings.callVolume = bad;
+  assert.equal(
+    E.validateProfile(s2).settings.callVolume,
+    1,
+    '越界的音量必须退回默认，实际保留成了 ' + E.validateProfile(s2).settings.callVolume,
+  );
+}
 const old = JSON.parse(JSON.stringify(p));
 delete old.settings.music;
 delete old.settings.autosave;
+delete old.settings.musicVolume;
+delete old.settings.callVolume;
 assert(E.validateProfile(old).settings.music);
 assert(E.validateProfile(old).settings.autosave);
+assert.equal(E.validateProfile(old).settings.musicVolume, 1, '老存档的音量应回到默认满音量');
+assert.equal(E.validateProfile(old).settings.callVolume, 1, '老存档的音量应回到默认满音量');
 console.log(
   'PASS six independent compact slots, quota failure, bounds and legacy settings defaults',
 );

@@ -105,6 +105,10 @@
     if (input.settings) {
       for (const k of ['sound', 'music', 'autosave', 'labels', 'autoFocus'])
         if (typeof input.settings[k] === 'boolean') out.settings[k] = input.settings[k];
+      // 音量滑杆。范围写死 0–1：写宽了旧存档/坏存档能让音量跑到 10，
+      // 一开声音就炸。范围不对这里是直接丢掉用默认值，不让整份存档作废。
+      for (const k of ['musicVolume', 'callVolume'])
+        if (finite(input.settings[k], 0, 1)) out.settings[k] = input.settings[k];
       if (['auto', 'low', 'high'].includes(input.settings.quality))
         out.settings.quality = input.settings.quality;
       if (['dynamic', 'dawn', 'afternoon', 'dusk', 'night'].includes(input.settings.timeOfDay))

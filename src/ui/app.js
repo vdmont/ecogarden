@@ -1053,16 +1053,74 @@
       '<option value="night">定格 · 夜晚</option>' +
       '</select>';
     panel.append(timeRow);
+    // 音量滑杆：各自紧跟在自己的开关后面。
+    // 范围 0–100，存进 profile.settings 的是 0–1 的比例。
+    // oninput（拖动中就生效）和 onchange（松手才存档）分开：
+    // 拖动时要能立刻听见，松手前没必要每动一下就写一次存档。
+    const volRow = (id, outId, label, key, toggleId) => {
+      const row = document.createElement('label');
+      row.className = 'setting vol';
+      row.innerHTML =
+        '<span>' +
+        label +
+        '</span><input type="range" id="' +
+        id +
+        '" min="0" max="100" step="1"><output id="' +
+        outId +
+        '"></output>';
+      // ⚠ 必须用 row.querySelector 拿，不能用 $()：
+      //   这一行执行的时候滑杆还没插进文档，$(id) 拿到的是 null，
+      //   给 null 挂 oninput 会抛异常，而且是一路抛到外面——
+      //   后面连「设置」按钮都不会被建出来（探针实测：面板里少了这两个滑杆，
+      //   设置按钮整个不存在）。
+      const input = row.querySelector('input');
+      const out = row.querySelector('output');
+      const toggle = $(toggleId);
+      const paint = () => {
+        out.textContent = input.value + '%';
+        // 开关关着时把滑杆变灰，免得看成一个「关了还能拖」的东西
+        input.disabled = !!toggle && !toggle.checked;
+        input.style.opacity = input.disabled ? '0.4' : '';
+      };
+      const apply = () => {
+        profile.settings[key] = Number(input.value) / 100;
+        paint();
+        GardenAudio.configure(profile.settings);
+      };
+      input.oninput = apply;
+      input.onchange = () => {
+        apply();
+        save();
+      };
+      row.sync = paint;
+      return row;
+    };
+    const musicVol = volRow('musicVolume', 'musicVolumeOut', '音乐音量', 'musicVolume', 'musicToggle');
+    const callVol = volRow('callVolume', 'callVolumeOut', '动物音量', 'callVolume', 'soundToggle');
+    music.after(musicVol);
+    $('soundToggle').parentElement.after(callVol);
     const prefs = () => {
       $('timeSelect').value = profile.settings.timeOfDay || 'dynamic';
       $('musicToggle').checked = profile.settings.music !== false;
       $('autosaveToggle').checked = profile.settings.autosave !== false;
+      $('musicVolume').value = String(Math.round((profile.settings.musicVolume ?? 1) * 100));
+      $('callVolume').value = String(Math.round((profile.settings.callVolume ?? 1) * 100));
+      musicVol.sync();
+      callVol.sync();
     };
     $('musicToggle').onchange = () => {
       profile.settings.music = $('musicToggle').checked;
+      musicVol.sync();
       GardenAudio.configure(profile.settings);
       save();
     };
+    // 「动物叫声与音效」的开关以前点了没反应，是因为音频那层没看它。
+    // 它自己的 onchange 在 mount 时被统一装好了（那里还会同步其它复选框），
+    // 所以这里只**追加**一个监听来同步滑杆的可用状态，不能覆盖——
+    // 覆盖会把 syncSettings 那条链弄丢。
+    $('soundToggle').addEventListener('change', () => {
+      callVol.sync();
+    });
     $('timeSelect').onchange = () => {
       profile.settings.timeOfDay = $('timeSelect').value;
       view.setTimeOfDay(profile.settings.timeOfDay);

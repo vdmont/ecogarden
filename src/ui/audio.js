@@ -1169,7 +1169,7 @@
   function applySoundLevel(immediate) {
     if (!ambientBus || !ctx) return;
     const on = settings.sound !== false;
-    const vol = on ? 1 : 0;
+    const vol = on ? unit01(settings.callVolume, 1) : 0;
     const g = ambientBus.gain;
     if (immediate) {
       g.cancelScheduledValues(0);
@@ -1729,7 +1729,8 @@
     // musicVolume 是设置里的「音乐音量」滑杆（0–1，默认 1）。
     if (bgmGain) {
       const duck = 1 - (1 - MIX.bgmDuckMin) * zoomT;
-      const want = MUSIC_VOLUME * duck;
+      // musicVolume 是设置里的「音乐音量」滑杆（0–1，默认 1）。
+      const want = MUSIC_VOLUME * unit01(settings.musicVolume, 1) * duck;
       bgmGain.gain.value = lerpTo(bgmGain.gain.value, want, dt, MIX.smoothTau);
     }
 
@@ -2008,6 +2009,8 @@
     // 动物声那一层的总音量（复选框 + 「动物音量」滑杆拧的就是它）。
     // 取不到是正常的：还没解锁、没进岛的时候没有这条总线。
     _ambientGain: () => (ambientBus ? ambientBus.gain : null),
+    // BGM 那一层的总音量（音乐滑杆 × 让位系数）。
+    _bgmGain: () => (bgmGain ? bgmGain.gain : null),
     // 空间模型算出来的权重（离视口中心越近越大）。验收"越近越大"看这个。
     _weights: () => ({ ...spatialWeights() }),
     // 归一化之后的能量报告：每条片段的平均能量有没有落在 0.2–0.4。
