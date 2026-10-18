@@ -6,6 +6,7 @@
     terrain: 60000,
     animals: 50000,
     rings: 1800,
+    clouds: 400,
     flames: 9000,
     fireCores: 4500,
     waterfalls: 10000,
@@ -173,11 +174,33 @@
       this.box = new THREE.BoxGeometry(1, 1, 1);
       this.dummy = new THREE.Object3D();
       this.color = new THREE.Color();
+      // 地形用独立几何：多带一个"这根方块会不会被风吹"的每实例权重（植物=1，地面=0）
+      this.terrainGeo = new THREE.BoxGeometry(1, 1, 1);
+      this.swayAttr = new THREE.InstancedBufferAttribute(new Float32Array(BUDGET.terrain), 1);
+      this.swayAttr.setUsage(THREE.DynamicDrawUsage);
+      this.terrainGeo.setAttribute('aSway', this.swayAttr);
       this.mesh = this.makeMesh(
-        this.box,
+        this.terrainGeo,
         new THREE.MeshLambertMaterial({ color: 0xffffff }),
         BUDGET.terrain,
       );
+      // 顶点风动：只在植物上生效（aSway=1），底边锚定、越靠上摆得越多
+      this.mesh.material.onBeforeCompile = (shader) => {
+        shader.uniforms.uWindTime = { value: 0 };
+        this.windShader = shader;
+        shader.vertexShader =
+          'attribute float aSway;\nuniform float uWindTime;\n' +
+          shader.vertexShader.replace(
+            '#include <begin_vertex>',
+            [
+              '#include <begin_vertex>',
+              'float windH = clamp(position.y + 0.5, 0.0, 1.0);',
+              'float windPh = uWindTime * 1.7 + instanceMatrix[3][0] * 0.55 + instanceMatrix[3][2] * 0.75;',
+              'transformed.x += sin(windPh) * 0.085 * aSway * windH;',
+              'transformed.z += cos(windPh * 0.83) * 0.055 * aSway * windH;',
+            ].join('\n'),
+          );
+      };
       this.scene.add(this.mesh);
       this.animals = this.makeMesh(
         this.box,
@@ -195,6 +218,15 @@
         BUDGET.rings,
       );
       this.scene.add(this.rings);
+      // 轻云：一组方块拼的云团，缓慢横移并绕回来（数量克制，8 团 × 5 块）
+      this.cloud = this.makeMesh(
+        this.box,
+        new THREE.MeshLambertMaterial({ color: 0xffffff }),
+        BUDGET.clouds,
+      );
+      this.cloud.castShadow = false;
+      this.cloud.receiveShadow = false;
+      this.scene.add(this.cloud);
       this.flames = this.makeMesh(
         new THREE.ConeGeometry(1, 1, 5),
         new THREE.MeshBasicMaterial({
@@ -258,6 +290,12 @@
       mesh.count = 0;
       return mesh;
     }
+    // 只有地形网格有这个属性；其它网格静默跳过
+    writeSway(mesh, n, value) {
+      if (mesh !== this.mesh) return;
+      const attr = mesh.geometry.attributes.aSway;
+      if (attr) attr.array[n] = value;
+    }
     // rz = 绕动物前后轴的左右歪（tilt）；rx = 绕动物左右轴的前后摆（pitch，腿就是靠它绕胯转的）。
     // 欧拉顺序用 YXZ（先绕自身转再转向）而不是默认的 XYZ：默认顺序里 rx 会在 yaw 之后生效，
     // 那就变成绕世界坐标轴转了，动物一转身腿就摆错方向。
@@ -273,6 +311,7 @@
       mesh.setMatrixAt(n, this.dummy.matrix);
       this.color.setHex(color).convertSRGBToLinear();
       mesh.setColorAt(n, this.color);
+      this.writeSway(mesh, n, this.swayFlag ? 1 : 0);
     }
     boxAt(x, y, z, w, h, d, color, ry = 0, rz = 0) {
       this.put(this.mesh, x, y, z, w, h, d, color, ry, rz);
@@ -725,6 +764,7 @@
             );
           }
         }
+        this.swayFlag = 1;
         GardenModels.plants({
           b: (...a) => this.boxAt(a[0], a[1] + terr, a[2], ...a.slice(3)),
           c,
@@ -735,6 +775,7 @@
           wet,
           labelList,
         });
+        this.swayFlag = 0;
         if (c.ground === 'ash' && !c.plant && c.ash > 0 && i % 3 === 0)
           b(x, terr + 0.18, z, 0.25, 0.15, 0.16, 0x9a8e86);
       });
@@ -761,6 +802,7 @@
       this.flames.instanceColor.needsUpdate = true;
       this.fireCores.instanceMatrix.needsUpdate = true;
       this.fireCores.instanceColor.needsUpdate = true;
+      if (this.swayAttr) this.swayAttr.needsUpdate = true;
       this.lastDraw = t;
       this.dirty = false;
       this.lastTick = s.tick;
@@ -895,6 +937,38 @@
       m.instanceMatrix.needsUpdate = true;
       m.instanceColor.needsUpdate = true;
     }
+    // 轻云：8 团云在岛上方缓慢横移，位置只跟时间有关，不参与模拟
+    drawClouds(t) {
+      const m = this.cloud;
+      if (!m) return;
+      m.count = 0;
+      const drift = t * 0.00035;
+      for (let k = 0; k < 8; k++) {
+        const span = 74;
+        let cx = ((k * 9.3 + drift * (0.6 + (k % 3) * 0.18)) % span + span) % span;
+        cx -= span / 2;
+        const cy = 8.6 + (k % 3) * 1.5 + Math.sin(t * 0.0002 + k) * 0.12;
+        const cz = -16 + ((k * 7.1) % 32) + Math.cos(t * 0.00017 + k * 2) * 0.4;
+        const tint = k % 2 ? 0xfdfbf3 : 0xf3f7ef;
+        for (let b2 = 0; b2 < 5; b2++) {
+          const ox = (b2 - 2) * 0.9 + Math.sin(k * 3 + b2) * 0.25;
+          const oy = b2 === 2 ? 0.28 : 0;
+          const oz = Math.cos(k * 2 + b2 * 1.7) * 0.5;
+          this.put(
+            m,
+            cx + ox,
+            cy + oy,
+            cz + oz,
+            b2 === 2 ? 1.5 : 1.05,
+            0.5 + (b2 % 2) * 0.16,
+            1.05,
+            tint,
+          );
+        }
+      }
+      m.instanceMatrix.needsUpdate = true;
+      m.instanceColor.needsUpdate = true;
+    }
     drawEffects(t) {
       const s = this.world;
       if (!s) return;
@@ -1008,6 +1082,8 @@
       }
       this.updateCamera(0.1);
       if (this.dirty || this.lastTick !== this.world.tick) this.draw(t);
+      if (this.windShader) this.windShader.uniforms.uWindTime.value = t * 0.001;
+      this.drawClouds(t);
       this.drawAnimals(t);
       this.drawEffects(t);
       let i = this.hover >= 0 ? this.hover : this.selected;
