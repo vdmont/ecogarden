@@ -10,6 +10,33 @@
     fireCores: 4500,
     waterfalls: 10000,
   };
+  // 时段光影预设：太阳方位/颜色、天空与地面反射光、曝光、投影范围、舞台背景。
+  // 清晨＝低角度暖阳 + 偏冷的补光，影子拉长。
+  const TIME_PRESETS = {
+    dawn: {
+      sunColor: 0xffd9a8,
+      sunIntensity: 1.05,
+      sunPos: [-30, 13, 22],
+      skyColor: 0xffe9c6,
+      groundColor: 0x6e6353,
+      hemiIntensity: 0.58,
+      exposure: 1.08,
+      shadowSpan: 46,
+      sky: 'radial-gradient(ellipse at 50% 20%, #fff7e9 0%, #f8e8d2 52%, #e6d2b6 100%)',
+    },
+    // ↓ 以下三档尚未按观感调整，界面上暂不开放
+    afternoon: { sunColor: 0xfff4dc, sunIntensity: 1.15, sunPos: [-8, 34, 16], skyColor: 0xeaf6ff, groundColor: 0x6c6654, hemiIntensity: 0.8, exposure: 1.0, shadowSpan: 34, sky: 'radial-gradient(ellipse at 50% 26%, #f8fcff 0%, #eaf2ec 60%, #dae7d8 100%)' },
+    dusk: { sunColor: 0xff9d6b, sunIntensity: 1.0, sunPos: [28, 9, 18], skyColor: 0xffc9a8, groundColor: 0x5b4a44, hemiIntensity: 0.5, exposure: 1.05, shadowSpan: 48, sky: 'radial-gradient(ellipse at 50% 22%, #ffe2c2 0%, #f3c3a8 50%, #c99a9c 100%)' },
+    night: { sunColor: 0x9fb4d8, sunIntensity: 0.25, sunPos: [-22, 26, 20], skyColor: 0x3d4a66, groundColor: 0x2b2f38, hemiIntensity: 0.5, exposure: 0.95, shadowSpan: 34, sky: 'radial-gradient(ellipse at 50% 30%, #39465f 0%, #2a3448 60%, #1e2532 100%)' },
+  };
+  // 把一个十六进制颜色按系数调暗（用于贴图里的环境光遮蔽）
+  function shadeHex(hex, k) {
+    const r = Math.max(0, Math.min(255, Math.round(((hex >> 16) & 255) * k)));
+    const g = Math.max(0, Math.min(255, Math.round(((hex >> 8) & 255) * k)));
+    const b = Math.max(0, Math.min(255, Math.round((hex & 255) * k)));
+    return (r << 16) | (g << 8) | b;
+  }
+
   class GardenView {
     constructor(canvas, onPick, onDrag, isPainting, onStrokeEnd) {
       this.canvas = canvas;
@@ -43,7 +70,8 @@
       this.renderer.shadowMap.enabled = true;
       this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
       this.scene = new THREE.Scene();
-      this.scene.add(new THREE.HemisphereLight(0xe9fff4, 0x6c6654, 0.9));
+      this.hemi = new THREE.HemisphereLight(0xe9fff4, 0x6c6654, 0.9);
+      this.scene.add(this.hemi);
       this.sun = new THREE.DirectionalLight(0xffefce, 0.9);
       this.sun.position.set(-12, 30, 18);
       this.sun.castShadow = true;
@@ -122,6 +150,7 @@
       this.labelRoot = document.getElementById('worldLabels');
       this.pointers = new Map();
       this.bind();
+      this.setTimeOfDay('dawn');
       this.resize();
       window.addEventListener('resize', () => this.resize());
       // 页面布局会变（切到观察模式时页脚被隐藏、打开对话框、手机转屏），必须跟着重新测量画布，
@@ -142,11 +171,16 @@
       mesh.count = 0;
       return mesh;
     }
-    put(mesh, x, y, z, w, h, d, color, ry = 0, rz = 0) {
+    // rz = 绕动物前后轴的左右歪（tilt）；rx = 绕动物左右轴的前后摆（pitch，腿就是靠它绕胯转的）。
+    // 欧拉顺序用 YXZ（先绕自身转再转向）而不是默认的 XYZ：默认顺序里 rx 会在 yaw 之后生效，
+    // 那就变成绕世界坐标轴转了，动物一转身腿就摆错方向。
+    // rz/rx 都默认为 0 时，YXZ 的矩阵是 Ry·Rz，和原来的 XYZ(=Rx·Ry·Rz) 完全一样，
+    // 所以现有调用点一个都不用改。
+    put(mesh, x, y, z, w, h, d, color, ry = 0, rz = 0, rx = 0) {
       let n = mesh.count++;
       if (n >= mesh.instanceMatrix.count) throw Error('模型实例超过预算');
       this.dummy.position.set(x, y, z);
-      this.dummy.rotation.set(0, ry, rz);
+      this.dummy.rotation.set(rx, ry, rz, 'YXZ');
       this.dummy.scale.set(w, h, d);
       this.dummy.updateMatrix();
       mesh.setMatrixAt(n, this.dummy.matrix);
@@ -207,6 +241,32 @@
       this.scene.add(this.cliff);
       this.resize();
       this.draw(0);
+    }
+    // 时段预设。目前只有「清晨」是按效果调过的；其余三档只是占位，
+    // 等所有者确认清晨的观感后再逐档调（不要拿它们当成品）。
+    setTimeOfDay(name) {
+      const p = TIME_PRESETS[name] || TIME_PRESETS.dawn;
+      this.timeOfDay = TIME_PRESETS[name] ? name : 'dawn';
+      this.sun.color.setHex(p.sunColor);
+      this.sun.intensity = p.sunIntensity;
+      this.sun.position.set(p.sunPos[0], p.sunPos[1], p.sunPos[2]);
+      this.hemi.color.setHex(p.skyColor);
+      this.hemi.groundColor.setHex(p.groundColor);
+      this.hemi.intensity = p.hemiIntensity;
+      this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
+      this.renderer.toneMappingExposure = p.exposure;
+      Object.assign(this.sun.shadow.camera, {
+        left: -p.shadowSpan,
+        right: p.shadowSpan,
+        top: p.shadowSpan,
+        bottom: -p.shadowSpan,
+        near: 0.1,
+        far: 200,
+      });
+      this.sun.shadow.camera.updateProjectionMatrix();
+      const stage = document.getElementById('stage');
+      if (stage) stage.style.background = p.sky;
+      this.dirty = true;
     }
     resize() {
       let r = this.canvas.getBoundingClientRect(),
@@ -483,16 +543,19 @@
         const waterCell = ['water', 'spring'].includes(c.ground),
           terr = c.elevation || 0,
           bare = c.ground === 'mountain';
-        if (!bare && terr > 0.12) b(x, (terr - 0.1) / 2, z, 1, terr, 1, 0x8d7659);
+        // 体素环境光遮蔽：四周比它高的格子越多、越高，这一格越暗（凹处/墙根变暗）
+        const voxelAO = this.voxelAO(s, i, terr);
+        if (!bare && terr > 0.12)
+          b(x, (terr - 0.1) / 2, z, 1, terr, 1, shadeHex(0x8d7659, voxelAO * 0.95));
         let ground = c.ground === 'ash' ? 0x7f756a : c.moist >= 0.6 ? 0x9c9a6b : 0xb7a57c;
         if (c.ground === 'soil' && c.fert >= 0.4) ground = c.moist >= 0.6 ? 0x858558 : 0x9b8965;
-        if (!bare) b(x, terr, z, 1, 0.1, 1, ground);
+        if (!bare) b(x, terr, z, 1, 0.1, 1, shadeHex(ground, voxelAO));
         if (['water', 'spring'].includes(c.ground)) {
           b(x, terr + 0.11, z, 1, 0.12, 1, c.ground === 'spring' ? 0x53a9b5 : 0x71b3c2);
           if (i % 3 === 0) b(x - 0.1, terr + 0.18, z, 0.5, 0.025, 0.07, 0xc2e4df);
         }
         if (c.ground === 'rock') {
-          b(x, terr + 0.26, z, 0.76, 0.52, 0.7, 0x8c9490);
+          b(x, terr + 0.26, z, 0.76, 0.52, 0.7, shadeHex(0x8c9490, voxelAO));
           b(x - 0.12, terr + 0.57, z + 0.03, 0.48, 0.16, 0.5, 0xb3b6a6);
         }
         if (bare) {
@@ -566,6 +629,32 @@
       this.dirty = false;
       this.lastTick = s.tick;
     }
+    // 体素环境光遮蔽：看 8 个邻格比本格高多少，折算成一个 0.72~1 的亮度系数
+    voxelAO(s, i, terr) {
+      const x = i % s.w,
+        z = Math.floor(i / s.w);
+      let occ = 0;
+      for (const [dx, dz, w] of [
+        [1, 0, 1],
+        [-1, 0, 1],
+        [0, 1, 1],
+        [0, -1, 1],
+        [1, 1, 0.55],
+        [1, -1, 0.55],
+        [-1, 1, 0.55],
+        [-1, -1, 0.55],
+      ]) {
+        const xx = x + dx,
+          zz = z + dz;
+        if (xx < 0 || zz < 0 || xx >= s.w || zz >= s.h) continue;
+        const n = s.cells[zz * s.w + xx];
+        if (!n) continue;
+        const nh = n.ground === 'mountain' ? n.elevation || 1.8 : n.elevation || 0;
+        const rise = nh - terr;
+        if (rise > 0.05) occ += Math.min(1, rise / 1.5) * w;
+      }
+      return 1 - 0.28 * Math.min(1, occ / 2.2);
+    }
     // 脚底高度：周围四格双线性插值，走坡/上台阶时是斜坡而不是瞬间抬升
     groundAt(s, ax, az) {
       const x0 = Math.max(0, Math.min(s.w - 2, Math.floor(ax - 0.5)));
@@ -631,6 +720,7 @@
             state.pet = a.petUntil;
             state.heart = t + 2200;
           }
+          // 脚底接触阴影：越贴地越黑，腾空（被冲走/睡着压扁）时不画
           let bob = state.y + (a.sleep || a.type === 'bug' ? 0 : Math.sin(state.phase) * 0.014),
             yaw = state.yaw;
           if (state.heart > t) {
@@ -644,7 +734,7 @@
             ])
               b(x + dx, hy + dy, z, 0.18, 0.18, 0.12, col);
           }
-          const part = (dx, y, dz, w, h, d, col, tilt = 0) => {
+          const part = (dx, y, dz, w, h, d, col, tilt = 0, pitch = 0) => {
             let xx = dx * Math.cos(yaw) + dz * Math.sin(yaw),
               zz = -dx * Math.sin(yaw) + dz * Math.cos(yaw);
             b(
@@ -654,9 +744,13 @@
               w,
               h,
               d,
-              GardenPalette.animalColor(col, a.type, a.variant || 0),
+              shadeHex(
+                GardenPalette.animalColor(col, a.type, a.variant || 0),
+                0.80 + 0.20 * Math.min(1, Math.max(0, y / 0.55)),
+              ),
               yaw,
               tilt,
+              pitch,
             );
           };
           GardenModels.animals({ a, part, phase, t, i, labelList });

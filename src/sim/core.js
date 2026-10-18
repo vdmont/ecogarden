@@ -79,6 +79,7 @@
         labels: true,
         autoFocus: false,
         quality: 'auto',
+        timeOfDay: 'dawn',
       },
     };
   }

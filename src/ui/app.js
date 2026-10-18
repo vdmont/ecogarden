@@ -885,6 +885,8 @@
   }
   function syncSettings() {
     GardenAudio.configure(profile.settings);
+    view.setTimeOfDay(profile.settings.timeOfDay || 'dawn');
+    if ($('timeSelect')) $('timeSelect').value = profile.settings.timeOfDay || 'dawn';
     view.showLabels = profile.settings.labels;
     view.dirty = true;
     for (const [id, key] of [
@@ -1018,7 +1020,19 @@
     music.innerHTML = '<span>轻柔音乐</span><input type="checkbox" id="musicToggle">';
     panel.prepend(music);
     panel.prepend(panel.querySelector('.dialogHead'));
+    // 光影时段：目前只有「清晨」是按效果调过的，其余三档在界面上先禁用
+    const timeRow = document.createElement('label');
+    timeRow.className = 'setting';
+    timeRow.innerHTML =
+      '<span>光影时段</span><select id="timeSelect">' +
+      '<option value="dawn">清晨</option>' +
+      '<option value="afternoon" disabled>午后（待定）</option>' +
+      '<option value="dusk" disabled>黄昏（待定）</option>' +
+      '<option value="night" disabled>夜晚（待定）</option>' +
+      '</select>';
+    panel.append(timeRow);
     const prefs = () => {
+      $('timeSelect').value = profile.settings.timeOfDay || 'dawn';
       $('musicToggle').checked = profile.settings.music !== false;
       $('autosaveToggle').checked = profile.settings.autosave !== false;
     };
@@ -1026,6 +1040,11 @@
       profile.settings.music = $('musicToggle').checked;
       GardenAudio.configure(profile.settings);
       save();
+    };
+    $('timeSelect').onchange = () => {
+      profile.settings.timeOfDay = $('timeSelect').value;
+      view.setTimeOfDay(profile.settings.timeOfDay);
+      save(true);
     };
     const button = el('button', '', '设置');
     button.id = 'settingsBtn';
