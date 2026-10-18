@@ -109,22 +109,34 @@ GardenModels.pose = function (a, t) {
 
   // 呼吸：站着浅而快，睡着深而慢（scene.js 里睡着时整体起伏是关掉的，所以睡着反而要靠这里）
   const breath = Math.sin(sec * TAU * (asleep ? 0.22 : 0.42));
-  // 睡着时各个部位各自压到什么程度。
+  // 吃：站着低头嚼那 10 拍（a.act 由模拟设置，到期它自己清掉）。
+  // 咀嚼节奏用渲染层的时间驱动（这里拿得到毫秒），所以头是一点一点在动的，
+  // 而不是十拍一动。头往哪边低、往哪边转，由模拟把整只动物转过去（a.dir）。
+  const eat = a.act === 'eat',
+    chew = eat ? Math.sin(sec * TAU * 3.6) : 0; // -1..1
+  // 睡着/吃的时候各个部位各自压到什么程度。
   // 头单独用一个压法：压得比身子轻，不然头会陷进躯干里糊成一坨。
+  //
+  // 低头用的是「按头自己的高度打折」而不是固定往下挪多少：
+  // 兔子的头在 0.5 高、鹿在 1.3 高，固定挪 0.05 对兔子来说是十分之一、对鹿来说是看不见。
+  // 打折就自动合适了，31 种不用各填一个数字。
   const BODY_K = asleep ? 0.55 : 1,
-    HEAD_K = asleep ? 0.62 : 1,
+    HEAD_K = asleep ? 0.62 : eat ? 0.78 : 1,
     LEG_K = asleep ? 0.22 : 1;
   return {
     asleep,
     drunk,
     drift,
     walk,
+    eat,
+    chew,
     breath,
     // 睡：躯干压到贴地、腿收进身体底下、头往下放、眼睛眯成一条、耳朵往后耷
+    // 吃：头低下去够植物，chew 带着一点点上下（咀嚼），腿不动
     bodyY: BODY_K,
     headY: HEAD_K,
     legY: LEG_K,
-    headDrop: asleep ? 0.04 : 0,
+    headDrop: asleep ? 0.04 : eat ? 0.06 + chew * 0.02 : 0,
     headFwd: asleep ? 0.15 : 0,
     headH: asleep ? 0.8 : 1,
     eyeH: asleep ? 0.25 : 1,

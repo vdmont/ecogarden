@@ -13,6 +13,9 @@
     soil,
     updateMoisture,
   } = Eco;
+  // 动物 a.act 的合法取值。空串=没在做任何事。加新动作时要同步这里，
+  // 否则旧存档读到新值会被校验拒掉（整个存档打不开）。
+  const ACT_VALUES = ['', 'eat'];
   // 存档是「严格」校验的：字段白名单 + 数值范围，任何越界都抛错而不是静默清空。
   // 新增字段的固定流程（漏掉任一步都会让存档往返丢数据或让校验误拒）：
   //   1) 在 soil()/animal() 里给出默认值（src/sim/core.js）；
@@ -191,6 +194,12 @@
           if (a.driftDir !== undefined && !finite(a.driftDir, -1, 7)) throw Error(T.m271);
           if (a.habit !== undefined && (!Number.isInteger(a.habit) || !finite(a.habit, 0, 6)))
             throw Error(T.m271);
+          // 「正在做什么」：目前只有 'eat'（站着低头嚼那 10 拍）。
+          // 老存档没有这两个字段，按「没在吃」处理 —— 否则老玩家存读一次就打不开。
+          if (a.act !== undefined && !ACT_VALUES.includes(a.act)) throw Error(T.m271);
+          if (a.actUntil !== undefined && !finite(a.actUntil, 0, 1e12)) throw Error(T.m271);
+          b.act = a.act ?? '';
+          b.actUntil = a.actUntil ?? 0;
           b.habit = a.habit ?? 0;
           b.drift = a.drift ?? 0;
           b.driftDir = a.driftDir ?? -1;

@@ -38,6 +38,7 @@
     [1, -1],
   ]; // 8 个方向
   const FLOW_DROP = 0.28; // 落差超过这个值才算「有落差的水」，开始流动
+  const EAT_TICKS = 10; // 吃完站着头低下去嚼多少拍
   const blankMetrics = () => Object.fromEntries(METRICS.map((k) => [k, 0]));
   const soil = () => ({
     ground: 'soil',
@@ -391,6 +392,11 @@
       x: null, // 格内坐标，格心在整数 + 0.5
       z: null,
       state: 'idle', // idle | walk
+      // 正在做的事（目前只有 'eat'）。渲染层靠它做「吃」这个动作：
+      // 到期前动物不再发起新的移动（站着低头嚼），头也压低。
+      // 老存档没有这两个字段，按「没在吃」处理（save.js 里 ?? 0）。
+      act: '',
+      actUntil: 0,
       tcell: -1, // 正在前往的格子（预约）
       tx: 0,
       tz: 0,
@@ -1038,6 +1044,9 @@
       if (!a || a.moved === s.tick) continue;
       a.moved = s.tick;
       a.age++;
+      // 「正在吃」的窗口到期。这句放在最前面：每拍只处理一次的动物身上，
+      // 早于下面所有分支，醉/睡/走这些 continue 掉的路径也会正常到期。
+      if (a.act && s.tick > a.actUntil) a.act = '';
       if (a.age >= LIFE[a.type]) {
         c.animal = null;
         c.fert = Math.min(3, c.fert + 0.35);
@@ -1071,6 +1080,7 @@
         continue;
       }
       let ate = false,
+        ateAt = -1, // 吃到的是哪一格，用来把动物转过去
         food = eatPlants(s, i, a).sort((left, right) =>
           a.type === 'squirrel'
             ? (s.cells[right].plant === 'bush' ? 1 : 0) - (s.cells[left].plant === 'bush' ? 1 : 0)
@@ -1096,6 +1106,7 @@
         population[victim] = Math.max(0, (population[victim] || 1) - 1);
         s.cells[j].fert = Math.min(3, s.cells[j].fert + 0.2);
         ate = true;
+        ateAt = j;
         count(s, 'hunts', 1, p);
         if (a.type === 'bird') {
           count(s, 'birdMeals', 1, p);
@@ -1134,6 +1145,7 @@
         }
         d.fert = Math.min(3, d.fert + 0.12);
         ate = true;
+        ateAt = j;
         if (a.type === 'bug') {
           count(s, 'bugMeals', 1, p);
           note(s, 'bugFood', T.m112, T.m255, j);
@@ -1152,6 +1164,13 @@
         a.hunger = Math.max(0, a.hunger - 100);
         a.full++;
         count(s, 'meals', 1, p);
+        // 站着低头嚼 10 拍。这期间动物不再发起新的移动（见下面的 a.act 判断），
+        // 头也压到植物那一侧，这样「吃」才看得见，而不是吃完立刻若无其事地走掉。
+        // 转向转的是整只动物（a.dir），不单独转脖子 —— 单独转脖子要给 part()
+        // 加一个偏航参数，而那个函数正在被另一条线改动，插进去容易撞。
+        a.act = 'eat';
+        a.actUntil = s.tick + EAT_TICKS;
+        if (ateAt >= 0) a.dir = Math.atan2((ateAt % s.w) - x, Math.floor(ateAt / s.w) - y);
       }
       if (a.type === 'bird' && s.tick % 24 === 0) {
         let j = n.find((j) => s.cells[j].ground === 'soil' && !s.cells[j].plant);
@@ -1214,7 +1233,11 @@
         !a.drunk &&
         !a.sleep &&
         a.petUntil <= s.tick &&
-        rand(s) < (a.type === 'bug' ? 0.15 : pollinator || a.type === 'bird' ? 0.34 : 0.24)
+        // 「正在吃」的这一条必须写在 rand(s) 的右边。&& 是短路的：写在左边的话，
+        // 正在吃的动物会少抽一次随机，而这个仓库只有一条随机流（rand(s)），
+        // 后面所有事件会整体错位，旧测试里按拍数写的时序断言会跟着全挂。
+        rand(s) < (a.type === 'bug' ? 0.15 : pollinator || a.type === 'bird' ? 0.34 : 0.24) &&
+        a.act !== 'eat'
       ) {
         let choices = n.filter(
           (j) => canWalk(s.cells[j], a, c) && !s.cells[j].animal && !reserved.has(j),

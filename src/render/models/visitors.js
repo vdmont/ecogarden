@@ -212,7 +212,9 @@ for (const [type, [name, kind, color]] of Object.entries(EcoData.VISITORS))
     if (myth) {
       for (const side of [-1, 1]) {
         hd(side * 0.13, 1.08, 0.27, 0.07, 0.27, 0.08, 0xd0af70);
-        hd(side * 0.32, 0.6, -0.04, 0.22, 0.13, 0.4, type === 'pixiu' ? 0xe3c989 : 0xc4d9cd);
+        // 翅膀在身后、贴着身侧，跟着身子走而不是跟着头：之前画在 hd() 里，
+        // 「低头吃」的时候翅膀会被一起拉到脑袋的高度。
+        p(side * 0.32, 0.6, -0.04, 0.22, 0.13, 0.4, type === 'pixiu' ? 0xe3c989 : 0xc4d9cd);
       }
       hd(0, 0.98, 0.37, 0.09, 0.08, 0.07, 0x82b5aa);
     }
