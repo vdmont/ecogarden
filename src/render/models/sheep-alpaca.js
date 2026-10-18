@@ -29,30 +29,40 @@ GardenModels.registry['sheep-alpaca'] = function ({ a, part, phase, t, i }) {
       P.tilt,
       pitch,
     );
-  // 头/脖子：睡着时低下来枕在地上
-  const hd = (dx, y, dz, w, h, d, col, tilt = 0) =>
+  // 脖子接在躯干上的那个点，吃的时候整条脖子带着头绕它转（绕 X 轴，矢状面）。
+  // 羊驼脖子长、接得低，羊脖子短、接得高 —— 性质和腿的胯高一样，逐个物种给。
+  const NECK_Y = alp ? 0.62 : 0.7,
+    NECK_Z = alp ? 0.3 : 0.26;
+  // 头/脖子：睡着时低下来枕在地上；吃的时候绕脖子转
+  const hd = (dx, y, dz, w, h, d, col, tilt = 0, pitch = 0) => {
+    const H = P.neckAt(y, dz, NECK_Y, NECK_Z);
     part(
       (dx + sway) * sc,
-      (y * P.headY - P.headDrop) * sc + P.lift * sc,
-      dz * sc,
+      (H.y * P.headY - P.headDrop) * sc + P.lift * sc,
+      H.z * sc,
       w * sc,
       h * sc,
       d * sc,
       col,
-      tilt + P.earTilt + P.tilt,
+      tilt + P.earTilt + P.tilt + H.pitch,
+      pitch,
     );
+  };
   // 眼睛：睡着时眯成一条
-  const eye = (dx, y, dz, w, h, d, col) =>
+  const eye = (dx, y, dz, w, h, d, col) => {
+    const H = P.neckAt(y, dz, NECK_Y, NECK_Z);
     part(
       (dx + sway) * sc,
-      (y * P.headY - P.headDrop) * sc + P.lift * sc,
-      dz * sc,
+      (H.y * P.headY - P.headDrop) * sc + P.lift * sc,
+      H.z * sc,
       w * sc,
       h * P.eyeH * sc,
       d * sc,
       col,
       P.tilt,
+      H.pitch,
     );
+  };
   const wool = alp ? 0xf1eadb : 0xf1e8d0,
     shade = alp ? 0xdfd5c2 : 0xded5bd;
   p(0, 0.55, 0, 0.67, 0.46, 0.86, wool);

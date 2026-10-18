@@ -31,18 +31,24 @@ for (const [type, [name, kind, color]] of Object.entries(EcoData.VISITORS))
         P.tilt,
         pitch,
       );
-    // 头：睡着时低下来枕着
-    const hd = (x, y, z, w, h, d, c, tilt = 0) =>
+    // 头：睡着时低下来枕着；吃的时候绕脖子转（绕 X 轴，矢状面），不是整块往下挪。
+    // 连接点按 kind 分别给（有的脖子长有的短），性质和腿的胯高一样。
+    let neckY = 0.66,
+      neckZ = 0.2;
+    const hd = (x, y, z, w, h, d, c, tilt = 0, pitch = 0) => {
+      const H = P.neckAt(y, z, neckY, neckZ);
       part(
         (x + sway) * scale * wide,
-        (y * P.headY - P.headDrop) * scale * rest + P.lift * scale,
-        z * scale,
+        (H.y * P.headY - P.headDrop) * scale * rest + P.lift * scale,
+        H.z * scale,
         w * scale * wide,
         h * scale,
         d * scale,
         c,
-        tilt + P.earTilt + P.tilt,
+        tilt + P.earTilt + P.tilt + H.pitch,
+        pitch,
       );
+    };
     const eye = (y, z) => {
       for (const side of [-1, 1])
         hd(
@@ -74,6 +80,8 @@ for (const [type, [name, kind, color]] of Object.entries(EcoData.VISITORS))
           lg(x, L.y, L.z, 0.035, L.len, 0.035, 0xaa806b, L.pitch);
         }
       if (tall) p(0, y + 0.25, 0.19, 0.09, 0.4, 0.09, color);
+      neckY = tall ? 1.02 : 0.7; // 高脚鸟脖子长，连接点就高
+      neckZ = 0.1;
       const hy = y + (tall ? 0.48 : 0.22);
       // 鸟睡觉缩脖子：头往下沉
       hd(0, hy, 0.23, 0.25, 0.23, 0.24, color);
@@ -103,6 +111,8 @@ for (const [type, [name, kind, color]] of Object.entries(EcoData.VISITORS))
       return;
     }
     if (kind === 'dragon') {
+      neckY = 0.7;
+      neckZ = 0.2;
       for (let j = 0; j < 6; j++) {
         const z = a.habit === 6 ? Math.cos(j * 0.8) * 0.38 : 0.35 - j * 0.22;
         p(
@@ -147,6 +157,8 @@ for (const [type, [name, kind, color]] of Object.entries(EcoData.VISITORS))
       }
     const hy = capy ? 0.57 : cat ? 0.82 : 0.76,
       hz = 0.34;
+    neckY = capy ? 0.62 : 0.66; // 卡皮巴拉身子矮，脖子接得也低
+    neckZ = 0.2;
     hd(0, hy, hz, capy ? 0.4 : 0.37, 0.33, capy ? 0.44 : 0.33, color);
     hd(
       0,

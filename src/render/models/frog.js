@@ -14,14 +14,44 @@ GardenModels.registry['frog'] = function ({ a, part, phase, t, i }) {
       tilt + P.tilt,
       pitch,
     );
+  // 脖子接在躯干上的那个点，吃的时候头绕它转（绕 X 轴，矢状面）
+  const NECK_Y = 0.24,
+    NECK_Z = 0.02;
+  const hd = (dx, y, dz, w, h, d, col, tilt = 0, pitch = 0) => {
+    const H = P.neckAt(y, dz, NECK_Y, NECK_Z);
+    part(
+      dx + sway,
+      H.y * P.headY - P.headDrop + P.lift,
+      H.z,
+      w,
+      h * P.bodyY,
+      d,
+      col,
+      tilt + P.earTilt + P.tilt + H.pitch,
+      pitch,
+    );
+  };
   // 眼睛：睡着时眼睛往后缩进脑袋（青蛙闭眼是眼皮盖住，不是变瞎）
-  const eye = (dx, y, dz, w, h, d, col) =>
-    part(dx + sway, y * P.headY - P.headDrop + P.lift, dz, w, h, d, col, P.tilt);
+  const eye = (dx, y, dz, w, h, d, col) => {
+    const H = P.neckAt(y, dz, NECK_Y, NECK_Z);
+    part(
+      dx + sway,
+      H.y * P.headY - P.headDrop + P.lift,
+      H.z,
+      w,
+      h,
+      d,
+      col,
+      P.tilt,
+      H.pitch,
+    );
+  };
   for (const side of [-1, 1]) p(side * 0.12, 0.365, -0.04, 0.055, 0.035, 0.27, 0xe8dfa5);
   p(0, 0.295, 0.365, 0.22, 0.05, 0.035, 0x5c9293);
   p(0, 0.21, 0, 0.49, 0.27, 0.43, 0x739753);
-  p(0, 0.26, 0.21, 0.48, 0.22, 0.3, 0x92b669);
-  p(0, 0.14, 0.29, 0.32, 0.08, 0.19, 0xc2d79a);
+  // 头原本画在 p()（身子部件）里，头一低它就不动 —— 挪到 hd()，跟着脖子转
+  hd(0, 0.26, 0.21, 0.48, 0.22, 0.3, 0x92b669);
+  hd(0, 0.14, 0.29, 0.32, 0.08, 0.19, 0xc2d79a);
   for (let side of [-1, 1]) {
     eye(side * 0.17, 0.43, 0.22, 0.17, 0.18, 0.18, 0x8fae61);
     eye(side * 0.17, 0.45, 0.32, 0.085 * P.eyeH, 0.085, 0.035, 0x333f2e);

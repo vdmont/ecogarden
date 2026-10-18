@@ -4,11 +4,37 @@ GardenModels.registry['hedgehog'] = function ({ a, part, phase, t, i }) {
   const sway = P.sway * 0.04;
   const p = (dx, y, dz, w, h, d, col, tilt = 0) =>
     part((dx + sway) * 1, y * P.bodyY + P.lift, dz, w, h * P.bodyY, d, col, tilt + P.tilt);
-  // 脸：睡着时低下来贴地，眼睛眯成一条
-  const face = (dx, y, dz, w, h, d, col, tilt = 0) =>
-    part(dx + sway, y * P.headY - P.headDrop + P.lift, dz, w, h, d, col, tilt + P.earTilt + P.tilt);
-  const eye = (dx, y, dz, w, h, d, col) =>
-    part(dx + sway, y * P.headY - P.headDrop + P.lift, dz, w, h * P.eyeH, d, col, P.tilt);
+  // 脖子接在躯干上的那个点，吃的时候脸绕它转（绕 X 轴，矢状面）
+  const NECK_Y = 0.4,
+    NECK_Z = 0.16;
+  const face = (dx, y, dz, w, h, d, col, tilt = 0, pitch = 0) => {
+    const H = P.neckAt(y, dz, NECK_Y, NECK_Z);
+    part(
+      dx + sway,
+      H.y * P.headY - P.headDrop + P.lift,
+      H.z,
+      w,
+      h,
+      d,
+      col,
+      tilt + P.earTilt + P.tilt + H.pitch,
+      pitch,
+    );
+  };
+  const eye = (dx, y, dz, w, h, d, col) => {
+    const H = P.neckAt(y, dz, NECK_Y, NECK_Z);
+    part(
+      dx + sway,
+      H.y * P.headY - P.headDrop + P.lift,
+      H.z,
+      w,
+      h * P.eyeH,
+      d,
+      col,
+      P.tilt,
+      H.pitch,
+    );
+  };
 
   p(0, 0.27, -0.04, 0.49, 0.35, 0.52, 0x90775a);
   for (let dz of [-0.2, 0, 0.2])

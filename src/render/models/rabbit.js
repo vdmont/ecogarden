@@ -26,30 +26,40 @@ GardenModels.registry['rabbit'] = function ({ a, part, phase, t, i }) {
       P.tilt,
       pitch,
     );
-  const hd = (dx, y, dz, w, h, d, col, tilt = 0) =>
+  // 脖子接在躯干上的那个点。吃的时候头绕它转（绕 X 轴，矢状面），不是整块上下挪。
+  const NECK_Y = 0.5,
+    NECK_Z = 0.16;
+  const hd = (dx, y, dz, w, h, d, col, tilt = 0, pitch = 0) => {
+    const H = P.neckAt(y, dz, NECK_Y, NECK_Z);
     part(
       (dx + sway) * sc,
-      (y * P.headY - P.headDrop) * sc + P.lift * sc,
-      dz * sc,
+      (H.y * P.headY - P.headDrop) * sc + P.lift * sc,
+      H.z * sc,
       w * sc,
       h * sc,
       d * sc,
       col,
-      tilt + P.earTilt + P.tilt,
+      tilt + P.earTilt + P.tilt + H.pitch,
+      pitch,
     );
-  const eye = (dx, y, dz, w, h, d, col) =>
+  };
+  const eye = (dx, y, dz, w, h, d, col) => {
+    const H = P.neckAt(y, dz, NECK_Y, NECK_Z);
     part(
       (dx + sway) * sc,
-      (y * P.headY - P.headDrop) * sc + P.lift * sc,
-      dz * sc,
+      (H.y * P.headY - P.headDrop) * sc + P.lift * sc,
+      H.z * sc,
       w * sc,
       h * P.eyeH * sc,
       d * sc,
       col,
       P.tilt,
+      H.pitch,
     );
+  };
   p(0, 0.31, -0.04, 0.43, 0.36, 0.5, 0xd8c4aa);
-  p(0, 0.49, 0.25, 0.36, 0.32, 0.32, 0xe5d2bb);
+  // 头原本画在 p()（身子部件）里，头一低它就不动 —— 挪到 hd()，跟着脖子转
+  hd(0, 0.49, 0.25, 0.36, 0.32, 0.32, 0xe5d2bb);
   p(0, 0.27, -0.36, 0.22, 0.22, 0.22, 0xf7eddc);
   for (let side of [-1, 1]) {
     hd(side * 0.11, 0.89, 0.23, 0.1, 0.5, 0.12, 0xe5d2bb);

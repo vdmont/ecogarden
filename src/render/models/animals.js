@@ -39,6 +39,12 @@ GardenModels.animals = function (ctx) {
 // 鸡和火烈鸟/夜鹭都有腿，不在这个名单里。
 const LEGLESS = new Set(['bird', 'bee', 'butterfly', 'bug', 'redstart', 'longtail', 'wren']);
 
+// 头最多往下转多少度（吃的时候低头够草）。
+const NECK_MAX = (45 * Math.PI) / 180;
+// 每只动物当前的头部角度。pose() 是逐帧调用的，所以平滑状态自己记一份，
+// 不写回 a（写回 a 会被存进存档）。
+const neckSmooth = new WeakMap();
+
 // 所有动物共用的姿态都在这里算，模型文件只管画自己的方块。
 // 放在一起是有意的：31 种动物要做同一件事时（比如"四条腿怎么交替"），
 // 抄 31 份一定会改一处忘一处，节奏也会走样。
@@ -114,14 +120,32 @@ GardenModels.pose = function (a, t) {
   // 而不是十拍一动。头往哪边低、往哪边转，由模拟把整只动物转过去（a.dir）。
   const eat = a.act === 'eat',
     chew = eat ? Math.sin(sec * TAU * 3.6) : 0; // -1..1
-  // 睡着/吃的时候各个部位各自压到什么程度。
-  // 头单独用一个压法：压得比身子轻，不然头会陷进躯干里糊成一坨。
+
+  // —— 头绕脖子转，不是整块上下平移 ——
+  // 之前「吃」是把头整体往下挪（headY 打折 + headDrop 减一点），画面上头是上下窜的，
+  // 像被人按了一下又弹起来。腿那边早就改成绕胯转了，头得用同一个道理：
+  // 上端钉在脖子与躯干的连接点上，下端画弧，那才像低头够草。
   //
-  // 低头用的是「按头自己的高度打折」而不是固定往下挪多少：
-  // 兔子的头在 0.5 高、鹿在 1.3 高，固定挪 0.05 对兔子来说是十分之一、对鹿来说是看不见。
-  // 打折就自动合适了，31 种不用各填一个数字。
+  // 角度上限 45°。实际角度每帧只趋近目标的一小部分，所以从抬头到低头是「压下去」，
+  // 不是「啪一下弹过去」。这份平滑状态记在这里、不写回 a —— 写回会被存进存档；
+  // scene.js 里转朝向的 motion 表也是同样的思路。
+  const neckState = (() => {
+    let st = neckSmooth.get(a);
+    if (!st) neckSmooth.set(a, (st = { ang: 0 }));
+    const target = eat ? NECK_MAX : 0;
+    st.ang += (target - st.ang) * 0.22;
+    if (!target && Math.abs(st.ang) < 0.0015) st.ang = 0;
+    return st;
+  })();
+  // 咀嚼是在极限角附近轻轻点一下，但**不许越出 0–45°**：所以点的是上限之内，
+  // 而不是「45° 再加 2°」——那样峰值会变成 47°，就超出定的范围了。
+  const neck = Math.max(0, Math.min(NECK_MAX, neckState.ang + chew * 0.035));
+
+  // 睡着时各个部位各自压到什么程度。
+  // 头单独用一个压法：压得比身子轻，不然头会陷进躯干里糊成一坨。
+  // （睡着还是整体压低、不走 neck，那是另一套，不在这次的范围里）
   const BODY_K = asleep ? 0.55 : 1,
-    HEAD_K = asleep ? 0.62 : eat ? 0.78 : 1,
+    HEAD_K = asleep ? 0.62 : 1,
     LEG_K = asleep ? 0.22 : 1;
   return {
     asleep,
@@ -130,17 +154,37 @@ GardenModels.pose = function (a, t) {
     walk,
     eat,
     chew,
+    neck,
     breath,
-    // 睡：躯干压到贴地、腿收进身体底下、头往下放、眼睛眯成一条、耳朵往后耷
-    // 吃：头低下去够植物，chew 带着一点点上下（咀嚼），腿不动
     bodyY: BODY_K,
     headY: HEAD_K,
     legY: LEG_K,
-    headDrop: asleep ? 0.04 : eat ? 0.06 + chew * 0.02 : 0,
+    headDrop: asleep ? 0.04 : 0,
     headFwd: asleep ? 0.15 : 0,
     headH: asleep ? 0.8 : 1,
     eyeH: asleep ? 0.25 : 1,
     earTilt: asleep ? 0.3 : 0,
+    // 头的一个部件绕「脖子与躯干的连接点」转，返回模型要用的 y / z / pitch。
+    //
+    // 模型里这样用（连接点由每个物种自己给，和腿的胯高、腿长一个性质）：
+    //   const NECK_Y = 0.55, NECK_Z = 0.2;   // 脖子接在躯干上的那个点
+    //   const H = P.neckAt(y, dz, NECK_Y, NECK_Z);
+    //   part(dx, H.y, H.z, w, h, d, col, tilt, H.pitch);
+    //
+    // 绕 X 轴（矢状面）转，正数=低头。鼻子往下走的同时贴着脖子画弧，
+    // 不会一边低头一边往回缩（那是绕自己中心转才会有的毛病）。
+    neckAt: (y, z, pivotY, pivotZ) => {
+      if (!neck) return { y, z, pitch: 0 };
+      const dy = y - pivotY,
+        dz = z - pivotZ,
+        c = Math.cos(neck),
+        s = Math.sin(neck);
+      return {
+        y: pivotY + dy * c - dz * s,
+        z: pivotZ + dy * s + dz * c,
+        pitch: neck,
+      };
+    },
     // 被冲走时整只被水托起来一点，所以这里比呼吸大得多
     lift:
       breath * (asleep ? 0.02 : 0.004) +

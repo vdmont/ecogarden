@@ -4,20 +4,38 @@ GardenModels.registry['bird'] = function ({ a, part, phase, t, i }) {
   const sway = P.sway * 0.05;
   const p = (dx, y, dz, w, h, d, col, tilt = 0) =>
     part(dx + sway, y * P.bodyY + P.lift, dz, w, h * P.bodyY, d, col, tilt + P.tilt);
+  // 脖子接在躯干上的那个点，吃的时候头绕它转（绕 X 轴，矢状面）
+  const NECK_Y = 0.72,
+    NECK_Z = 0.08;
   // 头：鸟睡觉会把头缩进脖子里 —— 睡着时整个头往下沉，再眯起眼
-  const hd = (dx, y, dz, w, h, d, col, tilt = 0) =>
+  const hd = (dx, y, dz, w, h, d, col, tilt = 0, pitch = 0) => {
+    const H = P.neckAt(y, dz, NECK_Y, NECK_Z);
     part(
       dx + sway,
-      y * P.headY - P.headDrop * 1.6 + P.lift,
-      dz - (P.asleep ? 0.05 : 0),
+      H.y * P.headY - P.headDrop * 1.6 + P.lift,
+      H.z - (P.asleep ? 0.05 : 0),
       w * (P.asleep ? 0.9 : 1),
       h,
       d,
       col,
-      tilt + P.tilt,
+      tilt + P.tilt + H.pitch,
+      pitch,
     );
-  const eye = (dx, y, dz, w, h, d, col) =>
-    part(dx + sway, y * P.headY - P.headDrop * 1.6 + P.lift, dz, w, h * P.eyeH, d, col, P.tilt);
+  };
+  const eye = (dx, y, dz, w, h, d, col) => {
+    const H = P.neckAt(y, dz, NECK_Y, NECK_Z);
+    part(
+      dx + sway,
+      H.y * P.headY - P.headDrop * 1.6 + P.lift,
+      H.z,
+      w,
+      h * P.eyeH,
+      d,
+      col,
+      P.tilt,
+      H.pitch,
+    );
+  };
 
   p(0, 0.6, 0, 0.35, 0.3, 0.42, 0x709dad);
   hd(0, 0.79, 0.18, 0.28, 0.25, 0.28, 0x87b4c5);

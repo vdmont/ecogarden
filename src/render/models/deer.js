@@ -4,17 +4,23 @@ GardenModels.registry['deer'] = function ({ a, part, phase, t, i }) {
   // 躯干/脖子/头/耳朵/鹿角在睡着时一起压低，腿收进肚子底下，眼睛眯成一条
   const body = (dx, y, dz, w, h, d, col) =>
     part(dx, y * P.bodyY + P.lift, dz, w, h * P.bodyY, d, col, P.tilt);
-  const head = (dx, y, dz, w, h, d, col, tilt = 0) =>
+  // 脖子接在躯干上的那个点。吃的时候整条脖子带着头一起绕它转（绕 X 轴，矢状面）
+  const NECK_Y = 0.95,
+    NECK_Z = 0.25;
+  const head = (dx, y, dz, w, h, d, col, tilt = 0, pitch = 0) => {
+    const H = P.neckAt(y, dz, NECK_Y, NECK_Z);
     part(
       dx,
-      y * P.headY - P.headDrop + P.lift,
-      dz,
+      H.y * P.headY - P.headDrop + P.lift,
+      H.z,
       w,
       h * (P.asleep ? 1 : P.eyeH),
       d,
       col,
-      tilt + P.earTilt + P.tilt,
+      tilt + P.earTilt + P.tilt + H.pitch,
+      pitch,
     );
+  };
   const eye = (dx, y, dz, w, h, d, col) => head(dx, y, dz, w, h * P.eyeH, d, col);
 
   body(0, 0.68, 0, 0.43, 0.37, 0.8, 0xad8057);

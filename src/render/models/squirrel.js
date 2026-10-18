@@ -16,21 +16,37 @@ GardenModels.registry['squirrel'] = function ({ a, part, phase, t, i }) {
       tilt + P.tilt,
       pitch,
     );
-  // 头/耳朵/吻：睡着时低下来
-  const hd = (dx, y, dz, w, h, d, col, tilt = 0, pitch = 0) =>
+  // 头/耳朵/吻：睡着时低下来；吃的时候绕脖子转（绕 X 轴，矢状面）
+  const NECK_Y = 0.5,
+    NECK_Z = 0.12;
+  const hd = (dx, y, dz, w, h, d, col, tilt = 0, pitch = 0) => {
+    const H = P.neckAt(y, dz, NECK_Y, NECK_Z);
     part(
       dx + sway,
-      y * P.headY - P.headDrop + P.lift,
-      dz,
+      H.y * P.headY - P.headDrop + P.lift,
+      H.z,
       w,
       h,
       d,
       col,
-      tilt + P.earTilt + P.tilt,
+      tilt + P.earTilt + P.tilt + H.pitch,
       pitch,
     );
-  const eye = (dx, y, dz, w, h, d, col) =>
-    part(dx + sway, y * P.headY - P.headDrop + P.lift, dz, w, h * P.eyeH, d, col, P.tilt);
+  };
+  const eye = (dx, y, dz, w, h, d, col) => {
+    const H = P.neckAt(y, dz, NECK_Y, NECK_Z);
+    part(
+      dx + sway,
+      H.y * P.headY - P.headDrop + P.lift,
+      H.z,
+      w,
+      h * P.eyeH,
+      d,
+      col,
+      P.tilt,
+      H.pitch,
+    );
+  };
 
   // 两条后腿撑地：腿立着而不是横在身下，这是"站着"和"四足爬"的区别
   for (let side of [-1, 1]) {

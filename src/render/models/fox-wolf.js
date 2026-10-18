@@ -26,11 +26,37 @@ GardenModels.registry['fox-wolf'] = function ({ a, part: drawPart, phase, t, i }
   // 腿：睡着收进肚子底下，走路前后摆、抬起的那只离地
   const lg = (dx, y, dz, w, h, d, col, pitch = 0) =>
     part(dx + sway, y, dz, w, h, d, col, P.tilt, pitch);
-  // 头：睡着时低下来枕着
-  const hd = (dx, y, dz, w, h, d, col, tilt = 0) =>
-    part(dx + sway, y * P.headY - P.headDrop + P.lift, dz, w, h, d, col, tilt + P.earTilt + P.tilt);
-  const eye = (dx, y, dz, w, h, d, col) =>
-    part(dx + sway, y * P.headY - P.headDrop + P.lift, dz, w, h * P.eyeH, d, col, P.tilt);
+  // 脖子接在躯干上的那个点，吃的时候头绕它转（绕 X 轴，矢状面）
+  const NECK_Y = 0.52,
+    NECK_Z = 0.2;
+  const hd = (dx, y, dz, w, h, d, col, tilt = 0, pitch = 0) => {
+    const H = P.neckAt(y, dz, NECK_Y, NECK_Z);
+    part(
+      dx + sway,
+      H.y * P.headY - P.headDrop + P.lift,
+      H.z,
+      w,
+      h,
+      d,
+      col,
+      tilt + P.earTilt + P.tilt + H.pitch,
+      pitch,
+    );
+  };
+  const eye = (dx, y, dz, w, h, d, col) => {
+    const H = P.neckAt(y, dz, NECK_Y, NECK_Z);
+    part(
+      dx + sway,
+      H.y * P.headY - P.headDrop + P.lift,
+      H.z,
+      w,
+      h * P.eyeH,
+      d,
+      col,
+      P.tilt,
+      H.pitch,
+    );
+  };
 
   p(0, 0.44, 0, 0.4, 0.31, 0.63, 0xc47c40);
   hd(0, 0.57, 0.34, 0.35, 0.3, 0.32, 0xda9552);
