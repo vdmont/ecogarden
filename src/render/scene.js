@@ -153,6 +153,9 @@
       this.lastClick = null;
       this.onDoublePick = null;
       this.showLabels = true;
+      // 接触阴影压到几成。放在实例上而不是写死，是为了能在浏览器里直接改值对比不同深浅。
+      // 0.72 是挑出来的：0.78 几乎看不出来，0.66 就开始像地上一个坑了（.dsh-reports/contact-ab.cjs）
+      this.contactShade = 0.72;
       this.renderer = new THREE.WebGLRenderer({
         canvas,
         alpha: true,
@@ -362,6 +365,7 @@
       this.dirty = true;
       this.lastTick = -1;
       this.motion = new WeakMap();
+      this.contactCells = null;
       this.focus = null;
       this.selected = -1;
       this.hover = -1;
@@ -754,7 +758,17 @@
           b(x, (terr - 0.1) / 2, z, 1, terr, 1, shadeHex(0x8d7659, voxelAO * 0.95));
         let ground = c.ground === 'ash' ? 0x7f756a : c.moist >= 0.6 ? 0x9c9a6b : 0xb7a57c;
         if (c.ground === 'soil' && c.fert >= 0.4) ground = c.moist >= 0.6 ? 0x858558 : 0x9b8965;
-        if (!bare) b(x, terr, z, 1, 0.1, 1, shadeHex(ground, voxelAO));
+        // 接触阴影：动物脚下这一格压暗一点，贴着 voxelAO 的做法一起乘，不额外画任何东西
+        if (!bare)
+          b(
+            x,
+            terr,
+            z,
+            1,
+            0.1,
+            1,
+            shadeHex(ground, voxelAO * (this.contactCells?.has(i) ? this.contactShade : 1)),
+          );
         if (['water', 'spring'].includes(c.ground)) {
           b(x, terr + 0.11, z, 1, 0.12, 1, c.ground === 'spring' ? 0x53a9b5 : 0x71b3c2);
           if (i % 3 === 0) b(x - 0.1, terr + 0.18, z, 0.5, 0.025, 0.07, 0xc2e4df);
@@ -863,6 +877,39 @@
       }
       m.instanceMatrix.needsUpdate = true;
       m.instanceColor.needsUpdate = true;
+    }
+    // 接触阴影：算出"谁踩在哪一格"。draw() 要靠这个集合把地砖压暗，
+    // 但 draw() 只在 tick 变化时跑（每 500ms 一拍），而动物每 50ms 就挪一下——
+    // 直接画在 draw() 里会一格一格地跳。所以每帧算一次集合，跟上一帧不同就标脏，
+    // 让地面下一帧重画：跨格的延迟只剩一帧，看起来是跟着脚走的。
+    collectContact() {
+      const s = this.world;
+      if (!s) return;
+      const next = new Set();
+      s.cells.forEach((c, i) => {
+        const a = c?.animal;
+        if (!a || a.drift > 0) return; // 被水冲走的在半空，不踩地
+        if (Eco.TRAITS[a.type]?.move === 'fly') return; // 会飞的悬着，不留接触阴影
+        // 模拟给的是格内连续坐标（格心在整数 + 0.5），和 drawAnimals() 取法一致
+        const ax = a.x ?? (i % s.w) + 0.5,
+          az = a.z ?? Math.floor(i / s.w) + 0.5,
+          gx = Math.floor(ax),
+          gz = Math.floor(az);
+        if (gx < 0 || gz < 0 || gx >= s.w || gz >= s.h) return;
+        next.add(gz * s.w + gx);
+      });
+      const prev = this.contactCells;
+      if (prev && prev.size === next.size) {
+        let same = true;
+        for (const i of next)
+          if (!prev.has(i)) {
+            same = false;
+            break;
+          }
+        if (same) return;
+      }
+      this.contactCells = next;
+      this.dirty = true;
     }
     // 体素环境光遮蔽：看 8 个邻格比本格高多少，折算成一个 0.72~1 的亮度系数
     voxelAO(s, i, terr) {
@@ -1138,6 +1185,7 @@
         if (state) this.targetLook.set(state.x, state.y + 0.3, state.z);
       }
       this.updateCamera(0.1);
+      this.collectContact();
       if (this.dirty || this.lastTick !== this.world.tick) this.draw(t);
       if (this.windShader) this.windShader.uniforms.uWindTime.value = t * 0.001;
       this.drawClouds(t);
