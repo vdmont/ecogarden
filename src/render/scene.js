@@ -144,6 +144,14 @@
     CLOUD_GRID = 10,
     CLOUD_BILLOWS = 7,
     CLOUD_OVERLAP = 1.18;
+  // 移轴景深 + 颜色分级。两个 pass 合在同一个全屏 shader 里，不额外多渲一遍。
+  // STRENGTH 是全岛视角之外最多能虚到什么程度；BAND 是清晰带的半宽（占画面高度的比例）。
+  // RADIUS 是最大模糊半径（像素）。ZOOM_AT_FULL 是"从这里开始才起模糊"的缩放档位：
+  // zoom=1 是全岛（一点不糊），越小越近、越虚——也就是"放大时景深更浅"。
+  const DOF_STRENGTH = 1,
+    DOF_BAND = 0.16,
+    DOF_RADIUS = 9,
+    DOF_ZOOM_AT_FULL = 0.78;
   // 接地阴影贴片的旋钮。三个值都是对着真机截图调的，不是拍脑袋。
   // FOOT_Y 是"脚正常踩在地上"时 part() 传进来的 y（方块中心高度）。
   // 实测 31 种：走兽 0.025~0.195、访客猫狗 0.170、飞鸟 0.395~0.540、
@@ -519,6 +527,102 @@
       this.labelRoot = document.getElementById('worldLabels');
       this.pointers = new Map();
       this.bind();
+      // ── 移轴景深 + 颜色分级：一张离屏纹理 + 一个全屏 shader。
+      //
+      // 为什么不用现成的 EffectComposer：项目零依赖，vendor 里只有 three.min.js，没有
+      // EffectComposer / BokehPass。而且这里要的就是"横向清晰带 + 上下渐虚"这种
+      // 微缩模型效果，不是真的景深——一个按屏幕 y 逐像素算半径的 shader 就够了，
+      // 单 pass 完成，不用乒乓两张纹理来回模糊。
+      //
+      // ⚠️ 两个坑写在下面注释里了：透明画布的 alpha，和颜色空间。
+      this.rtOpts = {
+        minFilter: THREE.LinearFilter,
+        magFilter: THREE.LinearFilter,
+        format: THREE.RGBAFormat,
+        type: THREE.UnsignedByteType,
+        depthBuffer: true,
+        stencilBuffer: false,
+      };
+      this.rtScene = new THREE.WebGLRenderTarget(2, 2, this.rtOpts);
+      // 离屏纹理必须保持线性：three 只在"渲染到默认帧缓冲"时才做 sRGB 编码，
+      // 渲到 RenderTarget 上时用的是纹理自己的 encoding。设成 sRGBEncoding 会让
+      // three 在采样时又解一次 sRGB，白转两圈，颜色不对。这里 LinearEncoding = 不转，
+      // 最后一律由下面的 shader 自己编码。
+      this.rtScene.texture.encoding = THREE.LinearEncoding;
+      this.postScene = new THREE.Scene();
+      this.postCam = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
+      this.postMat = new THREE.ShaderMaterial({
+        uniforms: {
+          tScene: { value: this.rtScene.texture },
+          uTexel: { value: new THREE.Vector2(1 / 2, 1 / 2) },
+          uStrength: { value: 0 },
+          uCenter: { value: 0.5 },
+          uBand: { value: DOF_BAND },
+          uRadius: { value: DOF_RADIUS },
+          uTint: { value: new THREE.Vector3(1, 1, 1) },
+          uContrast: { value: 1 },
+          uLift: { value: 0 },
+        },
+        depthTest: false,
+        depthWrite: false,
+        vertexShader: 'varying vec2 vUv;\nvoid main(){ vUv = uv; gl_Position = vec4(position.xy, 0.0, 1.0); }',
+        fragmentShader: [
+          'varying vec2 vUv;',
+          'uniform sampler2D tScene;',
+          'uniform vec2 uTexel;',
+          'uniform float uStrength, uCenter, uBand, uRadius, uContrast, uLift;',
+          'uniform vec3 uTint;',
+          'void main(){',
+          // 每像素自己的模糊半径：清晰带内为 0，越往上/往下越大。
+          '  float d = abs(vUv.y - uCenter);',
+          '  float k = smoothstep(uBand, uBand + 0.30, d) * uStrength;',
+          '  vec4 c = texture2D(tScene, vUv);',
+          '  vec4 outC = c;',
+          '  if (k > 0.002) {',
+          // 采样点不够密 + 半径大 = 规则鬼影（沙地那种重复花纹上最明显，会拖出斜条纹）。
+          // 两个手段治它：三环共 24 个采样，再按像素把起始角度抖一下——
+          // 抖完鬼影变成细噪点，看不出来。这是离焦模糊的常规做法。
+          '    float jit = fract(sin(dot(gl_FragCoord.xy, vec2(12.9898, 78.233))) * 43758.5453) * 6.2831853;',
+          '    vec4 sum = vec4(0.0);',
+          '    for (int i = 0; i < 12; i++) {',
+          '      float a = jit + (float(i) + 0.5) / 12.0 * 6.2831853;',
+          '      vec2 off = vec2(cos(a), sin(a)) * k * uRadius * uTexel;',
+          '      vec4 s = texture2D(tScene, vUv + off);',
+          '      sum += vec4(s.rgb * s.a, s.a);',
+          '    }',
+          '    for (int i = 0; i < 8; i++) {',
+          '      float a = jit + (float(i) + 0.5) / 8.0 * 6.2831853 + 0.35;',
+          '      vec2 off = vec2(cos(a), sin(a)) * k * uRadius * 0.55 * uTexel;',
+          '      vec4 s = texture2D(tScene, vUv + off);',
+          '      sum += vec4(s.rgb * s.a, s.a);',
+          '    }',
+          '    for (int i = 0; i < 4; i++) {',
+          '      float a = jit + (float(i) + 0.5) / 4.0 * 6.2831853 + 0.7;',
+          '      vec2 off = vec2(cos(a), sin(a)) * k * uRadius * 0.26 * uTexel;',
+          '      vec4 s = texture2D(tScene, vUv + off);',
+          '      sum += vec4(s.rgb * s.a, s.a);',
+          '    }',
+          '    sum += vec4(c.rgb * c.a, c.a);',
+          '    float al = sum.a;',
+          // alpha 接近 0 时别除，直接透出去
+          '    outC = al > 0.002 ? vec4(sum.rgb / al, al) : vec4(0.0);',
+          '  }',
+          // 颜色分级：先提对比、再抬暗部、最后乘色调。保持卡通味，不追求真实曝光。
+          '  vec3 rgb = outC.rgb;',
+          '  rgb = (rgb - 0.5) * uContrast + 0.5 + uLift;',
+          '  rgb *= uTint;',
+          '  rgb = max(rgb, 0.0);',
+          // 离屏纹理存的是线性值，RawShaderMaterial 不会替我们做 sRGB 编码，
+          // 所以这里必须自己转一道，否则整个画面会发暗发灰。
+          '  rgb = mix(pow(rgb, vec3(0.41666)) * 1.055 - vec3(0.055), rgb * 12.92, vec3(lessThanEqual(rgb, vec3(0.0031308))));',
+          '  gl_FragColor = vec4(rgb, outC.a);',
+          '}',
+        ].join('\n'),
+      });
+      this.postQuad = new THREE.Mesh(new THREE.PlaneGeometry(2, 2), this.postMat);
+      this.postQuad.frustumCulled = false;
+      this.postScene.add(this.postQuad);
+      this.postOn = true;
       this.dayPhase = 0.02; // 从清晨稍后一点开始
       this.dayLengthMs = 240000; // 一昼夜 4 分钟
       this.dayCycle = true;
@@ -664,7 +768,12 @@
       if (!(name in TIME_PRESETS)) name = 'dawn';
       this.timeOfDay = name;
       this.dayCycle = false;
-      this.applyLighting(resolvePhase(DAY_KEYS[TIME_PRESETS[name]].at));
+      // ⚠️ dayPhase 必须一起改，不然读它的代码会拿到过时的值：
+      // 颜色分级靠它算白天/夜晚（不更新的话白天和夜晚参数完全一样，实测过），
+      // 而且从"夜晚"切回 'dynamic' 时，循环会从旧相位开始，而不是从夜晚接着走。
+      const at = DAY_KEYS[TIME_PRESETS[name]].at;
+      this.dayPhase = at;
+      this.applyLighting(resolvePhase(at));
     }
     resize() {
       let w = Math.max(1, this.canvas.clientWidth),
@@ -675,14 +784,73 @@
       this.renderer.setSize(w, h, false);
       this.width = w;
       this.height = h;
+      // 离屏纹理跟着画布走，并且用**绘制缓冲的真实像素数**，不是 CSS 尺寸——
+      // setPixelRatio 改的是绘制分辨率，用 CSS 尺寸会差一截采样坐标，模糊会整体偏移。
+      if (this.rtScene) {
+        const pr = this.renderer.getPixelRatio();
+        const pw = Math.max(1, Math.round(w * pr)),
+          ph = Math.max(1, Math.round(h * pr));
+        this.rtScene.setSize(pw, ph);
+        this.postMat.uniforms.uTexel.value.set(1 / pw, 1 / ph);
+      }
       this.updateCamera(1);
     }
     setQuality(q) {
       this.quality = q;
       this.renderer.shadowMap.enabled = q !== 'low';
+      // 低画质不做后处理：移轴景深整个靠多 pass 采样撑着，
+      // 关掉它省下的是每帧十几次纹理采样，低端机上这是最划算的一刀。
+      this.postOn = q !== 'low';
       // 只有"清晰"档付得起更细的阴影图；换分辨率要连 bias 一起换到匹配痱子的档位
       if (q !== 'low') this.setShadowMapSize(q === 'high' ? 2048 : 1024);
       this.resize();
+    }
+    // 最后一步：把画面端出去。
+    // 不用后处理时直接照旧渲染到屏幕（少一次纹理拷贝）；
+    // 用的时候先渲进离屏纹理，再由全屏 shader 做移轴 + 调色。
+    present() {
+      const r = this.renderer;
+      if (!this.postOn || !this.rtScene) {
+        r.setRenderTarget(null);
+        r.render(this.scene, this.camera);
+        return;
+      }
+      r.setRenderTarget(this.rtScene);
+      r.render(this.scene, this.camera);
+      r.setRenderTarget(null);
+      this.updatePost();
+      r.render(this.postScene, this.postCam);
+    }
+    // 每帧刷一次后处理的 uniform。分三件事：虚多少、焦点在哪、颜色调成什么样。
+    updatePost() {
+      const u = this.postMat.uniforms;
+      // 缩放越近、景深越浅。全岛视角（zoom=1）一点不糊。
+      u.uStrength.value =
+        DOF_STRENGTH * smoothstep(DOF_ZOOM_AT_FULL, 0.18, this.zoom) * (this.quality === 'high' ? 1 : 0.75);
+      // 焦点在屏幕上的纵向位置。正交相机的 lookAt 目标本来就在正中，
+      // 但还是真算一遍投影——以后镜头偏心了就自动对得上，不用回来改这里。
+      const p = this.look.clone().project(this.camera);
+      u.uCenter.value = Math.max(0, Math.min(1, p.y * 0.5 + 0.5));
+      u.uRadius.value = DOF_RADIUS * Math.max(1, this.renderer.getPixelRatio());
+      this.applyGrade(u);
+    }
+    // 颜色分级：跟着昼夜走，白天稍提对比，夜里压暗压蓝、黄昏带一点暖。
+    // 刻意保持卡通味——只做对比 / 暗部抬升 / 色调三件事，不做真实曝光。
+    applyGrade(u) {
+      // phase 0=清晨 0.25=正午 0.5=黄昏 0.75=夜晚。
+      // 以正午(0.25)为圆心算环上的距离，这样跨过 0/1 分界时不会突然跳一下。
+      const ph = (((this.dayPhase || 0) % 1) + 1) % 1;
+      const d = Math.abs(((ph - 0.25 + 1.5) % 1) - 0.5); // 0=正午，最大 0.5=夜
+      const n = smoothstep(0.18, 0.46, d);
+      const dusk = Math.min(
+        1,
+        Math.max(0, 1 - Math.abs(ph - 0.5) / 0.14) * 0.7 + Math.max(0, 1 - Math.abs(ph - 0.0) / 0.12) * 0.4,
+      );
+      u.uContrast.value = 1.06 - n * 0.12 + dusk * 0.06;
+      u.uLift.value = n * 0.05;
+      // 夜里往蓝偏：红压、蓝抬。之前写成蓝往下压，结果是发黄，和"夜晚"正好相反。
+      // 黄昏则是反过来，暖一点。
+      u.uTint.value.set(1 - n * 0.06 + dusk * 0.05, 1 - n * 0.01, 1 + n * 0.08 + dusk * 0.02);
     }
     // 换阴影图分辨率：three.js 不会自己重建已经建好的阴影贴图，
     // 必须把旧的 dispose 掉、置空，下一帧才会按新尺寸重新渲染一张。
@@ -1631,7 +1799,7 @@
         this.cursor.scale.set(breathe, 1, breathe);
       }
       this.updateLabels();
-      this.renderer.render(this.scene, this.camera);
+      this.present();
     }
   }
   GardenView.BUDGET = BUDGET;
