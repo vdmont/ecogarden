@@ -163,6 +163,8 @@
     CONTACT_SPREAD = 1.5,
     CONTACT_SKEW = 0.22,
     CONTACT_DARK = 0.5;
+  // 被冲走时整只翻转的支点高度，现在在 animals.js 的 DRIFT_PIVOT（那里和刚体变换函数
+  // rigidRoll 放在一起，检查脚本要拿同一个值量），这里不再抄一份。
   // 昼夜四个关键帧（phase 0=清晨、0.25=正午、0.5=黄昏、0.75=夜晚）。
   // 动态模式会在它们之间平滑插值；也可以定格到某一档。
   const DAY_KEYS = [
@@ -1426,15 +1428,23 @@
               b(x + dx, hy + dy, z, 0.18, 0.18, 0.12, col);
           }
           const part = (dx, y, dz, w, h, d, col, tilt = 0, pitch = 0) => {
-            let xx = dx * Math.cos(yaw) + dz * Math.sin(yaw),
-              zz = -dx * Math.sin(yaw) + dz * Math.cos(yaw);
+            // 被冲走：整只当一个刚体翻转 —— 位置绕同一个支点转，盒子自己也转同样的角度。
+            //
+            // 以前是把翻转角当 tilt 分发给每个方块，而 put() 只转盒子不转位置，
+            // 于是鹿角、兔耳、狼耳各自原地打转而身子不动，看着就是散架。
+            // rigidRoll 把「位置绕支点转」和「盒子转同一个角」绑在一起给（见 animals.js），
+            // 少给一半就不刚体。转的是动物的自身坐标系（局部 z 轴 = 身躯方向），
+            // 所以不管它朝哪个方向，画面上都是左右打滚。
+            const r = GardenModels.rigidRoll(dx, y, dz, GardenModels.driftRoll());
+            let xx = r.x * Math.cos(yaw) + dz * Math.sin(yaw),
+              zz = -r.x * Math.sin(yaw) + dz * Math.cos(yaw);
             // 顺带记一下"贴着地的那一层"占了多大范围——这就是影子的尺寸。
             // 只有几个比较，不改模型文件，也不用在 scene.js 里给每个物种写一张体型表。
-            if (y < footY - 1e-6) {
-              footY = y;
+            if (r.y < footY - 1e-6) {
+              footY = r.y;
               fx0 = fx1 = xx;
               fz0 = fz1 = zz;
-            } else if (y <= footY + 0.16) {
+            } else if (r.y <= footY + 0.16) {
               if (xx < fx0) fx0 = xx;
               if (xx > fx1) fx1 = xx;
               if (zz < fz0) fz0 = zz;
@@ -1442,17 +1452,18 @@
             }
             b(
               x + xx,
-              y + bob,
+              r.y + bob,
               z + zz,
               w,
               h,
               d,
               shadeHex(
                 GardenPalette.animalColor(col, a.type, a.variant || 0),
-                0.8 + 0.2 * Math.min(1, Math.max(0, y / 0.55)),
+                0.8 + 0.2 * Math.min(1, Math.max(0, r.y / 0.55)),
               ),
               yaw,
-              tilt,
+              // tilt 是 rz（绕动物前后轴的左右歪），翻转角也是绕同一条轴 —— 两者相加。
+              tilt + r.rz,
               pitch,
             );
           };

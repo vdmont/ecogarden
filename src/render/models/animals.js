@@ -51,6 +51,36 @@ const NECK_MAX = (45 * Math.PI) / 180;
 // 不写回 a（写回 a 会被存进存档）。
 const neckSmooth = new WeakMap();
 
+// 「被冲走时整只翻转」的角度，在 pose() 里算一次、scene.js 画每个方块时都读同一个值。
+// 之所以绕这一圈而不是两边各算一次：drawAnimals 每帧对每只动物只调一次 pose()，
+// 而 part() 要被调几十次（每个方块一次）。两边各算就会因为逐帧顺序和浮点差一点点，
+// 翻转会看着抖。存一份在这里，读的人用 GardenModels.driftRoll() 取。
+let lastDriftRoll = 0;
+GardenModels.driftRoll = () => lastDriftRoll;
+
+// 被冲走时整只翻转的支点高度（局部坐标，0 是脚底）。
+// 取 0.3：多数动物的身子中心就在 0.3–0.45，腿短、脖子长的略高一点也还在附近。
+// 支点太高整只几乎不倾（只是原地转），太低则像被人从脚底掀翻。
+const DRIFT_PIVOT = 0.3;
+GardenModels.DRIFT_PIVOT = DRIFT_PIVOT;
+
+// 把一个部件的局部坐标按翻转角转一下 —— 位置绕支点转，盒子自己转同一个角。
+//
+// 以前是把翻转角当 tilt 分发给每个方块，而 put() 只转盒子不转位置，于是鹿角、兔耳、
+// 狼耳各自原地打转而身子不动，画面上就是散架（项目所有者原话：「那个静止不动的模型，
+// 绕着一个轴去转」）。要刚体，位置和角度就**必须由这一个函数一起给**，缺一半就不刚体。
+//
+// 放在这里而不是写在 scene.js 的 part() 里，是为了能被检查脚本直接调用：
+// check-sleep-drift.cjs 拿它把每个部件在翻转过程中的坐标算一遍，验证两件事 ——
+// 部件之间的距离一个数都不能变（刚体），而且真的挪动了（不是原地只转盒子）。
+const rigidRoll = (dx, y, dz, roll) => {
+  const cr = Math.cos(roll),
+    sr = Math.sin(roll),
+    ry = y - DRIFT_PIVOT;
+  return { x: dx * cr - ry * sr, y: DRIFT_PIVOT + dx * sr + ry * cr, rz: roll };
+};
+GardenModels.rigidRoll = rigidRoll;
+
 // 所有动物共用的姿态都在这里算，模型文件只管画自己的方块。
 // 放在一起是有意的：31 种动物要做同一件事时（比如"四条腿怎么交替"），
 // 抄 31 份一定会改一处忘一处，节奏也会走样。
@@ -99,7 +129,6 @@ GardenModels.pose = function (a, t) {
   // 除出来是 NaN，于是**待机时（默认状态就是 idle）整条腿的坐标全是 NaN**，
   // three.js 直接不画 —— 画面上就是动物没有腿、整只悬空。
   const REST = { fwd: 0, lift: 0 };
-  const driftU = (sec * 2.1) % 1;
 
   // 一条腿的摆动：fwd 是脚相对身体的前后偏移（格），lift 是抬离地面的高度系数。
   //
@@ -110,10 +139,11 @@ GardenModels.pose = function (a, t) {
   function legAt(i, legLen) {
     if (stride === null) stride = strideOf(legLen);
     const A = (DUTY * stride) / 2;
-    let u = null;
-    if (walk) u = (cycleU() + i * 0.5) % 1;
-    else if (drift) u = (driftU + i * 0.5) % 1;
-    if (u === null) return REST;
+    // 被冲走时**不摆腿**：保持 REST，整体交给 driftRoll 当刚体转。
+    // 以前这里也走一遍扑腾（u = driftU + i*0.5），腿相对身子在动 ——
+    // 那样就不是刚体了，翻转时看着像腿在甩、身子在转，两件事打架。
+    if (!walk) return REST;
+    const u = (cycleU() + i * 0.5) % 1;
     if (u < DUTY) return { fwd: A - (2 * A * u) / DUTY, lift: 0 }; // 踩地：匀速后退
     const f = (u - DUTY) / (1 - DUTY);
     return { fwd: -A + 2 * A * f, lift: Math.sin(Math.PI * f) }; // 摆动：抬起来往前送
@@ -164,6 +194,8 @@ GardenModels.pose = function (a, t) {
   const BODY_K = asleep ? 0.55 : 1,
     HEAD_K = asleep ? 0.62 : 1,
     LEG_K = asleep ? 0.22 : 1;
+  // 整只翻转的角度：存一份给 scene.js 的 part() 用（见上面 driftRoll 的说明）
+  lastDriftRoll = drift ? Math.sin(sec * TAU * 1.3) * 0.5 : 0;
   return {
     asleep,
     drunk,
@@ -220,15 +252,19 @@ GardenModels.pose = function (a, t) {
         : 0),
     // 醉：走路摇摇晃晃。频率故意不和脚步同频，同频的话看着像在打拍子而不是站不稳。
     sway: drunk ? Math.sin(sec * TAU * 0.9) : 0,
-    tilt: drift ? Math.sin(sec * TAU * 4.2) * 0.2 : drunk ? Math.sin(sec * TAU * 0.63) * 0.11 : 0,
-    flail: drift ? Math.sin(sec * TAU * 4.2) : 0,
+    tilt: drunk ? Math.sin(sec * TAU * 0.63) * 0.11 : 0,
+    // 被冲走：整只当一个刚体翻转。**不要把这个角度塞进 tilt** ——
+    // tilt 是「每个方块绕自己中心转」，而 put() 只转盒子不转位置，所以鹿角、
+    // 兔耳、狼耳会各自原地打转而身子不动，看着就是散架（项目所有者原话）。
+    // 正确的做法是位置和盒子一起转同一个角度、绕同一个支点，scene.js 的 part()
+    // 里做（那里才是所有部件的唯一出口）。
+    driftRoll: lastDriftRoll,
     // 飞起来的三样东西，6 种会飞的共用（鸟 / 蝴蝶 / 蜜蜂 / 红尾水鸲 / 长尾山雀 / 冬鹪鹩）
     fly: flying,
     flap,
     // 升空高度。站着时各模型自己的 lift 已经把身体托到该在的位置，
     // 飞起来再抬这么一截才像离开了地面。
     flyLift: flying ? 0.3 : 0,
-    lean: drift ? 0.22 : 0,
     // 对角的两条腿同步：前左+后右一组，前右+后左一组，走起来才不会四条腿一起动。
     // 模型不用自己算，只管说"这条腿在前还是在后、在左边还是右边"。
     // 注意必须返回数字：数组用布尔值当下标取到的是键 "true"/"false"，结果是 undefined。
