@@ -21,6 +21,8 @@ GardenModels.registry['deer'] = function ({ a, part, phase, t, i }) {
       H.pitch + pitch,
     );
   };
+  // 眼睛要和头一起歪：头那边拿的是 head()，里面带了 P.earTilt，
+  // 眼睛以前只拿 P.tilt，于是头歪眼不歪 —— 看着像歪脖子，很诡异。
   const eye = (dx, y, dz, w, h, d, col) => head(dx, y, dz, w, h * P.eyeH, d, col);
 
   body(0, 0.68, 0, 0.43, 0.37, 0.8, 0xad8057);

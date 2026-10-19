@@ -42,7 +42,7 @@ GardenModels.registry['frog'] = function ({ a, part, phase, t, i }) {
       h,
       d,
       col,
-      P.tilt,
+      P.earTilt + P.tilt,
       H.pitch,
     );
   };

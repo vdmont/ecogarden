@@ -43,7 +43,7 @@ GardenModels.registry['squirrel'] = function ({ a, part, phase, t, i }) {
       h * P.eyeH,
       d,
       col,
-      P.tilt,
+      P.earTilt + P.tilt,
       H.pitch,
     );
   };

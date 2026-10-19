@@ -104,7 +104,7 @@ GardenModels.registry['fox-wolf'] = function ({ a, part: drawPart, phase, t, i }
       h * P.eyeH,
       d,
       col,
-      P.tilt,
+      P.earTilt + P.tilt,
       H.pitch,
     );
   };

@@ -53,7 +53,7 @@ GardenModels.registry['rabbit'] = function ({ a, part, phase, t, i }) {
       h * P.eyeH * sc,
       d * sc,
       col,
-      P.tilt,
+      P.earTilt + P.tilt,
       H.pitch,
     );
   };
