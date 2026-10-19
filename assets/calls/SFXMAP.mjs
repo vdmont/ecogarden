@@ -676,11 +676,11 @@
                 "labels": [
                       "卡皮巴拉"
                 ],
-                "dur": 12,
-                "lufs": -14.08,
-                "truePeak": -1.76,
-                "noise": -42.13,
-                "snr": 29.86
+                "dur": 2.534,
+                "lufs": -14.39,
+                "truePeak": -2.34,
+                "noise": -44.72,
+                "snr": 32.29
           },
           "cat_063": {
                 "license": "CC0 1.0",
@@ -774,11 +774,11 @@
                 "labels": [
                       "猫"
                 ],
-                "dur": 1.54,
-                "lufs": -16.17,
-                "truePeak": -10.69,
-                "noise": -50.63,
-                "snr": 33.74
+                "dur": 1.593,
+                "lufs": -20.15,
+                "truePeak": -11.86,
+                "noise": -56.5,
+                "snr": 35.96
           },
           "cat_main": {
                 "license": "CC0 1.0",
@@ -796,11 +796,11 @@
                 "labels": [
                       "猫"
                 ],
-                "dur": 12,
-                "lufs": -19.14,
-                "truePeak": -6.02,
-                "noise": -240,
-                "snr": 160.18
+                "dur": 0.731,
+                "lufs": -19.01,
+                "truePeak": -10.6,
+                "noise": -51.69,
+                "snr": 32.53
           },
           "chicken_001": {
                 "license": "CC0 1.0",
@@ -1024,11 +1024,11 @@
                 "labels": [
                       "狗"
                 ],
-                "dur": 4.03,
-                "lufs": -14,
-                "truePeak": -5.77,
-                "noise": -54.45,
-                "snr": 42.63
+                "dur": 4.075,
+                "lufs": -17.96,
+                "truePeak": -7.44,
+                "noise": -56.38,
+                "snr": 40.12
           },
           "dragon_126": {
                 "license": "CC0 1.0",
@@ -1161,11 +1161,11 @@
                 "labels": [
                       "火烈鸟"
                 ],
-                "dur": 12,
-                "lufs": -17.11,
-                "truePeak": -1.78,
-                "noise": -25.71,
-                "snr": 8.37
+                "dur": 1.175,
+                "lufs": -18.37,
+                "truePeak": -7.71,
+                "noise": -29.62,
+                "snr": 10.34
           },
           "flamingo_main": {
                 "license": "CC0 1.0",
@@ -1180,11 +1180,11 @@
                 "labels": [
                       "火烈鸟"
                 ],
-                "dur": 12,
-                "lufs": -16.61,
-                "truePeak": -1.65,
-                "noise": -37.07,
-                "snr": 21.88
+                "dur": 0.627,
+                "lufs": -20.85,
+                "truePeak": -11.9,
+                "noise": -45.15,
+                "snr": 25.33
           },
           "fox_033": {
                 "license": "CC BY 4.0",
@@ -1370,11 +1370,11 @@
                 "labels": [
                       "青蛙"
                 ],
-                "dur": 12,
-                "lufs": -14.17,
-                "truePeak": -1.76,
-                "noise": -30.67,
-                "snr": 17.39
+                "dur": 2.011,
+                "lufs": -14.56,
+                "truePeak": -2.91,
+                "noise": -25.33,
+                "snr": 10.38
           },
           "frog_main": {
                 "license": "CC0 1.0",
@@ -1465,11 +1465,11 @@
                 "labels": [
                       "北长尾山雀"
                 ],
-                "dur": 12,
-                "lufs": -18.87,
-                "truePeak": -4,
-                "noise": -48.97,
-                "snr": 30.08
+                "dur": 2.247,
+                "lufs": -21.93,
+                "truePeak": -11.59,
+                "noise": -48.69,
+                "snr": 25.1
           },
           "long_tailed_tit_main": {
                 "license": "CC0 1.0",
@@ -1484,11 +1484,11 @@
                 "labels": [
                       "北长尾山雀"
                 ],
-                "dur": 12,
-                "lufs": -17.46,
-                "truePeak": -1.02,
-                "noise": -28.5,
-                "snr": 12.34
+                "dur": 1.541,
+                "lufs": -20.97,
+                "truePeak": -8.85,
+                "noise": -26.28,
+                "snr": 3.67
           },
           "longtail_109": {
                 "license": "CC BY 4.0",
@@ -1845,11 +1845,11 @@
                 "labels": [
                       "松鼠"
                 ],
-                "dur": 12,
-                "lufs": -18.85,
-                "truePeak": -2.81,
-                "noise": -48.42,
-                "snr": 28.54
+                "dur": 0.731,
+                "lufs": -20.82,
+                "truePeak": -10.51,
+                "noise": -55.09,
+                "snr": 34.05
           },
           "squirrel_alt_squeal": {
                 "license": "CC0 1.0",
@@ -1864,11 +1864,11 @@
                 "labels": [
                       "松鼠"
                 ],
-                "dur": 12,
-                "lufs": -18.16,
-                "truePeak": -4.23,
-                "noise": -74.29,
-                "snr": 54.31
+                "dur": 2.038,
+                "lufs": -19.07,
+                "truePeak": -9.22,
+                "noise": -78.8,
+                "snr": 58.76
           },
           "squirrel_main": {
                 "license": "CC0 1.0",
@@ -1883,11 +1883,11 @@
                 "labels": [
                       "松鼠"
                 ],
-                "dur": 12,
-                "lufs": -18.83,
-                "truePeak": -1.37,
-                "noise": -30.05,
-                "snr": 11.08
+                "dur": 2.351,
+                "lufs": -20.45,
+                "truePeak": -2.91,
+                "noise": -38.87,
+                "snr": 19.62
           },
           "wolf_040": {
                 "license": "CC BY 4.0",
