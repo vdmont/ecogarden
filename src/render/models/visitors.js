@@ -170,7 +170,9 @@ for (const [type, [name, kind, color]] of Object.entries(EcoData.VISITORS))
       capy ? 0.26 : cat ? 0.055 : 0.16,
       capy ? color : cat ? 0xe8dcc5 : 0xf2eee6,
     );
-    eye(hy + 0.03, hz + 0.18);
+    // 卡皮巴拉的头更深（d=0.44，前面在 z=0.56），眼睛原来的 z=0.52 整个埋在头里面 ——
+    // 看上去就是「卡皮巴拉没有眼睛」。所以它的眼睛要单独往前挪到头面外面。
+    eye(hy + 0.03, hz + (capy ? 0.24 : 0.18));
     hd(0, hy - 0.04, hz + (capy ? 0.36 : cat ? 0.205 : 0.31), 0.07, 0.05, 0.035, 0x41433b);
     for (const side of [-1, 1]) {
       if (cat) {
