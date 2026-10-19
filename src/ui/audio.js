@@ -1862,6 +1862,38 @@ const CALLS_TRIM = dbToGain(TUNE.callsDb, 'callsDb');
     return active && settings.music !== false && !document.hidden;
   }
 
+  // 起播**一首新的**曲子（换曲时才用）。会重设 bgm.src，所以会从头开始放。
+  function startTrack() {
+    if (!musicWanted() || bgmMisses >= MUSIC_TRACKS.length) return;
+    // 换曲会让上一首的回调作废：用代号区分「这条回调属于哪一次起播」，
+    // 否则一次 src 变更触发的 error 会把还没试过的曲子误判成取不到。
+    const gen = ++bgmGen;
+    bgm.onended = () => {
+      if (gen === bgmGen) startTrack(); // 这首放完了，换下一首
+    };
+    bgm.onerror = () => {
+      if (gen !== bgmGen) return;
+      bgmMisses++;
+      startTrack(); // 这首取不到就换下一首；全都不行就靠 bgmMisses 收手
+    };
+
+    let i = Math.floor(Math.random() * MUSIC_TRACKS.length);
+    if (MUSIC_TRACKS.length > 1)
+      while (i === bgmLast) i = Math.floor(Math.random() * MUSIC_TRACKS.length);
+    bgmLast = i;
+    bgm.src = MUSIC_TRACKS[i];
+    const p = bgm.play();
+    // 浏览器的自动播放策略：没有用户手势时这里会 reject，静默即可，
+    // 下一次 unlock（用户又点了一下界面）会重新尝试。
+    if (p && p.catch) p.catch(() => {});
+  }
+
+  // 确保音乐在放。**已经在放就什么都不做**——
+  //
+  // ⚠ 这里以前是「直接重设 bgm.src」，于是每改一次设置（拖一下音量滑杆就是
+  // 一次 configure）就把曲子从头重播一次、还换成随机另一首。
+  // 项目所有者听到的就是「BGM 放个两三秒就自己切歌」——其实是他拖滑杆拖的。
+  // 现在：正在放 → 绝不动它；暂停着 → 从头放一首。
   function playMusic() {
     if (!musicWanted() || bgmMisses >= MUSIC_TRACKS.length) return;
     if (!bgm) {
@@ -1885,33 +1917,25 @@ const CALLS_TRIM = dbToGain(TUNE.callsDb, 'callsDb');
         bgmAnalyser = null;
       }
     }
-    // 换曲会让上一首的回调作废：用代号区分「这条回调属于哪一次起播」，
-    // 否则一次 src 变更触发的 error 会把还没试过的曲子误判成取不到。
-    const gen = ++bgmGen;
-    bgm.onended = () => {
-      if (gen === bgmGen) playMusic();
-    };
-    bgm.onerror = () => {
-      if (gen !== bgmGen) return;
-      bgmMisses++;
-      playMusic(); // 这首取不到就换下一首；全都不行就靠 bgmMisses 收手
-    };
-
-    let i = Math.floor(Math.random() * MUSIC_TRACKS.length);
-    if (MUSIC_TRACKS.length > 1)
-      while (i === bgmLast) i = Math.floor(Math.random() * MUSIC_TRACKS.length);
-    bgmLast = i;
-    bgm.src = MUSIC_TRACKS[i];
-    const p = bgm.play();
-    // 浏览器的自动播放策略：没有用户手势时这里会 reject，静默即可，
-    // 下一次 unlock（用户又点了一下界面）会重新尝试。
-    if (p && p.catch) p.catch(() => {});
+    // 已经在放而且没放完 → 不动它。
+    if (!bgm.paused && !bgm.ended) return;
+    // 暂停着的 → **接着放这一首**，不要换曲（换曲会从头开始，听着像突然重来）。
+    if (bgm.src && !bgm.ended) {
+      const p = bgm.play();
+      if (p && p.catch) p.catch(() => {});
+      return;
+    }
+    // 一首都没放过，或者上一首已经放完 → 换一首新的
+    startTrack();
   }
 
+  // 设置变了之后对一下音乐的状态。
+  // 只在「该放却没放」或「不该放却在放」时才动，绝不重起正在放的曲子。
   function syncMusic() {
     if (!bgm) return;
-    if (musicWanted()) playMusic();
-    else bgm.pause();
+    if (musicWanted()) {
+      if (bgm.paused) playMusic();
+    } else bgm.pause();
   }
 
   function unlock(s) {
@@ -2278,6 +2302,11 @@ const CALLS_TRIM = dbToGain(TUNE.callsDb, 'callsDb');
     }),
     // BGM 那一层的总音量（音乐滑杆 × 让位系数）。
     _bgmGain: () => (bgmGain ? bgmGain.gain : null),
+    // BGM 那一层的分析节点（在增益之后、主输出之前）。量电平用。
+    _bgmAnalyser: () => bgmAnalyser,
+    // 那个 <audio> 元素本身。看它当前放的是哪一首、放到第几秒了。
+    // 诊断「BGM 是不是被重起播」用：曲子没放完 currentTime 就归零，就是被重设了 src。
+    _bgm: () => bgm,
     // 空间模型算出来的权重（离视口中心越近越大）。验收"越近越大"看这个。
     _weights: () => ({ ...spatialWeights() }),
     // 归一化之后的能量报告：每条片段的平均能量有没有落在 0.2–0.4。

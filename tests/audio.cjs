@@ -129,6 +129,8 @@ class FakeAudio {
     this.volume = 1;
     this.src = '';
     this.preload = '';
+    this.ended = false;
+    this.currentTime = 0;
     players.push(this);
   }
   play() {
@@ -180,6 +182,21 @@ GardenAudio.configure({ music: false, sound: true });
 assert.equal(bg.paused, true, '关掉音乐后仍在播放');
 GardenAudio.configure({ music: true, sound: true });
 assert.equal(bg.paused, false, '重新打开音乐后没有恢复播放');
+
+// —— 改设置**不能**把正在放的曲子从头重播 ——
+//
+// 这一条是项目所有者报的现象：「BGM 放个两三秒就自己切歌了」。
+// 根因：syncMusic() 以前无条件重设 bgm.src，于是拖一下音量滑杆
+// （拖一下 = 调一次 configure）就把曲子重播，还换成随机另一首。
+// 随机播放的是**动物叫声**，不是背景音乐。
+{
+  const srcBefore = bg.src;
+  const playsBefore = bg.plays;
+  for (let i = 0; i < 5; i++)
+    GardenAudio.configure({ music: true, sound: true, musicVolume: 0.3 + i * 0.05, callVolume: 0.5 });
+  assert.equal(bg.src, srcBefore, '改设置把正在放的曲子换成了另一首：' + srcBefore + ' → ' + bg.src);
+  assert.equal(bg.plays, playsBefore, '改设置把正在放的曲子从头重播了');
+}
 
 // —— 一首放完要随机换一首，且不能连着放同一首 ——
 const seq = [bg.src];
