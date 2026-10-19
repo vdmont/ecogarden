@@ -129,7 +129,6 @@
                 "files": [
                       "assets/calls/capybara_075.mp3",
                       "assets/calls/capybara_079.mp3",
-                      "assets/calls/capybara_cc0.mp3",
                       "assets/calls/capybara_substitute_guineapig.mp3"
                 ],
                 "rate": 1,
@@ -144,7 +143,6 @@
                       "assets/calls/frog_082.mp3",
                       "assets/calls/frog_083.mp3",
                       "assets/calls/frog_085.mp3",
-                      "assets/calls/frog_main.mp3",
                       "assets/calls/frog_alt.mp3"
                 ],
                 "rate": 1,
@@ -179,7 +177,6 @@
           "nightHeron": {
                 "files": [
                       "assets/calls/nightHeron_103.mp3",
-                      "assets/calls/night_heron_main.mp3",
                       "assets/calls/night_heron_alt.mp3"
                 ],
                 "rate": 1,
@@ -643,25 +640,6 @@
                 "truePeak": -3.77,
                 "noise": -51.55,
                 "snr": 32.72
-          },
-          "capybara_cc0": {
-                "license": "CC0 1.0",
-                "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
-                "author": "Капыбара_12345",
-                "title": "capybara（家养水豚现场声）",
-                "source": "Freesound",
-                "sourceUrl": "https://freesound.org/people/%D0%9A%D0%B0%D0%BF%D1%8B%D0%B1%D0%B0%D1%80%D0%B0_12345/sounds/849980/",
-                "usedBy": [
-                      "capybara"
-                ],
-                "labels": [
-                      "卡皮巴拉"
-                ],
-                "dur": 5.5,
-                "lufs": -16.8,
-                "truePeak": -3.03,
-                "noise": -99.11,
-                "snr": 75.39
           },
           "capybara_substitute_guineapig": {
                 "license": "CC0 1.0",
@@ -1376,25 +1354,6 @@
                 "noise": -25.33,
                 "snr": 10.38
           },
-          "frog_main": {
-                "license": "CC0 1.0",
-                "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
-                "author": "SpliceSound",
-                "title": "Green frog, croaking.wav",
-                "source": "Freesound",
-                "sourceUrl": "https://freesound.org/people/SpliceSound/sounds/188195/",
-                "usedBy": [
-                      "frog"
-                ],
-                "labels": [
-                      "青蛙"
-                ],
-                "dur": 12,
-                "lufs": -16.5,
-                "truePeak": -1.73,
-                "noise": -60.1,
-                "snr": 45.04
-          },
           "hedgehog_056": {
                 "license": "CC BY 4.0",
                 "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
@@ -1565,25 +1524,6 @@
                 "truePeak": -2.62,
                 "noise": -21.87,
                 "snr": 7.91
-          },
-          "night_heron_main": {
-                "license": "CC BY 4.0",
-                "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
-                "author": "Matthias Keller",
-                "title": "Black-crowned Night Heron — nocturnal flight call",
-                "source": "xeno-canto",
-                "sourceUrl": "https://xeno-canto.org/1160373",
-                "usedBy": [
-                      "nightHeron"
-                ],
-                "labels": [
-                      "夜鹭"
-                ],
-                "dur": 9.29,
-                "lufs": -17.74,
-                "truePeak": -1.76,
-                "noise": -27.31,
-                "snr": 10.14
           },
           "rabbit_021": {
                 "license": "CC0 1.0",

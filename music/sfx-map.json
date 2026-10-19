@@ -132,7 +132,6 @@
    "files": [
     "capybara_075",
     "capybara_079",
-    "capybara_cc0",
     "capybara_substitute_guineapig"
    ],
    "rate": 1.0,
@@ -147,7 +146,6 @@
     "frog_082",
     "frog_083",
     "frog_085",
-    "frog_main",
     "frog_alt"
    ],
    "rate": 1.0,
@@ -182,7 +180,6 @@
   "nightHeron": {
    "files": [
     "nightHeron_103",
-    "night_heron_main",
     "night_heron_alt"
    ],
    "rate": 1.0,

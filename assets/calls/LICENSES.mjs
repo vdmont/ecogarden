@@ -12,7 +12,7 @@
 //   modified     素材包对它做了什么（裁切、降噪、限幅……改了就是演绎）
 //   sha1         我们这份 mp3 的哈希，任何人拿它都能复核"台账里这条就是这条"
 //
-// 本批 86 条的许可分布：{"CC0 1.0":48,"CC BY 4.0":36,"CC BY-SA 4.0":2}
+// 本批 83 条的许可分布：{"CC0 1.0":46,"CC BY 4.0":35,"CC BY-SA 4.0":2}
 
 const ASSET_LICENSES = [
   {
@@ -314,26 +314,6 @@ const ASSET_LICENSES = [
     "noiseFloorDb": -51.55,
     "snrDb": 32.72,
     "sha1": "e6492ed16ee80bd588a6561f157c2ba21beeced2"
-  },
-  {
-    "file": "calls/capybara_cc0.mp3",
-    "usedBy": [
-      "capybara"
-    ],
-    "label": "卡皮巴拉",
-    "title": "capybara（家养水豚现场声）",
-    "license": "CC0 1.0",
-    "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
-    "author": "Капыбара_12345",
-    "source": "Freesound",
-    "sourceUrl": "https://freesound.org/people/%D0%9A%D0%B0%D0%BF%D1%8B%D0%B1%D0%B0%D1%80%D0%B0_12345/sounds/849980/",
-    "modified": "44.1kHz/192kbps mp3（animal_sounds 素材包已做过能量选窗裁剪、−16 LUFS 响度归一、真峰值 ≤ −1.5 dBTP、首尾 0.15–0.25s 淡化）；本次接入时未再改动波形。台账里的 lufs/true_peak/peak/noise/snr 由 .dsh-reports/measure-clips.mjs 实测（BS.1770-4 K 计权 + 门限，真峰值为 4 倍过采样），与素材包原有 69 条的算法不完全一致，仅供核对参考",
-    "durSec": 5.5,
-    "lufs": -16.8,
-    "truePeakDb": -3.03,
-    "noiseFloorDb": -99.11,
-    "snrDb": 75.39,
-    "sha1": "28a473ff3d40d1295cf405181b2b919347dbd686"
   },
   {
     "file": "calls/capybara_substitute_guineapig.mp3",
@@ -1086,26 +1066,6 @@ const ASSET_LICENSES = [
     "sha1": "27465d721bb79b4119f78e2fc74dc6fab3cc4525"
   },
   {
-    "file": "calls/frog_main.mp3",
-    "usedBy": [
-      "frog"
-    ],
-    "label": "青蛙",
-    "title": "Green frog, croaking.wav",
-    "license": "CC0 1.0",
-    "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
-    "author": "SpliceSound",
-    "source": "Freesound",
-    "sourceUrl": "https://freesound.org/people/SpliceSound/sounds/188195/",
-    "modified": "44.1kHz/192kbps mp3（animal_sounds 素材包已做过能量选窗裁剪、−16 LUFS 响度归一、真峰值 ≤ −1.5 dBTP、首尾 0.15–0.25s 淡化）；本次接入时未再改动波形。台账里的 lufs/true_peak/peak/noise/snr 由 .dsh-reports/measure-clips.mjs 实测（BS.1770-4 K 计权 + 门限，真峰值为 4 倍过采样），与素材包原有 69 条的算法不完全一致，仅供核对参考",
-    "durSec": 12,
-    "lufs": -16.5,
-    "truePeakDb": -1.73,
-    "noiseFloorDb": -60.1,
-    "snrDb": 45.04,
-    "sha1": "7136c205575462a5f4cdfa0b9bb2281e3f7a35ac"
-  },
-  {
     "file": "calls/hedgehog_056.mp3",
     "usedBy": [
       "hedgehog"
@@ -1284,26 +1244,6 @@ const ASSET_LICENSES = [
     "noiseFloorDb": -21.87,
     "snrDb": 7.91,
     "sha1": "c83b07455e277b78b595d8eefb6e43e9c377185d"
-  },
-  {
-    "file": "calls/night_heron_main.mp3",
-    "usedBy": [
-      "nightHeron"
-    ],
-    "label": "夜鹭",
-    "title": "Black-crowned Night Heron — nocturnal flight call",
-    "license": "CC BY 4.0",
-    "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
-    "author": "Matthias Keller",
-    "source": "xeno-canto",
-    "sourceUrl": "https://xeno-canto.org/1160373",
-    "modified": "44.1kHz/192kbps mp3（animal_sounds 素材包已做过能量选窗裁剪、−16 LUFS 响度归一、真峰值 ≤ −1.5 dBTP、首尾 0.15–0.25s 淡化）；本次接入时未再改动波形。台账里的 lufs/true_peak/peak/noise/snr 由 .dsh-reports/measure-clips.mjs 实测（BS.1770-4 K 计权 + 门限，真峰值为 4 倍过采样），与素材包原有 69 条的算法不完全一致，仅供核对参考",
-    "durSec": 9.29,
-    "lufs": -17.74,
-    "truePeakDb": -1.76,
-    "noiseFloorDb": -27.31,
-    "snrDb": 10.14,
-    "sha1": "99cfdb8b3b4d79b832972721bb0322380cc0436d"
   },
   {
     "file": "calls/rabbit_021.mp3",
@@ -1749,4 +1689,4 @@ const ASSET_LICENSES = [
 
 // 一眼能查的两件事：哪条是 NC（将来要删）、哪条要署名。
 const NON_COMMERCIAL = [];
-const ATTRIBUTION_REQUIRED = ["calls/bee_089.mp3","calls/bird_006.mp3","calls/bird_007.mp3","calls/boar_050.mp3","calls/boar_051.mp3","calls/boar_052.mp3","calls/butterfly_095.mp3","calls/capybara_075.mp3","calls/capybara_079.mp3","calls/cat_066.mp3","calls/chicken_003.mp3","calls/dog_070.mp3","calls/dog_072.mp3","calls/flamingo_121.mp3","calls/flamingo_122.mp3","calls/flamingo_123.mp3","calls/flamingo_alt.mp3","calls/fox_033.mp3","calls/fox_037.mp3","calls/frog_082.mp3","calls/frog_083.mp3","calls/hedgehog_056.mp3","calls/hedgehog_057.mp3","calls/long_tailed_tit_alt.mp3","calls/longtail_109.mp3","calls/longtail_110.mp3","calls/nightHeron_103.mp3","calls/night_heron_main.mp3","calls/rabbit_024.mp3","calls/redstart_104.mp3","calls/redstart_107.mp3","calls/sheep_013.mp3","calls/sheep_014.mp3","calls/squirrel_046.mp3","calls/wolf_040.mp3","calls/wren_115.mp3","calls/wren_116.mp3","calls/wren_118.mp3"];
+const ATTRIBUTION_REQUIRED = ["calls/bee_089.mp3","calls/bird_006.mp3","calls/bird_007.mp3","calls/boar_050.mp3","calls/boar_051.mp3","calls/boar_052.mp3","calls/butterfly_095.mp3","calls/capybara_075.mp3","calls/capybara_079.mp3","calls/cat_066.mp3","calls/chicken_003.mp3","calls/dog_070.mp3","calls/dog_072.mp3","calls/flamingo_121.mp3","calls/flamingo_122.mp3","calls/flamingo_123.mp3","calls/flamingo_alt.mp3","calls/fox_033.mp3","calls/fox_037.mp3","calls/frog_082.mp3","calls/frog_083.mp3","calls/hedgehog_056.mp3","calls/hedgehog_057.mp3","calls/long_tailed_tit_alt.mp3","calls/longtail_109.mp3","calls/longtail_110.mp3","calls/nightHeron_103.mp3","calls/rabbit_024.mp3","calls/redstart_104.mp3","calls/redstart_107.mp3","calls/sheep_013.mp3","calls/sheep_014.mp3","calls/squirrel_046.mp3","calls/wolf_040.mp3","calls/wren_115.mp3","calls/wren_116.mp3","calls/wren_118.mp3"];
