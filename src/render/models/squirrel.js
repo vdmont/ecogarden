@@ -19,34 +19,9 @@ GardenModels.registry['squirrel'] = function ({ a, part, phase, t, i }) {
   // 头/耳朵/吻：睡着时低下来；吃的时候绕脖子转（绕 X 轴，矢状面）
   const NECK_Y = 0.5,
     NECK_Z = 0.12;
-  const hd = (dx, y, dz, w, h, d, col, tilt = 0, pitch = 0) => {
-    const H = P.neckAt(y, dz, NECK_Y, NECK_Z);
-    part(
-      dx + sway,
-      H.y * P.headY - P.headDrop + P.lift,
-      H.z,
-      w,
-      h,
-      d,
-      col,
-      tilt + P.earTilt + P.tilt,
-      H.pitch + pitch,
-    );
-  };
-  const eye = (dx, y, dz, w, h, d, col) => {
-    const H = P.neckAt(y, dz, NECK_Y, NECK_Z);
-    part(
-      dx + sway,
-      H.y * P.headY - P.headDrop + P.lift,
-      H.z,
-      w,
-      h * P.eyeH,
-      d,
-      col,
-      P.earTilt + P.tilt,
-      H.pitch,
-    );
-  };
+  const HEAD = P.headFrame(drawPart, NECK_Y, NECK_Z, { sway: P.sway * 0.05 });
+  const hd = (...a) => HEAD.draw(...a);
+  const eye = (dx, y, dz, w, h, d, col) => HEAD.drawEye(dx, y, dz, w, h, d, col);
 
   // 两条后腿撑地：腿立着而不是横在身下，这是"站着"和"四足爬"的区别
   for (let side of [-1, 1]) {

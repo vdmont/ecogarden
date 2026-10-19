@@ -7,34 +7,9 @@ GardenModels.registry['boar'] = function ({ a, part, phase, t, i }) {
   // 脖子接在躯干上的那个点，吃的时候头绕它转（绕 X 轴，矢状面）
   const NECK_Y = 0.6,
     NECK_Z = 0.28;
-  const hd = (dx, y, dz, w, h, d, col, tilt = 0, pitch = 0) => {
-    const H = P.neckAt(y, dz, NECK_Y, NECK_Z);
-    part(
-      dx + sway,
-      H.y * P.headY - P.headDrop + P.lift,
-      H.z,
-      w,
-      h,
-      d,
-      col,
-      tilt + P.earTilt + P.tilt,
-      H.pitch + pitch,
-    );
-  };
-  const eye = (dx, y, dz, w, h, d, col) => {
-    const H = P.neckAt(y, dz, NECK_Y, NECK_Z);
-    part(
-      dx + sway,
-      H.y * P.headY - P.headDrop + P.lift,
-      H.z,
-      w,
-      h * P.eyeH,
-      d,
-      col,
-      P.earTilt + P.tilt,
-      H.pitch,
-    );
-  };
+  const HEAD = P.headFrame(drawPart, NECK_Y, NECK_Z, { sway: P.sway * 0.04 });
+  const hd = (...a) => HEAD.draw(...a);
+  const eye = (dx, y, dz, w, h, d, col) => HEAD.drawEye(dx, y, dz, w, h, d, col);
 
   p(0, 0.44, -0.04, 0.62, 0.46, 0.79, 0x8e7661);
   hd(0, 0.5, 0.43, 0.49, 0.37, 0.4, 0xa58a6e);

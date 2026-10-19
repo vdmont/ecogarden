@@ -33,36 +33,12 @@ GardenModels.registry['sheep-alpaca'] = function ({ a, part, phase, t, i }) {
   // 羊驼脖子长、接得低，羊脖子短、接得高 —— 性质和腿的胯高一样，逐个物种给。
   const NECK_Y = alp ? 0.62 : 0.7,
     NECK_Z = alp ? 0.3 : 0.26;
-  // 头/脖子：睡着时低下来枕在地上；吃的时候绕脖子转
-  const hd = (dx, y, dz, w, h, d, col, tilt = 0, pitch = 0) => {
-    const H = P.neckAt(y, dz, NECK_Y, NECK_Z);
-    part(
-      (dx + sway) * sc,
-      (H.y * P.headY - P.headDrop) * sc + P.lift * sc,
-      H.z * sc,
-      w * sc,
-      h * sc,
-      d * sc,
-      col,
-      tilt + P.earTilt + P.tilt,
-      H.pitch + pitch,
-    );
-  };
-  // 眼睛：睡着时眯成一条
-  const eye = (dx, y, dz, w, h, d, col) => {
-    const H = P.neckAt(y, dz, NECK_Y, NECK_Z);
-    part(
-      (dx + sway) * sc,
-      (H.y * P.headY - P.headDrop) * sc + P.lift * sc,
-      H.z * sc,
-      w * sc,
-      h * P.eyeH * sc,
-      d * sc,
-      col,
-      P.earTilt + P.tilt,
-      H.pitch,
-    );
-  };
+  // 头 = 一个刚体。头、鼻子、眼睛、耳朵全部走它，模型不再自己算位置和转角。
+  // 睡觉歪头、吃的时候低头、睡着压低、醉的时候晃，都在 animals.js 里算一次。
+  const HEAD = P.headFrame(drawPart, NECK_Y, NECK_Z, { sway: P.sway * 0.05 });
+  // 眼睛：睡觉时闭眼（压扁），位置照样黏在脸上
+  const eye = (dx, y, dz, w, h, d, col) => HEAD.drawEye(dx, y, dz, w, h, d, col);
+  const hd = (...a) => HEAD.draw(...a);
   const wool = alp ? 0xf1eadb : 0xf1e8d0,
     shade = alp ? 0xdfd5c2 : 0xded5bd;
   p(0, 0.55, 0, 0.67, 0.46, 0.86, wool);

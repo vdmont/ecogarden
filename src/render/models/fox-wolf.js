@@ -80,34 +80,9 @@ GardenModels.registry['fox-wolf'] = function ({ a, part: drawPart, phase, t, i }
   const lg = (dx, y, dz, w, h, d, col, pitch = 0) =>
     part(dx + sway, y, dz, w, h, d, col, P.tilt, pitch);
   // 脖子接在躯干上的那个点，吃的时候头绕它转（绕 X 轴，矢状面）
-  const hd = (dx, y, dz, w, h, d, col, tilt = 0, pitch = 0) => {
-    const H = P.neckAt(y, dz, S.neck.y, S.neck.z);
-    part(
-      dx + sway,
-      H.y * P.headY - P.headDrop + P.lift,
-      H.z,
-      w,
-      h,
-      d,
-      col,
-      tilt + P.earTilt + P.tilt,
-      H.pitch + pitch,
-    );
-  };
-  const eye = (dx, y, dz, w, h, d, col) => {
-    const H = P.neckAt(y, dz, S.neck.y, S.neck.z);
-    part(
-      dx + sway,
-      H.y * P.headY - P.headDrop + P.lift,
-      H.z,
-      w,
-      h * P.eyeH,
-      d,
-      col,
-      P.earTilt + P.tilt,
-      H.pitch,
-    );
-  };
+  const HEAD = P.headFrame(part, S.neck.y, S.neck.z, { sway: P.sway * 0.05 });
+  const hd = (...a) => HEAD.draw(...a);
+  const eye = (dx, y, dz, w, h, d, col) => HEAD.drawEye(dx, y, dz, w, h, d, col);
 
   p(0, S.body.y, 0, S.body.w, S.body.h, S.body.d, 0xc47c40);
   hd(0, S.head.y, S.head.z, S.head.w, S.head.h, S.head.d, 0xda9552);

@@ -29,34 +29,11 @@ GardenModels.registry['rabbit'] = function ({ a, part, phase, t, i }) {
   // 脖子接在躯干上的那个点。吃的时候头绕它转（绕 X 轴，矢状面），不是整块上下挪。
   const NECK_Y = 0.5,
     NECK_Z = 0.16;
-  const hd = (dx, y, dz, w, h, d, col, tilt = 0, pitch = 0) => {
-    const H = P.neckAt(y, dz, NECK_Y, NECK_Z);
-    part(
-      (dx + sway) * sc,
-      (H.y * P.headY - P.headDrop) * sc + P.lift * sc,
-      H.z * sc,
-      w * sc,
-      h * sc,
-      d * sc,
-      col,
-      tilt + P.earTilt + P.tilt,
-      H.pitch + pitch,
-    );
-  };
-  const eye = (dx, y, dz, w, h, d, col) => {
-    const H = P.neckAt(y, dz, NECK_Y, NECK_Z);
-    part(
-      (dx + sway) * sc,
-      (H.y * P.headY - P.headDrop) * sc + P.lift * sc,
-      H.z * sc,
-      w * sc,
-      h * P.eyeH * sc,
-      d * sc,
-      col,
-      P.earTilt + P.tilt,
-      H.pitch,
-    );
-  };
+  // 头 = 一个刚体：头、两只耳朵、两只眼睛、鼻子全部走它。
+  // 睡觉歪头、吃的时候低头、睡着压低都在 animals.js 里算一次，模型不再自己算。
+  const HEAD = P.headFrame(drawPart, NECK_Y, NECK_Z, { sway: P.sway * 0.05 });
+  const hd = (...a) => HEAD.draw(...a);
+  const eye = (dx, y, dz, w, h, d, col) => HEAD.drawEye(dx, y, dz, w, h, d, col);
   p(0, 0.31, -0.04, 0.43, 0.36, 0.5, 0xd8c4aa);
   // 头原本画在 p()（身子部件）里，头一低它就不动 —— 挪到 hd()，跟着脖子转
   hd(0, 0.49, 0.25, 0.36, 0.32, 0.32, 0xe5d2bb);

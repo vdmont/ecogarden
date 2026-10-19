@@ -7,34 +7,9 @@ GardenModels.registry['hedgehog'] = function ({ a, part, phase, t, i }) {
   // 脖子接在躯干上的那个点，吃的时候脸绕它转（绕 X 轴，矢状面）
   const NECK_Y = 0.4,
     NECK_Z = 0.16;
-  const face = (dx, y, dz, w, h, d, col, tilt = 0, pitch = 0) => {
-    const H = P.neckAt(y, dz, NECK_Y, NECK_Z);
-    part(
-      dx + sway,
-      H.y * P.headY - P.headDrop + P.lift,
-      H.z,
-      w,
-      h,
-      d,
-      col,
-      tilt + P.earTilt + P.tilt,
-      H.pitch + pitch,
-    );
-  };
-  const eye = (dx, y, dz, w, h, d, col) => {
-    const H = P.neckAt(y, dz, NECK_Y, NECK_Z);
-    part(
-      dx + sway,
-      H.y * P.headY - P.headDrop + P.lift,
-      H.z,
-      w,
-      h * P.eyeH,
-      d,
-      col,
-      P.earTilt + P.tilt,
-      H.pitch,
-    );
-  };
+  const HEAD = P.headFrame(drawPart, NECK_Y, NECK_Z, { sway: P.sway * 0.04 });
+  const face = (...a) => HEAD.draw(...a);
+  const eye = (dx, y, dz, w, h, d, col) => HEAD.drawEye(dx, y, dz, w, h, d, col);
 
   p(0, 0.27, -0.04, 0.49, 0.35, 0.52, 0x90775a);
   for (let dz of [-0.2, 0, 0.2])
@@ -43,6 +18,9 @@ GardenModels.registry['hedgehog'] = function ({ a, part, phase, t, i }) {
   face(0, 0.23, 0.29, 0.29, 0.21, 0.23, 0xc8b28b);
   face(0, 0.21, 0.44, 0.11, 0.08, 0.1, 0x443f34);
   for (let side of [-1, 1])
+    // 眼睛原来在 z=0.37，而脸盒（face(0, 0.23, 0.29, 0.29, 0.21, 0.23)）深 0.23，
+    // 前面在 z=0.405 —— 眼睛整个埋在里面，看上去就是「刺猬没有眼睛」。
+    // 放到 0.41，让它露出脸面（和卡皮巴拉同一个毛病、同一个修法）。
     eye(side * 0.1, 0.29, 0.37, 0.045, 0.045, 0.04, 0x333b30);
   // 刺猬是四足，前后各一对。之前只画了一对、而且两条都摆在身体中段（dz=0），
   // 走起路来是两脚交替，怎么看都不像刺猬。躯干 d=0.52 居中在 z=−0.04

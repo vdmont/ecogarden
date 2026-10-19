@@ -35,28 +35,18 @@ for (const [type, [name, kind, color]] of Object.entries(EcoData.VISITORS))
     // 连接点按 kind 分别给（有的脖子长有的短），性质和腿的胯高一样。
     let neckY = 0.66,
       neckZ = 0.2;
-    const hd = (x, y, z, w, h, d, c, tilt = 0, pitch = 0) => {
-      const H = P.neckAt(y, z, neckY, neckZ);
-      part(
-        (x + sway) * scale * wide,
-        (H.y * P.headY - P.headDrop) * scale * rest + P.lift * scale,
-        H.z * scale,
-        w * scale * wide,
-        h * scale,
-        d * scale,
-        c,
-        tilt + P.earTilt + P.tilt,
-        H.pitch + pitch,
-      );
-    };
+    // 头 = 一个刚体。wide（左右收窄）和 rest（晒太阳/泡水时整体压低）都是**整个头**的事，
+    // 放在 opt 里统一生效；模型不再自己算位置和转角。
+    const HEAD = P.headFrame(part, neckY, neckZ, { sway: P.sway * 0.05, xScale: wide, rest });
+    const hd = (...a) => HEAD.draw(...a);
     const eye = (y, z) => {
       for (const side of [-1, 1])
-        hd(
+        HEAD.drawEye(
           side * 0.115,
           y,
           z,
           0.045,
-          0.05 * P.eyeH,
+          0.05,
           0.035,
           type === 'ragdoll' ? 0x609dc1 : 0x253633,
         );
@@ -227,6 +217,9 @@ for (const [type, [name, kind, color]] of Object.entries(EcoData.VISITORS))
       for (let j = 0; j < 3; j++)
         p(
           0,
+          // 斑纹要贴在背上：身子盒子上表面是 0.45 + body/2（p() 会把整个 y 乘一次 bodyY，
+          // 所以这里**不能**再乘一次 —— 乘两次的话睡着了会缩过头，斑纹整个埋进身子里，
+          // 狸花猫一睡着就没斑纹了）。
           0.45 + (body / 2) * P.bodyY + 0.006,
           -0.22 + j * 0.18,
           0.48,

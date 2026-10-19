@@ -7,34 +7,10 @@ GardenModels.registry['chicken'] = function ({ a, part, phase, t, i }) {
   // 脖子接在躯干上的那个点，吃的时候头绕它转（绕 X 轴，矢状面）
   const NECK_Y = 0.5,
     NECK_Z = 0.1;
-  const hd = (dx, y, dz, w, h, d, col, tilt = 0, pitch = 0) => {
-    const H = P.neckAt(y, dz, NECK_Y, NECK_Z);
-    part(
-      dx + sway,
-      H.y * P.headY - P.headDrop + P.lift,
-      H.z,
-      w,
-      h,
-      d,
-      col,
-      tilt + P.earTilt + P.tilt,
-      H.pitch + pitch,
-    );
-  };
-  const eye = (dx, y, dz, w, h, d, col) => {
-    const H = P.neckAt(y, dz, NECK_Y, NECK_Z);
-    part(
-      dx + sway,
-      H.y * P.headY - P.headDrop + P.lift,
-      H.z,
-      w,
-      h * P.eyeH,
-      d,
-      col,
-      P.earTilt + P.tilt,
-      H.pitch,
-    );
-  };
+  // 头 = 一个刚体：头、鸡冠、喙、两只眼睛全部走它。
+  const HEAD = P.headFrame(drawPart, NECK_Y, NECK_Z, { sway: P.sway * 0.05 });
+  const hd = (...a) => HEAD.draw(...a);
+  const eye = (dx, y, dz, w, h, d, col) => HEAD.drawEye(dx, y, dz, w, h, d, col);
 
   p(0, 0.36, 0, 0.43, 0.42, 0.46, 0xf3d786);
   hd(0, 0.63, 0.17, 0.3, 0.3, 0.29, 0xffe6a4);

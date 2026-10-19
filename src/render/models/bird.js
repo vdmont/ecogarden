@@ -7,35 +7,20 @@ GardenModels.registry['bird'] = function ({ a, part, phase, t, i }) {
   // 脖子接在躯干上的那个点，吃的时候头绕它转（绕 X 轴，矢状面）
   const NECK_Y = 0.72,
     NECK_Z = 0.08;
-  // 头：鸟睡觉会把头缩进脖子里 —— 睡着时整个头往下沉，再眯起眼
-  const hd = (dx, y, dz, w, h, d, col, tilt = 0, pitch = 0) => {
-    const H = P.neckAt(y, dz, NECK_Y, NECK_Z);
-    part(
-      dx + sway,
-      H.y * P.headY - P.headDrop * 1.6 + P.lift,
-      H.z - (P.asleep ? 0.05 : 0),
-      w * (P.asleep ? 0.9 : 1),
-      h,
-      d,
-      col,
-      tilt + P.tilt,
-      H.pitch + pitch,
-    );
-  };
-  const eye = (dx, y, dz, w, h, d, col) => {
-    const H = P.neckAt(y, dz, NECK_Y, NECK_Z);
-    part(
-      dx + sway,
-      H.y * P.headY - P.headDrop * 1.6 + P.lift,
-      H.z,
-      w,
-      h * P.eyeH,
-      d,
-      col,
-      P.earTilt + P.tilt,
-      H.pitch,
-    );
-  };
+  // 头 = 一个刚体：头、喙、两只眼睛全部走它。
+  //
+  // 鸟睡觉会把头缩进脖子里 —— 那是**整个头**一起往后缩一点、宽度收一点，
+  // 所以这两个数放在 opt 里（整头统一生效），不是写在某个部件上。
+  // 以前这里是 `H.z - (P.asleep ? 0.05 : 0)` 只写在 hd() 上、eye() 上漏了，
+  // 于是头往后缩了、眼睛没缩 —— 又是「头和眼睛各走各的」。
+  const HEAD = P.headFrame(drawPart, NECK_Y, NECK_Z, {
+    sway: P.sway * 0.05,
+    sleepDrop: 1.6,
+    sleepZ: -0.05,
+    sleepW: 0.9,
+  });
+  const hd = (...a) => HEAD.draw(...a);
+  const eye = (dx, y, dz, w, h, d, col) => HEAD.drawEye(dx, y, dz, w, h, d, col);
 
   p(0, 0.6, 0, 0.35, 0.3, 0.42, 0x709dad);
   hd(0, 0.79, 0.18, 0.28, 0.25, 0.28, 0x87b4c5);

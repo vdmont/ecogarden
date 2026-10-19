@@ -7,23 +7,10 @@ GardenModels.registry['deer'] = function ({ a, part, phase, t, i }) {
   // 脖子接在躯干上的那个点。吃的时候整条脖子带着头一起绕它转（绕 X 轴，矢状面）
   const NECK_Y = 0.95,
     NECK_Z = 0.25;
-  const head = (dx, y, dz, w, h, d, col, tilt = 0, pitch = 0) => {
-    const H = P.neckAt(y, dz, NECK_Y, NECK_Z);
-    part(
-      dx,
-      H.y * P.headY - P.headDrop + P.lift,
-      H.z,
-      w,
-      h * (P.asleep ? 1 : P.eyeH),
-      d,
-      col,
-      tilt + P.earTilt + P.tilt,
-      H.pitch + pitch,
-    );
-  };
-  // 眼睛要和头一起歪：头那边拿的是 head()，里面带了 P.earTilt，
-  // 眼睛以前只拿 P.tilt，于是头歪眼不歪 —— 看着像歪脖子，很诡异。
-  const eye = (dx, y, dz, w, h, d, col) => head(dx, y, dz, w, h * P.eyeH, d, col);
+  const HEAD = P.headFrame(part, NECK_Y, NECK_Z, { sway: P.sway * 0.05 });
+  const head = (...a) => HEAD.draw(...a);
+  // 眼睛直接复用 head()，位置和转角自然一模一样，不会各走各的
+  const eye = (dx, y, dz, w, h, d, col) => HEAD.drawEye(dx, y, dz, w, h, d, col);
 
   body(0, 0.68, 0, 0.43, 0.37, 0.8, 0xad8057);
   body(0, 0.61, 0.18, 0.28, 0.2, 0.36, 0xe1caa3);

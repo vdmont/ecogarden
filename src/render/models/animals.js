@@ -47,6 +47,12 @@ const FLIERS = new Set(['bird', 'bee', 'butterfly', 'redstart', 'longtail', 'wre
 
 // 头最多往下转多少度（吃的时候低头够草）。
 const NECK_MAX = (45 * Math.PI) / 180;
+
+// 睡觉时歪头的角度（弧度）。检查脚本要用它认出「哪些部件是跟着头一起歪的」，
+// 所以别把这个数字抄到检查脚本里去。
+const HEAD_TILT = 0.3;
+GardenModels.HEAD_TILT = HEAD_TILT;
+
 // 每只动物当前的头部角度。pose() 是逐帧调用的，所以平滑状态自己记一份，
 // 不写回 a（写回 a 会被存进存档）。
 const neckSmooth = new WeakMap();
@@ -193,7 +199,22 @@ GardenModels.pose = function (a, t) {
   // （睡着还是整体压低、不走 neck，那是另一套，不在这次的范围里）
   const BODY_K = asleep ? 0.55 : 1,
     HEAD_K = asleep ? 0.62 : 1,
-    LEG_K = asleep ? 0.22 : 1;
+    LEG_K = asleep ? 0.22 : 1,
+    // 睡觉时歪头的角度。headFrame() 里要用，所以提到局部变量（下面返回对象里也有一份同值的 earTilt）。
+    earTilt = asleep ? HEAD_TILT : 0,
+    // 喝醉了走路摇摇晃晃。身子用它，头也用它（头要跟着身子一起晃）。
+    bodyTilt = drunk ? Math.sin(sec * TAU * 0.63) * 0.11 : 0,
+    // 整个身子被托起多少（呼吸、被冲走时浮起来、没腿的走路时颠一下）。
+    // 头也要跟着一起被托起来，所以提到局部变量。
+    bodyLift =
+      breath * (asleep ? 0.02 : 0.004) +
+      (drift ? 0.07 : 0) +
+      // 模型里没画腿的（鸟、蜂、蝶、幼虫）走路时没东西可摆，
+      // 只能靠身体一颠一颠表示在移动：一个循环里颠两次
+      // （这些物种永远不调 place()，所以这里的步长固定就是 STRIDE_MAX）
+      (walk && LEGLESS.has(a.type)
+        ? Math.abs(Math.sin((a.phase / STRIDE_MAX) * Math.PI)) * 0.035
+        : 0);
   // 整只翻转的角度：存一份给 scene.js 的 part() 用（见上面 driftRoll 的说明）
   lastDriftRoll = drift ? Math.sin(sec * TAU * 1.3) * 0.5 : 0;
   return {
@@ -206,53 +227,93 @@ GardenModels.pose = function (a, t) {
     neck,
     breath,
     bodyY: BODY_K,
-    headY: HEAD_K,
     legY: LEG_K,
-    headDrop: asleep ? 0.04 : 0,
-    headFwd: asleep ? 0.15 : 0,
-    headH: asleep ? 0.8 : 1,
     eyeH: asleep ? 0.25 : 1,
-    earTilt: asleep ? 0.3 : 0,
-    // 头的一个部件绕「脖子与躯干的连接点」转，返回模型要用的 y / z / pitch。
+    earTilt: asleep ? HEAD_TILT : 0,
+    // —— 头 = 一个刚体 ——
     //
-    // 模型里这样用（连接点由每个物种自己给，和腿的胯高、腿长一个性质）：
-    //   const NECK_Y = 0.55, NECK_Z = 0.2;   // 脖子接在躯干上的那个点
-    //   const H = P.neckAt(y, dz, NECK_Y, NECK_Z);
-    //   part(dx, H.y, H.z, w, h, d, col, tilt, H.pitch);   // ← H.pitch 放最后一格
+    // 头不是一个东西，是一堆盒子：头、鼻子、眼睛、耳朵、鹿角。任何动作都不该把它们拆开转，
+    // 拆开的后果项目所有者已经见过两次：
+    //   「头歪了眼睛不歪」  —— 歪斜角只发给了盒子，位置没转
+    //   「歪鼻子歪眼」      —— 盒子各自绕自己中心拧，彼此的相对位置一个数都没变
+    // 和「被冲走时方块搭的小动物散架」是同一个病根：同一个角，位置和盒子必须一起转。
     //
-    // ⚠ H.pitch 必须放 part() 的**最后一格（pitch），不能加进倒数第二格（tilt）**。
-    // 动物的正面朝 +z，所以最后一格进 put() 的 rx = 绕左右轴的前后摆 = 矢状面 =
-    // 低头；倒数第二格进 rz = 绕前后轴的左右歪 = 冠状面 = 左右扭头。
-    // 放错进去的后果很隐蔽：头盒子拧了、眼睛没拧（eye() 一直是放对的），
-    // 画面上就是「脖子歪着扭」，而不低头。
+    // 所以模型**不许自己算头的位置和转角**。它只能说一句话：
+    // 「这个盒子在**清醒、不歪**时的头局部坐标里放在哪、有多大、什么颜色」，
+    // 然后调 head.draw(...)。剩下的（歪头、低头、睡着压低、整体摇晃、模型自己的缩放）
+    // 全在这里算一次 —— 模型拿不到「让鼻子单独歪一点」的机会，因为这里根本没有让它插手的地方。
     //
-    // 绕 X 轴（矢状面）转，正数=低头。鼻子往下走的同时贴着脖子画弧，
-    // 不会一边低头一边往回缩（那是绕自己中心转才会有的毛病）。
-    neckAt: (y, z, pivotY, pivotZ) => {
-      if (!neck) return { y, z, pitch: 0 };
-      const dy = y - pivotY,
-        dz = z - pivotZ,
-        c = Math.cos(neck),
-        s = Math.sin(neck);
+    // 连接点由每个物种自己给（pivotY / pivotZ），性质和腿的胯高、腿长一样。
+    //
+    //   const HEAD = P.headFrame(part, NECK_Y, NECK_Z, { sway: P.sway * 0.05 });
+    //   HEAD.draw(0, 0.86, 0.44, 0.4, 0.35, 0.35, col);   // 头
+    //   HEAD.draw(0.115, 0.905, 0.625, 0.065, 0.065 * P.eyeH, 0.035, dark);  // 眼睛
+    //
+    // opt 里只放「整个头一起做」的事，一个数都不能少：
+    //   sway      醉的时候整体左右摇多少（以前 12 个模型各写一遍 P.sway * 0.05）
+    //   xScale    整个头在左右方向缩放（访客的 wide = 0.76）
+    //   rest      整个头纵向压低（访客晒太阳 0.62 / 泡水 0.55）
+    //   pressWith 睡着时往下压用头的比例还是身子的比例（幼虫整个身子都在缩）
+    //   sleepDrop 往下压的倍数（鸟 1.6：它睡觉要把头缩进脖子里）
+    //   sleepZ    睡着时整个头在前后方向挪多少（鸟 −0.05）
+    //   sleepW    睡着时整个头宽度缩多少（鸟 0.9）
+    headFrame: (part, pivotY, pivotZ, opt = {}) => {
+      const sway = opt.sway || 0,
+        xScale = opt.xScale === undefined ? 1 : opt.xScale,
+        rest = opt.rest === undefined ? 1 : opt.rest,
+        press = asleep ? (opt.pressWith === 'body' ? BODY_K : HEAD_K) : 1,
+        drop = asleep ? 0.04 * (opt.sleepDrop === undefined ? 1 : opt.sleepDrop) : 0,
+        dz = asleep ? opt.sleepZ || 0 : 0,
+        dw = asleep && opt.sleepW ? opt.sleepW : 1;
+      // 一个头的部件最终放哪（不含盒子自己的转角，那在 draw 里统一加）
+      const place = (dx, y, z) => {
+        let hx = dx,
+          hy = y,
+          hz = z;
+        // 歪头：在冠状面里绕脖子连接点左右转
+        if (earTilt) {
+          const c = Math.cos(earTilt),
+            s = Math.sin(earTilt),
+            ry = y - pivotY;
+          hx = dx * c - ry * s;
+          hy = pivotY + dx * s + ry * c;
+        }
+        // 低头：在矢状面里绕脖子连接点前后转（绕 X 轴，正数 = 低头）
+        if (neck) {
+          const dy = hy - pivotY,
+            dzz = z - pivotZ,
+            c = Math.cos(neck),
+            s = Math.sin(neck);
+          hy = pivotY + dy * c - dzz * s;
+          hz = pivotZ + dy * s + dzz * c;
+        }
+        return { x: hx * xScale + sway, y: (hy * press - drop) * rest + bodyLift, z: hz + dz };
+      };
+      const draw = (dx, y, dz2, w, h, d, col, tilt = 0, pitch = 0) => {
+        const p = place(dx, y, dz2);
+        // rz = 绕前后轴 = 冠状面 = 左右歪；rx = 绕左右轴 = 矢状面 = 低头。
+        // 两个角都加在这里，模型碰不到，也就不会再出现「头歪了眼睛没歪」。
+        part(p.x, p.y, p.z, w * xScale * dw, h, d, col, tilt + earTilt + bodyTilt, neck + pitch);
+      };
       return {
-        y: pivotY + dy * c - dz * s,
-        z: pivotZ + dy * s + dz * c,
-        pitch: neck,
+        at: place,
+        draw,
+        // 画一只眼睛。和 draw 的唯一区别：睡着时把它压扁（闭眼）。
+        //
+        // 闭眼改的是**盒子的大小**，刚体管的是**位置和转角** —— 两件事互不干涉，
+        // 所以「头是一个刚体」并不妨碍闭眼：刚体保证眼睛永远黏在脸上不挪位，
+        // 闭眼只把那个盒子压成一条。眼睛是整张脸上唯一允许单独改变形状的东西。
+        //
+        // 压扁的比例统一在这里，不再让 12 个模型各写一遍 h * P.eyeH
+        //（漏一个就是「睡着了眼睛还睁着」）。
+        drawEye: (dx, y, dz, w, h, d, col) => draw(dx, y, dz, w, h * (asleep ? 0.25 : 1), d, col),
       };
     },
     // 被冲走时整只被水托起来一点，所以这里比呼吸大得多
-    lift:
-      breath * (asleep ? 0.02 : 0.004) +
-      (drift ? 0.07 : 0) +
-      // 模型里没画腿的（鸟、蜂、蝶、幼虫）走路时没东西可摆，
-      // 只能靠身体一颠一颠表示在移动：一个循环里颠两次
-      // （这些物种永远不调 place()，所以这里的步长固定就是 STRIDE_MAX）
-      (walk && LEGLESS.has(a.type)
-        ? Math.abs(Math.sin((a.phase / STRIDE_MAX) * Math.PI)) * 0.035
-        : 0),
+    lift: bodyLift,
     // 醉：走路摇摇晃晃。频率故意不和脚步同频，同频的话看着像在打拍子而不是站不稳。
     sway: drunk ? Math.sin(sec * TAU * 0.9) : 0,
-    tilt: drunk ? Math.sin(sec * TAU * 0.63) * 0.11 : 0,
+    tilt: bodyTilt,
     // 被冲走：整只当一个刚体翻转。**不要把这个角度塞进 tilt** ——
     // tilt 是「每个方块绕自己中心转」，而 put() 只转盒子不转位置，所以鹿角、
     // 兔耳、狼耳会各自原地打转而身子不动，看着就是散架（项目所有者原话）。
