@@ -3,7 +3,7 @@ GardenModels.registry['bird'] = function ({ a, part, phase, t, i }) {
   const P = GardenModels.pose(a, t);
   const sway = P.sway * 0.05;
   const p = (dx, y, dz, w, h, d, col, tilt = 0) =>
-    part(dx + sway, y * P.bodyY + P.lift, dz, w, h * P.bodyY, d, col, tilt + P.tilt);
+    part(dx + sway, y * P.bodyY + P.lift + P.flyLift, dz, w, h * P.bodyY, d, col, tilt + P.tilt);
   // 脖子接在躯干上的那个点，吃的时候头绕它转（绕 X 轴，矢状面）
   const NECK_Y = 0.72,
     NECK_Z = 0.08;
@@ -42,8 +42,9 @@ GardenModels.registry['bird'] = function ({ a, part, phase, t, i }) {
   hd(0, 0.72, 0.39, 0.14, 0.09, 0.16, 0xe2ad60);
   eye(-0.145, 0.83, 0.24, 0.05, 0.05, 0.06, 0x283b40);
   eye(0.145, 0.83, 0.24, 0.05, 0.05, 0.06, 0x283b40);
-  // 翅膀：站着小幅扇，睡着时贴住身体完全不动
-  const flap = P.asleep || a.habit === 5 ? 0 : phase * 0.4;
+  // 翅膀：扑翼角度统一由 pose() 给（P.flap）—— 站着小幅慢扇，飞起来大幅快扇，
+  // 睡着时是 0（贴住身体完全不动）。习惯 5「停在旁边」时翅膀僵住。
+  const flap = a.habit === 5 ? 0 : P.flap;
   p(-0.3, 0.64, 0, 0.35, 0.1, 0.3, 0x436e83, flap);
   p(0.3, 0.64, 0, 0.35, 0.1, 0.3, 0x436e83, -flap);
   p(0, 0.55, -0.3, 0.19, 0.09, 0.3, 0x416f81);

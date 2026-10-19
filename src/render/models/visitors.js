@@ -10,7 +10,7 @@ for (const [type, [name, kind, color]] of Object.entries(EcoData.VISITORS))
     const p = (x, y, z, w, h, d, c, tilt = 0) =>
       part(
         (x + sway) * scale * wide,
-        y * scale * rest * P.bodyY + P.lift * scale,
+        y * scale * rest * P.bodyY + (P.lift + P.flyLift) * scale,
         z * scale,
         w * scale * wide,
         h * scale * rest * P.bodyY,
@@ -96,7 +96,8 @@ for (const [type, [name, kind, color]] of Object.entries(EcoData.VISITORS))
       );
       eye(hy + 0.02, 0.355);
       for (const side of [-1, 1]) {
-        const flap = P.asleep || a.habit === 5 ? 0 : phase * 0.08;
+        // 扑翼角度统一由 pose() 给（P.flap）；习惯 5「停在旁边」时翅膀僵住
+        const flap = a.habit === 5 ? 0 : P.flap;
         p(
           side * 0.21,
           y + 0.03,

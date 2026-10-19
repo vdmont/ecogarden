@@ -38,6 +38,12 @@ GardenModels.animals = function (ctx) {
 // 全身只有躯干、没有腿的物种：走路时没腿可摆，只能靠身体一颠一颠表示在移动。
 // 鸡和火烈鸟/夜鹭都有腿，不在这个名单里。
 const LEGLESS = new Set(['bird', 'bee', 'butterfly', 'bug', 'redstart', 'longtail', 'wren']);
+// 真正靠扑翼飞的那几种（比 LEGLESS 少一个 bug —— 幼虫在地上爬，不会飞）。
+// 这份名单必须和 core.js 导出的 Eco.FLIERS 一致，check-fly.cjs 里有断言守着，
+// 两边对不上会直接报错。渲染层要自己查一遍名单，不能只看 a.flying：
+// 那个字段谁都能设，给猫设成 true 它就浮空了（测试里真踩到过）。
+// 龙也不在内 —— 它的 TRAITS.move 是 fly，但它画了六条腿在地上走。
+const FLIERS = new Set(['bird', 'bee', 'butterfly', 'redstart', 'longtail', 'wren']);
 
 // 头最多往下转多少度（吃的时候低头够草）。
 const NECK_MAX = (45 * Math.PI) / 180;
@@ -120,6 +126,17 @@ GardenModels.pose = function (a, t) {
   // 而不是十拍一动。头往哪边低、往哪边转，由模拟把整只动物转过去（a.dir）。
   const eat = a.act === 'eat',
     chew = eat ? Math.sin(sec * TAU * 3.6) : 0; // -1..1
+
+  // 飞：a.flying 由模拟推导（core.js 里的 IN_AIR 名单），表示这类物种此刻在不在空中移动。
+  // 翅膀这一拍的角度集中在这里算 —— 之前鸟 / 蝴蝶 / 蜜蜂 / 访客小鸟各自写死了一个乘数
+  // （0.4 / 0.4 / 0.45 / 0.08），四份都不一样，想统一调就得改四个地方。
+  //
+  // 站着：小幅慢扇（停在枝头也会偶尔扇两下）。
+  // 飞着：大幅快扇，鸟翼一拍大约十次 —— 所以这两档是分开的，不是一个乘数。
+  // 频率按时间走而不是按走路进度：翼拍快慢和移动快慢没关系，而且站着不动时照样在扇。
+  // 带上 a.variant 是为了让同一格里的几只不同步扇。
+  const flying = FLIERS.has(a.type) && !!a.flying,
+    flap = asleep ? 0 : (flying ? 0.95 : 0.3) * Math.sin(sec * TAU * (flying ? 9 : 1.4) + (a.variant || 0) * 1.3);
 
   // —— 头绕脖子转，不是整块上下平移 ——
   // 之前「吃」是把头整体往下挪（headY 打折 + headDrop 减一点），画面上头是上下窜的，
@@ -205,6 +222,12 @@ GardenModels.pose = function (a, t) {
     sway: drunk ? Math.sin(sec * TAU * 0.9) : 0,
     tilt: drift ? Math.sin(sec * TAU * 4.2) * 0.2 : drunk ? Math.sin(sec * TAU * 0.63) * 0.11 : 0,
     flail: drift ? Math.sin(sec * TAU * 4.2) : 0,
+    // 飞起来的三样东西，6 种会飞的共用（鸟 / 蝴蝶 / 蜜蜂 / 红尾水鸲 / 长尾山雀 / 冬鹪鹩）
+    fly: flying,
+    flap,
+    // 升空高度。站着时各模型自己的 lift 已经把身体托到该在的位置，
+    // 飞起来再抬这么一截才像离开了地面。
+    flyLift: flying ? 0.3 : 0,
     lean: drift ? 0.22 : 0,
     // 对角的两条腿同步：前左+后右一组，前右+后左一组，走起来才不会四条腿一起动。
     // 模型不用自己算，只管说"这条腿在前还是在后、在左边还是右边"。
@@ -238,3 +261,8 @@ GardenModels.pose = function (a, t) {
     },
   };
 };
+
+// 渲染层那份会飞名单，暴露出来是为了让检查脚本能断言它和 core.js 的 Eco.FLIERS
+// 没有跑偏。两边各写一份是为了不让渲染层依赖模拟的内部结构（和 LEGLESS 一个道理），
+// 代价就是必须有人盯着它们一致 —— 那就是 check-fly.cjs 的活。
+GardenModels.FLIERS = FLIERS;

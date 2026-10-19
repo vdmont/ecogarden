@@ -707,6 +707,11 @@
     const t = TRAITS[a && a.type];
     return CLIMB_BASE + (t ? t.climb || 0 : 0) * CLIMB_STEP;
   }
+  // 真正「靠扑翼在空中移动」的物种：模型里没画腿，走路时靠扑翼和悬浮表示在移动。
+  // 不能用 TRAITS[a.type].move === 'fly' 一刀切 —— 龙也是 fly，但它画了六条腿在地上走，
+  // 让它浮起来反而不像龙。幼虫 bug 也不在内：它在 ground 上爬，本来就不会飞。
+  // 渲染层（animals.js 的 pose）和动作实验室都读这一份，别再各抄一遍。
+  const FLIERS = new Set(['bird', 'bee', 'butterfly', 'redstart', 'longtail', 'wren']);
   // 水里也能走（蹚水、浮着、飞过）——会不会被冲走由 TRAITS 的 move/mass 决定，而不是靠这里禁止
   function canWalk(c, a, from) {
     if (!c || c.fire) return false;
@@ -1281,6 +1286,12 @@
           reserved.add(target);
         }
       }
+      // a.flying：这类物种此刻是不是在空中移动。纯推导，不消耗随机数 ——
+      // 随机流只有一条，多抽一次后面所有事件都会平移。
+      // 这个字段不进存档白名单：它由 type + state 完全决定（两个都存了），
+      // 存进去只会变成一个可能过期的值。和 a.act 不同 —— 那个必须存，
+      // 因为 actUntil 是拍数截止时间，刷新页面丢了会打断进食动画。
+      a.flying = FLIERS.has(a.type) && a.state === 'walk';
       // 属性 × 环境：站在活水里的走兽会被冲向下游，会飞的冲不走；冲到岛外就没了
       if (c.animal === a) {
         const push = flowPush(s, i, a);
@@ -1460,5 +1471,8 @@
     valid,
     islandMask,
     islandRadius,
+    // 会飞的物种名单（判断用）。导出来是为了让渲染层和动作实验室共用同一份，
+    // 免得每个地方各抄一遍、各改各的。
+    FLIERS,
   };
 })(globalThis);
