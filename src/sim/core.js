@@ -81,9 +81,12 @@
         autoFocus: false,
         quality: 'auto',
         timeOfDay: 'dynamic',
-        // 两个音量滑杆，0–1。默认 1 = 和以前一样，不改变任何人的听感。
-        musicVolume: 1,
-        callVolume: 1,
+        // 两个音量滑杆，0–1。默认 0.5 = 滑杆停在正中。
+        // 为什么不是 1：滑杆的 100% 是「基准的两倍」，那样一开游戏就太吵。
+        // 基准值在 src/ui/audio.js 顶部的 VOL 里（项目所有者 2026-10-19 亲口
+        // 确认过那一档听着舒服）。
+        musicVolume: 0.5,
+        callVolume: 0.5,
       },
     };
   }

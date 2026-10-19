@@ -359,37 +359,61 @@ console.log(
 //
 // 这里断言的是**真实的总线增益**，所以测试桩里每个节点的 gain 必须是
 // 独立对象——共用一个的话读到的永远是"最后一个写过它的人"。
+//
+// 刻度（2026-10-19 改）：滑杆 50% = 文件顶部的基准值，100% = 基准的两倍，
+// 0% = 静音。以前滑杆就是"直接乘"，所以 100% 才等于 1。
 {
   const amb = GardenAudio._ambientGain();
   assert(amb, '没有拿到动物声总线的增益参数');
-  const base = { music: true, sound: true, musicVolume: 1, callVolume: 1 };
+  const V = GardenAudio._vol();
+  const base50 = V.callsBase; // 滑杆正中时的倍数
+  const base = { music: true, sound: true, musicVolume: 0.5, callVolume: 0.5 };
   GardenAudio.configure(base);
-  assert(Math.abs(amb.value - 1) < 1e-6, '默认音量应该是 1，实际 ' + amb.value);
+  assert(
+    Math.abs(amb.value - base50) < 1e-6,
+    '滑杆在正中（50%）时应该是基准值 ' + base50 + '，实际 ' + amb.value,
+  );
 
   // 取消勾选 → 整层静音
   GardenAudio.configure({ ...base, sound: false });
   assert(amb.value === 0, '取消「动物叫声与音效」之后动物声没有归零，实际 ' + amb.value);
 
-  // 勾回来 → 恢复满音量
+  // 勾回来 → 恢复基准音量
   GardenAudio.configure(base);
-  assert(Math.abs(amb.value - 1) < 1e-6, '勾回来之后没有恢复满音量，实际 ' + amb.value);
+  assert(Math.abs(amb.value - base50) < 1e-6, '勾回来之后没有恢复音量，实际 ' + amb.value);
 
-  // 老存档里没有这个字段 → 回到默认满音量，而不是 0（哑掉）
+  // 老存档里没有这个字段 → 回到默认（正中），而不是 0（哑掉）
   GardenAudio.configure({ music: true });
-  assert(Math.abs(amb.value - 1) < 1e-6, '缺 sound 字段的老设置没有回到默认音量，实际 ' + amb.value);
+  assert(
+    Math.abs(amb.value - base50) < 1e-6,
+    '缺 callVolume 字段的老设置没有回到默认音量，实际 ' + amb.value,
+  );
 
   // BGM 那一层不在这儿断言：它的目标值是在 updateSpatial 里按"让位系数 ×
   // 音乐音量"算的，而那个函数靠真实经过的时间往前推。Node 桩里时间是假的，
   // 断言会得到一个看起来合理的假数字。音乐滑杆在浏览器探针里量
   // （probe-settings.mjs）。
 
-  // 勾回来但滑杆拉到 30% → 只剩三成
+  // 滑杆拉到 30% → 基准的 0.6 倍（30% ÷ 50% = 0.6）
   GardenAudio.configure({ ...base, callVolume: 0.3 });
-  assert(Math.abs(amb.value - 0.3) < 1e-6, '动物音量滑杆没生效，实际 ' + amb.value);
+  assert(
+    Math.abs(amb.value - base50 * 0.6) < 1e-6,
+    '动物音量滑杆没生效，实际 ' + amb.value + '，应为 ' + base50 * 0.6,
+  );
+
+  // 滑杆拉满 → 基准的两倍（"想听大声的可以继续往上加"）
+  GardenAudio.configure({ ...base, callVolume: 1 });
+  assert(
+    Math.abs(amb.value - base50 * 2) < 1e-6,
+    '滑杆拉满应该是基准的两倍 ' + base50 * 2 + '，实际 ' + amb.value,
+  );
 
   // 越界必须被夹住：坏存档里的 99 不能让一开声音就炸
   GardenAudio.configure({ ...base, callVolume: 99 });
-  assert(amb.value === 1, '超出范围的音量没有被夹到 1，实际 ' + amb.value);
+  assert(
+    Math.abs(amb.value - base50 * 2) < 1e-6,
+    '超出范围的音量没有被夹到上限，实际 ' + amb.value,
+  );
   GardenAudio.configure({ ...base, callVolume: -3 });
   assert(amb.value === 0, '负音量没有被夹到 0，实际 ' + amb.value);
 
@@ -399,29 +423,38 @@ console.log(
 
   GardenAudio.configure(base);
 }
-// ══════════════ 听感微调旋钮（TUNE.musicDb / TUNE.callsDb）══════════════
+// ══════════════ 默认配比基准（VOL.musicBase / VOL.callsBase）══════════════
 //
-// 文件顶部那两行是给项目所有者手动调的。他会直接编辑这两个数字，
+// 文件顶部那两个数是给项目所有者手动调的。他会直接编辑这两个数字，
 // 所以这里要保证「写错也不会把音轨调成哑的」：写错类型、写成字符串、
 // 写到离谱大，都必须夹回安全范围，而不是产生 NaN 把整条音轨弄没。
+//
+// ⚠ 单位是**倍数**，不是分贝。2026-10-19 换掉了分贝：分贝和玩家在
+// 滑杆上拖的百分比是两套刻度，混在一起就是「单位没写好」。
 {
-  const t = GardenAudio._tune();
-  assert(t, '没有暴露 TUNE 微调旋钮的读数');
-  for (const k of ['musicDb', 'callsDb']) {
+  const v = GardenAudio._vol();
+  assert(v, '没有暴露默认配比基准的读数');
+  for (const k of ['musicBase', 'callsBase']) {
     assert(
-      typeof t[k] === 'number' && Number.isFinite(t[k]),
-      k + ' 不是有限数字（改了之后必须仍是数字）：' + JSON.stringify(t[k]),
+      typeof v[k] === 'number' && Number.isFinite(v[k]),
+      k + ' 不是有限数字（改了之后必须仍是数字）：' + JSON.stringify(v[k]),
     );
-    assert(t[k] >= -24 && t[k] <= 12, k + ' 超出安全范围（−24…12 dB）：' + t[k]);
-    // 换算必须与 dbToGain 的公式一致，别让注释里的倍数和实际对不上
-    const expect = Math.pow(10, t[k] / 20);
-    const key = k === 'musicDb' ? 'musicTrim' : 'callsTrim';
-    assert(Math.abs(t[key] - expect) < 1e-4, k + ' 换算对不上：' + t[key] + ' vs ' + expect);
+    assert(v[k] >= 0 && v[k] <= 4, k + ' 超出安全范围（0…4 倍）：' + v[k]);
   }
-  // 当前是 0 dB 时，两边都不该有额外增减——否则「改之前」和「改之后」没法比
+  // 基准就是「滑杆 50% 的位置」：滑杆停在正中，实际倍数必须正好等于基准。
+  assert(
+    Math.abs(v.musicGain - v.musicBase) < 1e-6,
+    '音乐滑杆在正中时实际倍数应等于基准，实际 ' + v.musicGain,
+  );
+  assert(
+    Math.abs(v.callsGain - v.callsBase) < 1e-6,
+    '动物滑杆在正中时实际倍数应等于基准，实际 ' + v.callsGain,
+  );
+  // 百分比就是百分比：50 应该就是 50，不该再换算成别的东西
+  assert(v.musicPct === 50, '音乐滑杆的百分比读数不对：' + v.musicPct);
+  assert(v.callsPct === 50, '动物滑杆的百分比读数不对：' + v.callsPct);
   console.log(
-    'PASS 听感微调旋钮：音乐 ' + t.musicDb + ' dB（×' + t.musicTrim + '）、动物 ' +
-      t.callsDb + ' dB（×' + t.callsTrim + '）',
+    'PASS 默认配比：音乐 ×' + v.musicBase + '、动物 ×' + v.callsBase + '（滑杆 50% 的位置）',
   );
 }
 console.log('PASS 音量滑杆：静音生效、比例生效、越界被夹住、开关优先于滑杆、老存档回默认');

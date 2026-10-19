@@ -13,41 +13,42 @@
 // 猫呼噜：20–150Hz 的有节奏振动，吸气和呼气都不间断。
 // 蜜蜂：翅膀拍频在低百 Hz，给宽带噪声做调幅，这才是「嗡嗡」的物理来源。
 // ══════════════════════════════════════════════════════════════════════
-// 🎛️ 听感微调 —— 改这两行就行，别的不用动
+// 🎛️ 默认配比 —— 改这两行就行，别的不用动
 // ══════════════════════════════════════════════════════════════════════
 //
-// 项目所有者 2026-10-19 明确要求：「这两个东西肯定有一个地方可以统一调的，
-// 不然每次都要走一轮对话，很麻烦。」
-//
 // 怎么用：
-//   1. 改下面这两个数字（带 + / − 号，单位是分贝）
+//   1. 改下面这两个数字（就是**倍数**，1 = 不变）
 //   2. 浏览器按 Ctrl+F5 强制刷新（普通刷新可能吃缓存）
 //   3. 听，觉得对了就把最终值告诉我，我写进提交里
 //
-//   musicDb  背景音乐。+3 就是比现在响一倍（3 分贝 ≈ 音量 ×1.41）
-//   callsDb  动物叫声。−3 就是比现在轻一半（−3 分贝 ≈ 音量 ×0.71）
+//   musicBase  背景音乐。滑杆停在 50%（正中）时的倍数。
+//   callsBase  动物叫声。滑杆停在 50%（正中）时的倍数。
 //
-// 这两个是**总音量微调**，和设置面板里那两个滑杆（音乐音量 / 动物音量）
-// 是**乘**的关系，不是同一个东西：滑杆是玩家自己调的，这里是我们定基准。
-// 两个都可以用：比如觉得「音乐太吵、动物太轻」，就 musicDb: -3、callsDb: +3。
+// 为什么不用分贝：分贝是「给耳朵的刻度」，玩家在滑杆上拖的是百分比，
+// 两套单位混在一起就是「单位没写好」——
+// 写 +100 的人以为是自己想的「100%」，实际被夹到 +12 dB（×3.98）；
+// 写 −100 的被夹到 −24 dB（×0.063）。数字和心里想的完全对不上。
+// 现在统一成**倍数**，玩家在设置里拖到的百分比就是百分比，一一对应。
 //
-// 为什么不用「直接写 0.9 / 0.3 这种倍数」而要用分贝：
-// 人耳朵对音量的感知接近对数，「大了 3 分贝」比「乘以 1.2」直观得多，
-// 而且你回报的时候说的就是分贝，写成同一个单位不用来回换算。
-// 下面每行后面都注明了换算成倍数是多少，可以对照着算。
-const TUNE = {
-  musicDb: 0, // dB → 倍数 1.00（改这里：+3 ≈ 响一倍，−3 ≈ 轻一半）
-  callsDb: 0, // dB → 倍数 1.00（改这里：+3 ≈ 响一倍，−3 ≈ 轻一半）
+// 这两个数是量出来的，不是猜的：
+// 项目所有者 2026-10-19 亲口确认「BGM 20%、动物叫声 40%，系统音量 100%」
+// 那个配比他听着舒服。当时那一档实测是 BGM ×0.7166、动物声 ×0.02524
+// （探针：.dsh-reports/research/probe-mix-levels.mjs）。
+// 换成新的滑杆刻度后，把这两个数当「滑杆 50% 的位置」，
+// 比例一点没变——只是现在它可以被玩家自己拖着走。
+const VOL = {
+  musicBase: 0.7166, // 背景音乐在滑杆 50% 时的倍数
+  callsBase: 0.02524, // 动物叫声在滑杆 50% 时的倍数
+  // 滑杆 50% = 基准，100% = 基准的两倍，0% = 静音。
+  mid: 0.5,
 };
 
-// 分贝 → 线性倍数。写在越界之外就夹回来：写错一个字符不该让整条音轨变哑。
-function dbToGain(db, what) {
-  const v = typeof db === 'number' && Number.isFinite(db) ? db : 0;
-  if (v !== db) console.warn('[audio] ' + what + ' 不是数字，当作 0 dB 处理');
-  return Math.pow(10, Math.max(-24, Math.min(12, v)) / 20);
+// 滑杆（0–1）→ 实际倍数。50% 是基准，往右加一倍，往左减到 0。
+// 写错类型、写成 NaN、超出范围，都夹回安全值而不是把音轨弄哑。
+function volGain(base, pct) {
+  const p = typeof pct === 'number' && Number.isFinite(pct) ? Math.max(0, Math.min(1, pct)) : VOL.mid;
+  return (base * p) / VOL.mid;
 }
-const MUSIC_TRIM = dbToGain(TUNE.musicDb, 'musicDb');
-const CALLS_TRIM = dbToGain(TUNE.callsDb, 'callsDb');
 
 (function (root) {
   'use strict';
@@ -1193,11 +1194,6 @@ const CALLS_TRIM = dbToGain(TUNE.callsDb, 'callsDb');
     return true;
   }
 
-  const unit01 = (x, dft) => {
-    const n = typeof x === 'number' && Number.isFinite(x) ? x : dft;
-    return Math.max(0, Math.min(1, n));
-  };
-
   // 动物声这一层的总音量。复选框和滑杆都走这里。
   //
   // ⚠ 以前这里是坏的：configure() 只处理音乐，**环境声混音回路压根没看
@@ -1208,10 +1204,11 @@ const CALLS_TRIM = dbToGain(TUNE.callsDb, 'callsDb');
   function applySoundLevel(immediate) {
     if (!ambientBus || !ctx) return;
     const on = settings.sound !== false;
-    // CALLS_TRIM 是文件顶部那个「动物叫声多少分贝」的微调旋钮。
+    // VOL.callsBase 是文件顶部那个「动物叫声默认多响」的基准（倍数）。
     // 它乘在最外层，所以环境声、手动摸、实时合成叫三边一起变，
-    // 而设置面板里的「动物音量」滑杆仍然独立生效。
-    const vol = on ? CALLS_TRIM * unit01(settings.callVolume, 1) : 0;
+    // 而设置面板里的「动物音量」滑杆仍然独立生效：
+    // 滑杆 50% = 基准，100% = 基准的两倍，0% = 静音。
+    const vol = on ? volGain(VOL.callsBase, settings.callVolume) : 0;
     const g = ambientBus.gain;
     if (immediate) {
       g.cancelScheduledValues(0);
@@ -1768,12 +1765,12 @@ const CALLS_TRIM = dbToGain(TUNE.callsDb, 'callsDb');
     }
 
     // BGM 让位：放大/锁定时压一点，但压不到 0。
-    // musicVolume 是设置里的「音乐音量」滑杆（0–1，默认 1）。
+    // musicVolume 是设置里的「音乐音量」滑杆（0–1，默认 0.5 = 正中）。
     if (bgmGain) {
       const duck = 1 - (1 - MIX.bgmDuckMin) * zoomT;
-      // musicVolume 是设置里的「音乐音量」滑杆（0–1，默认 1）。
-      // MUSIC_TRIM 是文件顶部那个「音乐放大多少分贝」的微调旋钮。
-      const want = MUSIC_VOLUME * MUSIC_TRIM * unit01(settings.musicVolume, 1) * duck;
+      // VOL.musicBase 是文件顶部那个「背景音乐默认多响」的基准（倍数）。
+      // 滑杆 50% = 基准，100% = 基准的两倍，0% = 静音。
+      const want = volGain(VOL.musicBase, settings.musicVolume) * duck;
       bgmGain.gain.value = lerpTo(bgmGain.gain.value, want, dt, MIX.smoothTau);
     }
 
@@ -1845,13 +1842,16 @@ const CALLS_TRIM = dbToGain(TUNE.callsDb, 'callsDb');
     'assets/bgm/track-2.mp3',
     'assets/bgm/track-3.mp3',
   ];
-  // 基础音量。项目所有者 2026-10-19 要求从 0.45 抬到 0.9（两倍），因为
-  // 「BGM 还是太小」。设置里的「音乐音量」滑杆是在这个基础上再乘 0–1，
-  // 所以滑杆不动、只抬底子，默认 100% 的听感就整体翻倍。
+  // 背景音乐在**滑杆 50%（正中）**时的实际倍数。
   //
-  // 抬完不会爆：主输出那层有 0.8 的 master，再后面还有一道限幅器
+  // ⚠ 这个数以前是 0.9，含义是「滑杆 100% 时的倍数」；现在滑杆的 100%
+  // 是基准的两倍（1.4332），50% 才是基准（0.7166）。
+  // 之所以选这一档：项目所有者确认过「BGM 20%、动物叫声 40%」那个配比听着舒服，
+  // 那一档实测 BGM 就是 0.7166（探针 probe-mix-levels.mjs）。
+  //
+  // 不会爆：主输出那层有 0.8 的 master，再后面还有一道限幅器
   // （阈值 −3 dB、20:1）。实测音乐文件峰值见 .dsh-reports 的探针输出。
-  const MUSIC_VOLUME = 0.9;
+  const MUSIC_VOLUME = VOL.musicBase;
   let bgm = null,
     bgmLast = -1,
     bgmMisses = 0,
@@ -1905,7 +1905,7 @@ const CALLS_TRIM = dbToGain(TUNE.callsDb, 'callsDb');
       try {
         const src = ctx.createMediaElementSource(bgm);
         bgmGain = ctx.createGain();
-        bgmGain.gain.value = MUSIC_VOLUME;
+        bgmGain.gain.value = volGain(VOL.musicBase, settings.musicVolume);
         bgmAnalyser = ctx.createAnalyser();
         bgmAnalyser.fftSize = 1024;
         src.connect(bgmGain);
@@ -1913,7 +1913,7 @@ const CALLS_TRIM = dbToGain(TUNE.callsDb, 'callsDb');
         bgmAnalyser.connect(master || ctx.destination);
       } catch {
         // createMediaElementSource 每个元素只能调用一次；失败就退回元素自身音量
-        bgm.volume = MUSIC_VOLUME;
+        bgm.volume = volGain(VOL.musicBase, settings.musicVolume);
         bgmAnalyser = null;
       }
     }
@@ -2293,12 +2293,14 @@ const CALLS_TRIM = dbToGain(TUNE.callsDb, 'callsDb');
     // 动物声那一层的总音量（复选框 + 「动物音量」滑杆拧的就是它）。
     // 取不到是正常的：还没解锁、没进岛的时候没有这条总线。
     _ambientGain: () => (ambientBus ? ambientBus.gain : null),
-    // 顶部那两行微调旋钮现在是多少（分贝 + 换算成倍数），诊断用。
-    _tune: () => ({
-      musicDb: TUNE.musicDb,
-      callsDb: TUNE.callsDb,
-      musicTrim: +MUSIC_TRIM.toFixed(4),
-      callsTrim: +CALLS_TRIM.toFixed(4),
+    // 顶部那两个基准值与滑杆换算出来的实际倍数，诊断用。
+    _vol: () => ({
+      musicBase: VOL.musicBase,
+      callsBase: VOL.callsBase,
+      musicGain: +volGain(VOL.musicBase, settings.musicVolume).toFixed(6),
+      callsGain: +volGain(VOL.callsBase, settings.callVolume).toFixed(6),
+      musicPct: Math.round((typeof settings.musicVolume === 'number' ? settings.musicVolume : VOL.mid) * 100),
+      callsPct: Math.round((typeof settings.callVolume === 'number' ? settings.callVolume : VOL.mid) * 100),
     }),
     // BGM 那一层的总音量（音乐滑杆 × 让位系数）。
     _bgmGain: () => (bgmGain ? bgmGain.gain : null),

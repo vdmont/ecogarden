@@ -69,12 +69,14 @@ assert.equal(E.validateProfile(p).settings.autosave, false);
 assert.equal(E.validateProfile(p).settings.musicVolume, 0.25);
 assert.equal(E.validateProfile(p).settings.callVolume, 0.6);
 // 越界与坏类型要退回默认，而不是让整份存档作废
+// 默认 = 0.5（滑杆停在正中）。2026-10-19 改的：以前默认是 1，
+// 那时滑杆 100% 就是"直接乘"；现在 100% 是基准的两倍，默认得落在正中。
 for (const bad of [99, -1, 'loud', NaN, null]) {
   const s2 = JSON.parse(JSON.stringify(p));
   s2.settings.callVolume = bad;
   assert.equal(
     E.validateProfile(s2).settings.callVolume,
-    1,
+    0.5,
     '越界的音量必须退回默认，实际保留成了 ' + E.validateProfile(s2).settings.callVolume,
   );
 }
@@ -85,8 +87,8 @@ delete old.settings.musicVolume;
 delete old.settings.callVolume;
 assert(E.validateProfile(old).settings.music);
 assert(E.validateProfile(old).settings.autosave);
-assert.equal(E.validateProfile(old).settings.musicVolume, 1, '老存档的音量应回到默认满音量');
-assert.equal(E.validateProfile(old).settings.callVolume, 1, '老存档的音量应回到默认满音量');
+assert.equal(E.validateProfile(old).settings.musicVolume, 0.5, '老存档的音量应回到默认（滑杆正中）');
+assert.equal(E.validateProfile(old).settings.callVolume, 0.5, '老存档的音量应回到默认（滑杆正中）');
 console.log(
   'PASS six independent compact slots, quota failure, bounds and legacy settings defaults',
 );

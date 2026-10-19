@@ -1232,8 +1232,9 @@
       $('timeSelect').value = profile.settings.timeOfDay || 'dynamic';
       $('musicToggle').checked = profile.settings.music !== false;
       $('autosaveToggle').checked = profile.settings.autosave !== false;
-      $('musicVolume').value = String(Math.round((profile.settings.musicVolume ?? 1) * 100));
-      $('callVolume').value = String(Math.round((profile.settings.callVolume ?? 1) * 100));
+      // 缺字段的老存档回到 0.5 = 滑杆正中（和新建存档一样）
+      $('musicVolume').value = String(Math.round((profile.settings.musicVolume ?? 0.5) * 100));
+      $('callVolume').value = String(Math.round((profile.settings.callVolume ?? 0.5) * 100));
       musicVol.sync();
       callVol.sync();
     };
