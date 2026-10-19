@@ -220,7 +220,7 @@ for (const [type, [name, kind, color]] of Object.entries(EcoData.VISITORS))
           // 斑纹要贴在背上：身子盒子上表面是 0.45 + body/2（p() 会把整个 y 乘一次 bodyY，
           // 所以这里**不能**再乘一次 —— 乘两次的话睡着了会缩过头，斑纹整个埋进身子里，
           // 狸花猫一睡着就没斑纹了）。
-          0.45 + (body / 2) * P.bodyY + 0.006,
+          0.45 + body / 2 + 0.006,
           -0.22 + j * 0.18,
           0.48,
           0.025,
