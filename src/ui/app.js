@@ -264,19 +264,20 @@
             ? ''
             : locked
               ? '🔒 ' + threshold + ' 生态'
-              : (world.level === 5 ? '0' : t.cost) + ' 能量',
+              : (world.level === 5 ? '' : t.cost + ' 能量'),
         ),
       );
       b.onclick = () => chooseTool(k);
       bar.append(b);
     }
-    const back = el('button', 'tool');
+    $('undoBtn')?.remove();
+    const back = el('button', 'tool previousStep');
     back.id = 'undoBtn';
     back.disabled = !undoSnapshot;
     back.title = '撤回上一步（整次拖动），恢复操作前的花园';
-    back.append(el('span', 'toolIcon', '↶'), el('span', 'toolName', '撤回'));
+    back.append(el('span', 'toolIcon', '↶'), el('span', 'toolName', '上一步'));
     back.onclick = undo;
-    bar.append(back);
+    document.querySelector('.toolCaption').before(back);
     text(
       'selectedTool',
       E.TOOL[tool].name + (world.level !== 5 && E.TOOL[tool].cost ? ' · ' + E.TOOL[tool].cost : ''),
@@ -324,6 +325,7 @@
         paintReason = r.reason;
       } else if (batch) {
         strokeCount++;
+        view.dirty = true;
       } else {
         sound(tool === 'water' ? 650 : 450);
         view.draw(performance.now());
@@ -485,7 +487,7 @@
           ? ''
           : locked
             ? '🔒 ' + n + ' 生态'
-            : (world.level === 5 ? 0 : E.TOOL[k].cost) + ' 能量';
+            : (world.level === 5 ? '' : E.TOOL[k].cost + ' 能量');
     }
     text(
       'combo',
@@ -519,6 +521,7 @@
     $('nextChapter').hidden = !world.complete;
     const event = world.events[0];
     $('eventCard').hidden = !event;
+    if ($('eventsEmpty')) $('eventsEmpty').hidden = !!event;
     if (event) {
       text('eventTitle', event.title);
       text(
@@ -936,7 +939,48 @@
   }
   // 观察卡跟着照片走：挂到舞台内，贴右下角
   const sideRight = document.querySelector('.right');
-  if (sideRight) $('stage').append(sideRight);
+  const drawerControls = {};
+  if (sideRight) {
+    $('game').append(sideRight);
+    for (const [key, panel, label] of [
+      ['inspect', sideRight.querySelector('.inspector'), '观察'],
+      ['events', $('eventCard'), '动态'],
+    ]) {
+      const drawer = el('div', 'edgeDrawer');
+      const handle = el('button', 'drawerHandle', '◀');
+      const content = el('div', 'drawerContent');
+      content.id = key + 'DrawerContent';
+      content.hidden = true;
+      handle.type = 'button';
+      handle.setAttribute('aria-controls', content.id);
+      const setOpen = (open) => {
+        content.hidden = !open;
+        handle.textContent = open ? '▶' : '◀';
+        handle.setAttribute('aria-expanded', String(open));
+        handle.setAttribute('aria-label', (open ? '收起' : '展开') + label);
+        handle.title = (open ? '收起' : '展开') + label;
+      };
+      setOpen(false);
+      handle.onclick = () => setOpen(content.hidden);
+      drawerControls[key] = setOpen;
+      content.append(panel);
+      if (key === 'events') {
+        const empty = el('p', 'drawerEmpty', '暂无动态');
+        empty.id = 'eventsEmpty';
+        content.append(empty);
+      }
+      drawer.append(handle, content);
+      sideRight.append(drawer);
+    }
+    sideRight.addEventListener('keydown', (event) => {
+      if (event.key !== 'Escape') return;
+      const drawer = event.target.closest('.edgeDrawer');
+      if (drawer && drawer.querySelector('.drawerHandle').getAttribute('aria-expanded') === 'true') {
+        drawer.querySelector('.drawerHandle').click();
+        drawer.querySelector('.drawerHandle').focus();
+      }
+    });
+  }
   $('residentsBtn').onclick = () => open('residents');
   $('achievementFocus').onclick = () => {
     if (!achievementTarget) return;
@@ -994,12 +1038,7 @@
   $('focusBtn').onclick = () => focus(selected);
   $('eventFocus').onclick = () => world.events[0] && focus(world.events[0].i);
   $('overview').onclick = overview;
-  $('inspectClose').onclick = () => {
-    selected = -1;
-    selectedAnimal = null;
-    view.selected = -1;
-    inspect();
-  };
+  $('inspectClose').onclick = () => drawerControls.inspect(false);
   $('rotateLeft').onclick = () => (view.yaw -= 0.35);
   $('rotateRight').onclick = () => (view.yaw += 0.35);
   $('tiltRange').oninput = (e) => {

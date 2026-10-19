@@ -102,7 +102,11 @@ vm.runInContext(
   host,
 );
 const before = JSON.stringify(host.profile);
-for (const i of ids) host.api.pick(i, true);
+for (const i of ids) {
+  host.view.dirty = false;
+  host.api.pick(i, true);
+  assert.equal(host.view.dirty, true, 'painted cells redraw before stroke ends');
+}
 host.api.strokeEnd();
 assert(host.api.hasUndo());
 assert(ids.every((i) => host.world.cells[i].plant === 'seed'));

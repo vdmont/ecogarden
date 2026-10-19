@@ -247,7 +247,7 @@ globalThis.GardenText = {
     m285: '已自动保存',
     m286: '已保存到当前浏览器。',
     m287: '浏览器未能写入存档，请用「导出存档」保存到文件。',
-    m288: '全岛观察',
+    m288: '',
     m289: '这个事件发生在岛屿边缘，请先选择一个地块',
     m290: '近看 · ',
     m291: '小岛',
@@ -394,7 +394,7 @@ globalThis.GardenText = {
               <p id="levelTip"></p>
               <div id="goals"></div>
               <button id="nextChapter" class="primary" hidden>下一关</button>
-              <div class="unhurried">没有倒计时。理解之后，再出发。</div>
+              <div class="unhurried"></div>
             </section>
             <section class="panel controls">
               <div class="resource">
@@ -421,7 +421,7 @@ globalThis.GardenText = {
             <canvas id="garden" aria-label="点按或拖动涂抹放置，右键拖动旋转的浮岛"></canvas>
             <div id="worldLabels" aria-hidden="true"></div>
             <div class="viewTop">
-              <span id="viewMode">全岛观察</span>
+              <span id="viewMode"></span>
               <button id="residentsBtn">居民 <span id="residentSummary">0 种 · 0 只</span></button>
               <button id="overview">回到全岛</button>
               <button id="pausedBadge" hidden>Ⅱ 已暂停 · 点此继续</button>
@@ -431,7 +431,7 @@ globalThis.GardenText = {
           </section>
           <aside class="side right">
             <section class="panel inspector">
-              <div class="eyebrow">指尖上的生态</div>
+              <div class="eyebrow"></div>
               <div class="inspectHead">
                 <h2 id="cellTitle">先选一个工具</h2>
                 <button id="inspectClose" aria-label="收起地块详情">收起</button>
