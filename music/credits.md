@@ -56,7 +56,6 @@
 - “Alpaca noises” by gtg777 — https://freesound.org/people/gtg777/sounds/623809/
 - “Camelids - Alpaca; High Moan, Take 2” by TheKingOfGeeks360 — https://freesound.org/people/TheKingOfGeeks360/sounds/868310/
 - “Rabbit oinks and squeaks” by kessir — https://freesound.org/people/kessir/sounds/372075/
-- “Deer_Bark_5_s” by ferventtorpor — https://freesound.org/people/ferventtorpor/sounds/696776/
 - “Fox Screams” by Soundburst — https://freesound.org/people/Soundburst/sounds/634005/
 - “Fox Mating Call” by Bpianoholic — https://freesound.org/people/Bpianoholic/sounds/511000/
 - “Red_Squirrel_chatter.wav” by philberts — https://freesound.org/people/philberts/sounds/111393/
@@ -97,7 +96,6 @@
 ### CC BY 4.0
 
 - “2019209_flamingos.wav” by dobroide — https://freesound.org/s/496891/
-- “Black-crowned Night Heron — nocturnal flight call” by Matthias Keller — https://xeno-canto.org/1160373
 
 ### CC BY-SA 4.0
 
@@ -105,17 +103,15 @@
 
 ### CC0 1.0
 
-- “capybara（家养水豚现场声）” by Капыбара_12345 — https://freesound.org/people/%D0%9A%D0%B0%D0%BF%D1%8B%D0%B1%D0%B0%D1%80%D0%B0_12345/sounds/849980/
 - “Squeaking Guinea Pigs” by Breviceps — https://freesound.org/people/Breviceps/sounds/583078/ （水豚的替代：豚鼠与水豚同科，听感几乎一样）
 - “San Bernard dog bark” by Primitv094 — https://freesound.org/people/Primitv094/sounds/784914/
 - “Dog Bark” by aunrea — https://freesound.org/people/aunrea/sounds/495658/
 - “Greater Flamingo — flight calls” by Grégoire Chauvot — https://xeno-canto.org/797505
-- “Green frog, croaking.wav” by SpliceSound — https://freesound.org/people/SpliceSound/sounds/188195/
 - “frog croaking field recording” by Garuda1982 — https://freesound.org/people/Garuda1982/sounds/428536/
 - “Long-tailed Tit — call” by Lionel Triboulin — https://xeno-canto.org/1186424
 - “Black-crowned Night Heron — nocturnal flight call” by Philippe Grange — https://xeno-canto.org/1186284
 - “Red Squirrel chatter” by philberts — https://freesound.org/people/philberts/sounds/111393/
-- “Squirrel, cry call / squeal” by TRP — https://freesound.org/people/TRP/sounds/717582/
+- “Squirrel, cry call / squeal (Toronto backyard)” by TRP — https://freesound.org/people/TRP/sounds/717582/
 - “Squirrel, Grey alarm calls” by genghisattenborough — https://freesound.org/people/genghisattenborough/sounds/744596/
 - “cat meow” by tuberatanka — https://freesound.org/people/tuberatanka/sounds/110011/
 - “Cat Meows 7x” by Kinoton — https://freesound.org/people/Kinoton/sounds/584895/
