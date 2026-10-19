@@ -42,6 +42,7 @@
     last = 0,
     lastUI = 0,
     lastSave = 0,
+    eating = new Set(),
     audio;
   const names = {
     soil: T.m276,
@@ -566,6 +567,7 @@
       achievementTarget = locateAchievement(primary);
       $('achievementFocus').hidden = !achievementTarget;
       $('achievementToast').classList.add('show');
+      GardenAudio.ui('achievement', profile.settings);
       clearTimeout(achTimer);
       achTimer = setTimeout(() => $('achievementToast').classList.remove('show'), 10000);
       if (newIds.includes('drunk')) renderTools();
@@ -857,6 +859,10 @@
     const r = E.pet(world, selected, profile);
     if (r.ok) {
       GardenAudio.pet(r.type, profile.settings);
+      // 爱心在渲染层是「摸摸之后冒出来 2.2 秒」（scene.js 里 state.heart = t + 2200），
+      // 所以声音正好放在这一次摸摸上。摸摸自己已经有动物的叫声了，
+      // 这里只补那一层"被喜欢了"的暖音。
+      GardenAudio.ui('heart', profile.settings);
       toast(r.type === 'alpaca' ? T.m392 : T.m393);
       update();
       save();
@@ -1242,6 +1248,23 @@
     };
     $('importSaveBtn').onclick = () => $('importSave').click();
     $('enterGarden').addEventListener('click', () => GardenAudio.unlock(profile.settings));
+    // 点任何按钮都给一声短促的「哒」，让每次操作都有落点。
+    //
+    // 用**委托**挂在 document 上而不是给每个按钮单独挂：按钮大多是运行时拼出来的
+    // （工具栏、菜单格子、成就卡片都是），逐个挂迟早会漏。
+    //
+    // 排除 petBtn：它自己已经有动物的叫声 + 爱心暖音，再叠一声「哒」会糊。
+    // 排除带 data-noClick 的：滑杆这类控件需要排除。
+    document.addEventListener(
+      'click',
+      (e) => {
+        const b = e.target && e.target.closest && e.target.closest('button');
+        if (!b || b.id === 'petBtn') return;
+        if (b.dataset && b.dataset.noClick) return;
+        GardenAudio.ui('click', profile.settings);
+      },
+      true,
+    );
     prefs();
   }
   function lockFooterHeight() {
@@ -1275,6 +1298,21 @@
     } else {
       acc = 0;
       simAcc = 0;
+    }
+    // 吃东西：模拟层只在动物开始嚼的那一刻把 a.act 置成 'eat'（core.js），
+    // 这里靠"上一帧在嚼、这一帧不在"来认新的一次开场。
+    // 同物种可能同时有好几只开嚼，所以 audio.js 里对 eat 设了 1.4 秒冷却，
+    // 不会变成一窝蜂。
+    if (world && !paused) {
+      const now = new Set();
+      for (let i = 0; i < world.cells.length; i++) {
+        const a = world.cells[i] && world.cells[i].animal;
+        if (a && a.act === 'eat') {
+          now.add(i);
+          if (!eating.has(i)) GardenAudio.ui('eat', profile.settings);
+        }
+      }
+      eating = now;
     }
     if (!document.hidden) view.render(t);
     journey.update();

@@ -762,8 +762,10 @@ const CALLS_TRIM = dbToGain(TUNE.callsDb, 'callsDb');
     return w;
   }
 
-  // 带通噪声：气流、摩擦、沙沙
-  function noise(t, d, v, lo, hi, q) {
+  // 带通噪声：气流、摩擦、沙沙。
+  // atk 是起音时间（秒）。默认 0.008 保持老调用的音色不变；
+  // 咀嚼那种要"钝"的瞬态会传更长的起音，否则听起来像继电器咔哒。
+  function noise(t, d, v, lo, hi, q, atk) {
     const n = Math.max(64, Math.ceil(ctx.sampleRate * d) + 64);
     const buf = ctx.createBuffer(1, n, ctx.sampleRate),
       ch = buf.getChannelData(0);
@@ -772,7 +774,7 @@ const CALLS_TRIM = dbToGain(TUNE.callsDb, 'callsDb');
     src.buffer = buf;
     const f = bp(Math.sqrt(lo * hi), q || 1),
       g = ctx.createGain();
-    gnode(g, t, d, v, 0.008);
+    gnode(g, t, d, v, atk === undefined ? 0.008 : atk);
     src.connect(f);
     f.connect(g);
     g.connect(sink());
@@ -1984,6 +1986,216 @@ const CALLS_TRIM = dbToGain(TUNE.callsDb, 'callsDb');
     } catch {}
   }
 
+  // ══════════════════════ 界面反馈音（实时合成，没有录音）══════════════════════
+  //
+  // 四种：点一下按钮 / 达成新成就 / 冒出爱心 / 吃东西。
+  // 为什么是合成的而不是去找录音：这些都是几毫秒到半秒的功能音，
+  // 素材库里找不到「刚好是这一下」的现成片段，而且找来的录音还要按规矩
+  // 署名、对许可（-BY 的还得说明改过）。合成没有许可问题。
+  //
+  // 走 ambientBus：和「动物叫声与音效」那个开关、「动物音量」那根滑杆
+  // 管的是同一条路。所以关掉音效它们就一起没了，拖滑杆也会跟着变。
+  // 不走物种总线：它们不属于任何一只动物，不该被远近/锁定加权。
+
+  // 上一次放各类音是什么时候。防连点：拖滑杆、连着戳按钮时，
+  // 每一下都响会变成机关枪，而机关枪是"吵"不是"有参与感"。
+  // eat 的冷却最长——场上可能同时有好几只动物开始嚼，每只都响就成一片了。
+  const lastAt = {};
+  const UI_MIN_GAP = { click: 0.045, achievement: 0.8, heart: 0.25, eat: 1.4 };
+
+  // 一个不带泛音的正弦短音。上面的 fm() 至少带一层调制，这里要的是干净的
+  // 「哒」，调制会把它变成电子味。
+  function blip(f, t, d, v, type, atk) {
+    const o = ctx.createOscillator(),
+      g = ctx.createGain();
+    o.type = type || 'sine';
+    o.frequency.setValueAtTime(f, t);
+    gnode(g, t, d, v, atk === undefined ? 0.006 : atk);
+    o.connect(g);
+    g.connect(sink());
+    o.start(t);
+    o.stop(t + d + 0.02);
+    o.onended = () => {
+      o.disconnect();
+      g.disconnect();
+    };
+  }
+
+  // 木槌音：柔暖的、有芯的「叮」，用来代替纯正弦。
+  //
+  // 为什么不用纯正弦：第一版四种音全是正弦，去听了一遍被判成
+  // 「惨白的手机通知」「临床感、毫无感情」「数字静电」。
+  // 根因是纯正弦只有基频、没有泛音——而现实里让人覺得"暖"的东西
+  // （木槌、钟、拨弦）都有谐波。这里用 waveFor(roll) 铺一串 1/n^roll 的谐波，
+  // roll 越大越暗越闷；再用一根会往下走的低通表达「高次分音先死」，
+  // 那正是弦/槌被击打后音色的变化。
+  //
+  // ⚠ 包络是**两段**的，这是听审逼出来的：原来只有一段（从峰值一路指数掉到
+  // −80 dB），结果 0.2 秒就听不见了，被判「干、没空间、一下就没」。
+  // 真实的被敲物就是「敲下去亮而短、然后留一条慢慢化掉的尾巴」。
+  function mallet(f, t, d, v, opts) {
+    const o = opts || {};
+    const osc = ctx.createOscillator(),
+      fl = ctx.createBiquadFilter(),
+      g = ctx.createGain();
+    osc.setPeriodicWave(waveFor(o.roll || 2.2, false));
+    osc.frequency.setValueAtTime(f, t);
+    fl.type = 'lowpass';
+    fl.Q.value = 0.5;
+    // 低通要**下得快**。原来是从 f*8 慢慢滑到 f*1.5、用掉整段时长的 95%，
+    // 结果在 15% 那个点还停在 4.8 kHz——听审连着四轮都说"尾巴又薄又尖、
+    // 像玻璃在响"，根子就在这儿：泛音还没死，基频先没了。
+    // 现在改成前 35% 就压到 f*1.25（≈1.2 kHz 以内）然后保持。
+    fl.frequency.setValueAtTime(Math.min(12000, f * 5), t);
+    fl.frequency.exponentialRampToValueAtTime(Math.max(220, f * 1.25), t + d * 0.35);
+    const atk = o.atk === undefined ? 0.012 : o.atk;
+    const g2 = g.gain;
+    g2.setValueAtTime(0, t);
+    g2.linearRampToValueAtTime(v, t + atk);
+    // 三段，而不是两段。第三轮听审的原话："the volume drops off a cliff…
+    // only a thin, ghostly high-frequency metallic ring lingers"。
+    // 两段时第一段 16% 的衰减太陡，基频先死、泛音还在响，于是低中频（200–500 Hz）
+    // 全空，只剩一条尖细的余响。现在改成 45% → 10% → 0，让木头的那部分
+    // 能一路撑进尾巴里。
+    g2.exponentialRampToValueAtTime(v * 0.45, t + atk + d * 0.3);
+    g2.exponentialRampToValueAtTime(v * 0.1, t + d * 0.85);
+    g2.exponentialRampToValueAtTime(0.0006, t + d);
+    osc.connect(fl);
+    fl.connect(g);
+    g.connect(sink());
+    osc.start(t);
+    osc.stop(t + d + 0.02);
+    osc.onended = () => {
+      osc.disconnect();
+      fl.disconnect();
+      g.disconnect();
+    };
+    // 木头敲木头的那一下。只给「成就」用——「爱心」要的是软，不要敲击感
+    // （听审原话："Remove any sharp transient or clicking at the very start"）。
+    // 频带也从原来的 f*2–f*7 往下挪：那个高频尖峰被骂"clicky、边缘发刺耳"。
+    if (o.strike) noise(t, 0.03, v * 0.3, f * 1.2, f * 3.5, 0.9, 0.006);
+  }
+
+  // 界面音专属的小房间。合成的音没有录音的"空间"，干着放会被听成
+  // "从真空里冒出来的电子音"——第二轮听审的原话就是"no room, no air"。
+  // 所以这里给它一点点短混响：0.55 秒、衰减很陡，像一间小木屋。
+  let uiBus = null;
+  function ensureUiBus(dest) {
+    if (uiBus) return uiBus;
+    uiBus = ctx.createGain();
+    uiBus.gain.value = 1;
+    uiBus.connect(dest); // 干声
+    const len = Math.floor(ctx.sampleRate * 0.75);
+    const ir = ctx.createBuffer(2, len, ctx.sampleRate);
+    for (let c = 0; c < 2; c++) {
+      const d = ir.getChannelData(c);
+      for (let i = 0; i < len; i++)
+        d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / len, 2.8);
+    }
+    const cv = ctx.createConvolver();
+    cv.buffer = ir;
+    const send = ctx.createGain();
+    send.gain.value = 0.3;
+    const wet = ctx.createGain();
+    wet.gain.value = 0.6;
+    uiBus.connect(send);
+    send.connect(cv);
+    cv.connect(wet);
+    wet.connect(dest);
+    return uiBus;
+  }
+
+  const UI_SOUNDS = {
+    // 点一下：30 毫秒的高频"咔" + 55 毫秒的"哒"，总共 70 毫秒。
+    // 咔给参与感，哒给落点——只有咔会像鼠标划过，只有哒会像老式按键。
+    // 去听的结果：温暖、有木头感的实打实按键声，不刺耳。这一条过了。
+    click(t) {
+      const jitter = 0.94 + rnd() * 0.12;
+      noise(t, 0.03, 0.1, 2000, 7000, 0.9);
+      blip(760 * jitter, t, 0.055, 0.15, 'sine', 0.004);
+    },
+    // 达成成就：第一版是三个纯正音 + 一层高频亮片，被判成"手机通知、刺耳、
+    // 音符是孤立的测试音"。换成木槌三连音 + 低音根撑底，音符之间留长尾互相重叠，
+    // 每一下都带木头敲击的瞬态。亮片拿掉——那层高频正是刺耳的来源。
+    achievement(t) {
+      // 低音根给足——第三轮听审说 200–500 Hz「almost nothing」，
+      // 而那一段整首只有 C4 的基频在，所以这里把它从 0.10 提到 0.17 并拖长。
+      mallet(261.63, t, 1.6, 0.077, { roll: 2.0, atk: 0.02, strike: true });
+      mallet(523.25, t, 1.4, 0.059, { roll: 2.2, atk: 0.018, strike: true });
+      mallet(659.25, t + 0.095, 1.4, 0.054, { roll: 2.2, atk: 0.018, strike: true });
+      mallet(783.99, t + 0.19, 1.7, 0.05, { roll: 2.3, atk: 0.02, strike: true });
+    },
+    // 爱心：第一版被判"临床、毫无感情、起音突兀"，第二轮改完还是被判
+    // "像界面确认音"。这一版针对它说的三条：
+    //   ① 起音再放慢到 0.1 秒以上，让它"开出来"而不是"打开就有"；
+    //   ② 不加敲击瞬态（那一版专门被打回来过）；
+    //   ③ 每一下拖 1 秒以上并让它们重叠，低通慢慢下沉，尾巴化得掉而不是被切掉。
+    // 爱心：第三轮听审已经判它「温暖柔和、起音够轻、尾巴自然化掉」，
+    // 只剩一句"两个上行音仍带一点解锁提示的味道"。按它给的那条建议
+    // （"a very tight, rolled dyad — two notes played almost at once"）
+    // 把 0.16 / 0.32 秒的间隔收紧成几乎同时，像一次轻拨。
+    // 第四轮听审判它通过了，唯一的余留意见是起音还带一点"玻璃按钮"的味道，
+    // 所以起音又放慢了一档。
+    // 第四轮判它通过，第五轮又抓出一处：前两个音的起音还有「金属玻璃感」。
+    // 原因是 roll 给到了 1.9——那是**亮**的方向（谐波多），而这两个音本身很低
+    // （262/392 Hz），二三次谐波正好落在低通还没合拢的位置，于是起音"叮"的一下。
+    // 按它给的处方（换成更纯的波形）把 roll 提到 2.7–2.9，接近纯正弦但留一点暖。
+    heart(t) {
+      mallet(261.63, t, 1.0, 0.068, { roll: 2.7, atk: 0.14 });
+      mallet(392.0, t + 0.055, 1.2, 0.056, { roll: 2.7, atk: 0.16 });
+      mallet(587.33, t + 0.12, 1.4, 0.03, { roll: 2.9, atk: 0.19 });
+      // 一点点很闷的气声，纯噪声没有音高，跟着音高一起收掉才不会打架
+      noise(t + 0.12, 0.6, 0.0075, 650, 1900, 0.6, 0.14);
+    },
+    // 吃东西：第一版被判"数字静电、盖革计数器，太干太快"。
+    // 真实咀嚼的关键是①每口 0.3 秒以上（原来是 0.13 秒）②咬下去那一下要钝
+    // ③后面跟一小段"湿"的尾巴 ④三口之间不能一模一样。
+    eat(t) {
+      const chews = [
+        { at: 0, f: 1500, v: 0.1 },
+        { at: 0.34, f: 1250, v: 0.085 },
+        { at: 0.67, f: 1650, v: 0.075 },
+      ];
+      for (const c of chews) {
+        const t0 = t + c.at;
+        // 咬：钝一点的瞬态（起音 0.02，不是原来的 0.008）
+        noise(t0, 0.06, c.v, c.f * 0.5, c.f * 1.6, 1.0, 0.02);
+        // 湿：一小段低通的闷响跟着，模拟腮帮子
+        noise(t0 + 0.05, 0.15, c.v * 0.42, 260, 700, 0.8, 0.05);
+        // 每口一个轻轻的"合上嘴"
+        blip(112 + c.f / 90, t0, 0.11, 0.055, 'sine', 0.014);
+      }
+    },
+  };
+
+  /**
+   * 放一个界面反馈音。
+   * @param {'click'|'achievement'|'heart'|'eat'} kind
+   */
+  function ui(kind, s) {
+    unlock(s);
+    if (!ctx || s.sound === false) return;
+    const fn = UI_SOUNDS[kind];
+    if (!fn) return;
+    const now = ctx.currentTime;
+    const gap = UI_MIN_GAP[kind] || 0;
+    if (gap && lastAt[kind] !== undefined && now - lastAt[kind] < gap) return;
+    lastAt[kind] = now;
+    const saved = synthOut;
+    // 先进 uiBus：干声与湿声都走 ambientBus（跟着音效开关与动物音量滑杆）。
+    // dest 显式传进来，不靠 synthOut 反推——反推会踩到「赋值还没发生」的坑，
+    // 结果混响接到 master 上，音效开关就管不到它了。
+    try {
+      synthOut = ensureUiBus(ambientBus || master);
+      fn(ctx.currentTime + 0.01);
+    } catch (e) {
+      // 界面音挂掉绝不能把游戏点坏了
+      if (typeof console !== 'undefined') console.warn('[audio] 界面音 ' + kind + ' 失败', e);
+    } finally {
+      synthOut = saved;
+    }
+  }
+
   function pet(type, s) {
     unlock(s);
     if (!ctx || s.sound === false) return;
@@ -2030,6 +2242,7 @@ const CALLS_TRIM = dbToGain(TUNE.callsDb, 'callsDb');
     unlock,
     configure,
     pet,
+    ui,
     setMix,
     stopMixLoop,
     callEvents,
@@ -2098,6 +2311,9 @@ const CALLS_TRIM = dbToGain(TUNE.callsDb, 'callsDb');
       await Promise.all(paths.map((p) => loadBuffer(p).catch(() => null)));
       return paths;
     },
+    // 界面反馈音的**函数源码**。诊断/试听用：导出器在离线渲染里原样重建这几个函数，
+    // 这样试听的就是游戏真正会发的那段，而不是抄一份会跑偏的副本。
+    _uiSource: (kind) => (UI_SOUNDS[kind] ? UI_SOUNDS[kind].toString() : null),
     // 调试用：读当前混音状态
     _mix: () => ({
       zoomT,
