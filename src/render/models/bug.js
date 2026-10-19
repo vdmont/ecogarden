@@ -30,7 +30,7 @@ GardenModels.registry['bug'] = function ({ a, part, phase, t, i }) {
   // 眼睛跟着脑袋一起沉、一起转、一起歪，睡着时眯起来。
   // 位置在脑袋这一节的前脸（x=0.30）：放在 0.24 的话睡觉时整个埋进脑袋里
   // （脑袋缩到 0.172 宽、位置也跟着压下去），看上去就是幼虫没有眼睛。
-  for (let dz of [0.08, -0.08]) HEAD.drawEye(0.24, 0.36, dz, 0.055, 0.055, 0.045, 0x373b32);
+  for (let dz of [0.08, -0.08]) HEAD.drawEye(0.3, 0.3, dz, 0.055, 0.055, 0.045, 0x373b32);
   for (let k = -1; k <= 1; k++)
     for (let side of [-1, 1])
       part(
