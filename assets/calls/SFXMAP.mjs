@@ -366,6 +366,12 @@
                 "title": "Alpaca noises",
                 "source": "Freesound",
                 "sourceUrl": "https://freesound.org/people/gtg777/sounds/623809/",
+                "usedBy": [
+                      "alpaca"
+                ],
+                "labels": [
+                      "羊驼"
+                ],
                 "dur": 2.5,
                 "lufs": -18.56,
                 "truePeak": -3.2,
@@ -379,6 +385,12 @@
                 "title": "Camelids - Alpaca; High Moan, Take 2",
                 "source": "Freesound",
                 "sourceUrl": "https://freesound.org/people/TheKingOfGeeks360/sounds/868310/",
+                "usedBy": [
+                      "alpaca"
+                ],
+                "labels": [
+                      "羊驼"
+                ],
                 "dur": 0.54,
                 "lufs": -18,
                 "truePeak": -4.91,
@@ -392,6 +404,12 @@
                 "title": "Bumblebee",
                 "source": "Freesound",
                 "sourceUrl": "https://freesound.org/people/Breviceps/sounds/466795/",
+                "usedBy": [
+                      "bee"
+                ],
+                "labels": [
+                      "蜜蜂"
+                ],
                 "dur": 2.78,
                 "lufs": -26.06,
                 "truePeak": -7.51,
@@ -405,6 +423,12 @@
                 "title": "20100424.bee.wav",
                 "source": "Freesound",
                 "sourceUrl": "https://freesound.org/people/dobroide/sounds/95817/",
+                "usedBy": [
+                      "bee"
+                ],
+                "labels": [
+                      "蜜蜂"
+                ],
                 "dur": 2.78,
                 "lufs": -25.69,
                 "truePeak": -9.93,
@@ -418,6 +442,12 @@
                 "title": "PALM BIRD CHIRP 001.wav",
                 "source": "Freesound",
                 "sourceUrl": "https://freesound.org/people/sandyrb/sounds/156373/",
+                "usedBy": [
+                      "bird"
+                ],
+                "labels": [
+                      "飞鸟"
+                ],
                 "dur": 1.208,
                 "lufs": -18.19,
                 "truePeak": -8.78,
@@ -431,6 +461,12 @@
                 "title": "BIRDS_CHIRP_FEW_001.wav",
                 "source": "Freesound",
                 "sourceUrl": "https://freesound.org/people/JoelAudio/sounds/133896/",
+                "usedBy": [
+                      "bird"
+                ],
+                "labels": [
+                      "飞鸟"
+                ],
                 "dur": 2.2,
                 "lufs": -18.01,
                 "truePeak": -6.13,
@@ -444,6 +480,12 @@
                 "title": "Songbird Chirp",
                 "source": "SFXMint",
                 "sourceUrl": "https://sfxmint.com/sets/animal-calls",
+                "usedBy": [
+                      "bird"
+                ],
+                "labels": [
+                      "飞鸟"
+                ],
                 "dur": 2,
                 "lufs": -18.94,
                 "truePeak": -3.2,
@@ -457,6 +499,12 @@
                 "title": "Wild Boar / Grunting / Squealing",
                 "source": "Freesound",
                 "sourceUrl": "https://freesound.org/people/TheVeoMammoth11/sounds/492654/",
+                "usedBy": [
+                      "boar"
+                ],
+                "labels": [
+                      "野猪"
+                ],
                 "dur": 2.5,
                 "lufs": -19.03,
                 "truePeak": -3.2,
@@ -470,6 +518,12 @@
                 "title": "wild pig 008.wav",
                 "source": "Freesound",
                 "sourceUrl": "https://freesound.org/people/yottasounds/sounds/176731/",
+                "usedBy": [
+                      "boar"
+                ],
+                "labels": [
+                      "野猪"
+                ],
                 "dur": 0.789,
                 "lufs": -18.98,
                 "truePeak": -3.2,
@@ -483,6 +537,12 @@
                 "title": "wild pig 004.wav",
                 "source": "Freesound",
                 "sourceUrl": "https://freesound.org/people/yottasounds/sounds/176732/",
+                "usedBy": [
+                      "boar"
+                ],
+                "labels": [
+                      "野猪"
+                ],
                 "dur": 1.31,
                 "lufs": -20.56,
                 "truePeak": -3.2,
@@ -496,6 +556,12 @@
                 "title": "Sound of Beating Wings ",
                 "source": "Freesound",
                 "sourceUrl": "https://freesound.org/people/Uzbazur/sounds/257080/",
+                "usedBy": [
+                      "butterfly"
+                ],
+                "labels": [
+                      "蝴蝶"
+                ],
                 "dur": 2,
                 "lufs": -24.46,
                 "truePeak": -3.2,
@@ -509,6 +575,12 @@
                 "title": "Butterfly flying loop",
                 "source": "Freesound",
                 "sourceUrl": "https://freesound.org/people/fury12/sounds/496719/",
+                "usedBy": [
+                      "butterfly"
+                ],
+                "labels": [
+                      "蝴蝶"
+                ],
                 "dur": 2,
                 "lufs": -25.48,
                 "truePeak": -3.2,
@@ -522,6 +594,12 @@
                 "title": "Light Wing Flap",
                 "source": "Freesound",
                 "sourceUrl": "https://freesound.org/people/TurboFool/sounds/561009/",
+                "usedBy": [
+                      "butterfly"
+                ],
+                "labels": [
+                      "蝴蝶"
+                ],
                 "dur": 2,
                 "lufs": -24.11,
                 "truePeak": -5.84,
@@ -535,6 +613,12 @@
                 "title": "Capybara",
                 "source": "iNaturalist",
                 "sourceUrl": "https://www.inaturalist.org/observations/90187694",
+                "usedBy": [
+                      "capybara"
+                ],
+                "labels": [
+                      "卡皮巴拉"
+                ],
                 "dur": 2,
                 "lufs": -18.02,
                 "truePeak": -6.72,
@@ -548,6 +632,12 @@
                 "title": "Capivara",
                 "source": "iNaturalist",
                 "sourceUrl": "https://www.inaturalist.org/observations/39058843",
+                "usedBy": [
+                      "capybara"
+                ],
+                "labels": [
+                      "卡皮巴拉"
+                ],
                 "dur": 1.9,
                 "lufs": -17.98,
                 "truePeak": -3.77,
@@ -561,6 +651,12 @@
                 "title": "capybara（家养水豚现场声）",
                 "source": "Freesound",
                 "sourceUrl": "https://freesound.org/people/%D0%9A%D0%B0%D0%BF%D1%8B%D0%B1%D0%B0%D1%80%D0%B0_12345/sounds/849980/",
+                "usedBy": [
+                      "capybara"
+                ],
+                "labels": [
+                      "卡皮巴拉"
+                ],
                 "dur": 5.5,
                 "lufs": -16.8,
                 "truePeak": -3.03,
@@ -574,6 +670,12 @@
                 "title": "Squeaking Guinea Pigs",
                 "source": "Freesound",
                 "sourceUrl": "https://freesound.org/people/Breviceps/sounds/583078/",
+                "usedBy": [
+                      "capybara"
+                ],
+                "labels": [
+                      "卡皮巴拉"
+                ],
                 "dur": 12,
                 "lufs": -14.08,
                 "truePeak": -1.76,
@@ -587,6 +689,12 @@
                 "title": "cat meow",
                 "source": "Freesound",
                 "sourceUrl": "https://freesound.org/people/tuberatanka/sounds/110011/",
+                "usedBy": [
+                      "abyssinian"
+                ],
+                "labels": [
+                      "猫"
+                ],
                 "dur": 1.5,
                 "lufs": -18.03,
                 "truePeak": -10.44,
@@ -600,6 +708,12 @@
                 "title": "cat meow short",
                 "source": "Freesound",
                 "sourceUrl": "https://freesound.org/people/skymary/sounds/412017/",
+                "usedBy": [
+                      "ragdoll"
+                ],
+                "labels": [
+                      "猫"
+                ],
                 "dur": 1.5,
                 "lufs": -18.04,
                 "truePeak": -4.48,
@@ -613,6 +727,12 @@
                 "title": "Cat trilling",
                 "source": "Freesound",
                 "sourceUrl": "https://freesound.org/people/jsbarrett/sounds/200336/",
+                "usedBy": [
+                      "tabby"
+                ],
+                "labels": [
+                      "猫"
+                ],
                 "dur": 1.5,
                 "lufs": -18.65,
                 "truePeak": -3.2,
@@ -626,6 +746,12 @@
                 "title": "Cat Purr.mp3",
                 "source": "Freesound",
                 "sourceUrl": "https://freesound.org/people/soundmary/sounds/194926/",
+                "usedBy": [
+                      "orangeCat"
+                ],
+                "labels": [
+                      "猫"
+                ],
                 "dur": 1.5,
                 "lufs": -19.12,
                 "truePeak": -3.2,
@@ -639,6 +765,15 @@
                 "title": "cat meow",
                 "source": "Freesound",
                 "sourceUrl": "https://freesound.org/people/tuberatanka/sounds/110011/",
+                "usedBy": [
+                      "abyssinian",
+                      "ragdoll",
+                      "tabby",
+                      "orangeCat"
+                ],
+                "labels": [
+                      "猫"
+                ],
                 "dur": 1.54,
                 "lufs": -16.17,
                 "truePeak": -10.69,
@@ -652,6 +787,15 @@
                 "title": "Cat Meows 7x",
                 "source": "Freesound",
                 "sourceUrl": "https://freesound.org/people/Kinoton/sounds/584895/",
+                "usedBy": [
+                      "abyssinian",
+                      "ragdoll",
+                      "tabby",
+                      "orangeCat"
+                ],
+                "labels": [
+                      "猫"
+                ],
                 "dur": 12,
                 "lufs": -19.14,
                 "truePeak": -6.02,
@@ -665,6 +809,12 @@
                 "title": "Chicken clucking",
                 "source": "Freesound",
                 "sourceUrl": "https://freesound.org/people/Breviceps/sounds/456803/",
+                "usedBy": [
+                      "chicken"
+                ],
+                "labels": [
+                      "小鸡"
+                ],
                 "dur": 2.2,
                 "lufs": -17.97,
                 "truePeak": -7.1,
@@ -678,6 +828,12 @@
                 "title": "Chicken Clucking.wav",
                 "source": "Freesound",
                 "sourceUrl": "https://freesound.org/people/Angel_Perez_Grandi/sounds/49805/",
+                "usedBy": [
+                      "chicken"
+                ],
+                "labels": [
+                      "小鸡"
+                ],
                 "dur": 2.2,
                 "lufs": -17.99,
                 "truePeak": -3.47,
@@ -691,6 +847,12 @@
                 "title": "Chicks very young.wav",
                 "source": "Freesound",
                 "sourceUrl": "https://freesound.org/people/AGFX/sounds/43380/",
+                "usedBy": [
+                      "chicken"
+                ],
+                "labels": [
+                      "小鸡"
+                ],
                 "dur": 2.2,
                 "lufs": -18.49,
                 "truePeak": -3.2,
@@ -704,6 +866,12 @@
                 "title": "Hen Cluck 02",
                 "source": "SFXMint",
                 "sourceUrl": "https://sfxmint.com/sets/animal-calls",
+                "usedBy": [
+                      "chicken"
+                ],
+                "labels": [
+                      "小鸡"
+                ],
                 "dur": 2.2,
                 "lufs": -20.62,
                 "truePeak": -3.2,
@@ -717,6 +885,12 @@
                 "title": "Cricket chirping",
                 "source": "Freesound",
                 "sourceUrl": "https://freesound.org/people/GB01/sounds/530477/",
+                "usedBy": [
+                      "bug"
+                ],
+                "labels": [
+                      "蟋蟀/幼虫"
+                ],
                 "dur": 2.78,
                 "lufs": -26.08,
                 "truePeak": -12.7,
@@ -730,6 +904,12 @@
                 "title": "cricket chirping (slow)",
                 "source": "Freesound",
                 "sourceUrl": "https://freesound.org/people/_sinny_/sounds/822935/",
+                "usedBy": [
+                      "bug"
+                ],
+                "labels": [
+                      "蟋蟀/幼虫"
+                ],
                 "dur": 2.61,
                 "lufs": -26.06,
                 "truePeak": -11.09,
@@ -743,6 +923,12 @@
                 "title": "Cricket singing (close recording)",
                 "source": "Freesound",
                 "sourceUrl": "https://freesound.org/people/felix.blume/sounds/476082/",
+                "usedBy": [
+                      "bug"
+                ],
+                "labels": [
+                      "蟋蟀/幼虫"
+                ],
                 "dur": 2.78,
                 "lufs": -27.79,
                 "truePeak": -3.2,
@@ -756,6 +942,12 @@
                 "title": "dog tripple bark",
                 "source": "Freesound",
                 "sourceUrl": "https://freesound.org/people/crazymonke9/sounds/418108/",
+                "usedBy": [
+                      "borderCollie"
+                ],
+                "labels": [
+                      "狗"
+                ],
                 "dur": 0.8,
                 "lufs": -18.81,
                 "truePeak": -3.2,
@@ -769,6 +961,12 @@
                 "title": "Dog whining sound",
                 "source": "Freesound",
                 "sourceUrl": "https://freesound.org/people/Piink_Aces/sounds/257824/",
+                "usedBy": [
+                      "golden"
+                ],
+                "labels": [
+                      "狗"
+                ],
                 "dur": 0.8,
                 "lufs": -18.09,
                 "truePeak": -7.54,
@@ -782,6 +980,12 @@
                 "title": "Dog Bark 25",
                 "source": "SFXMint",
                 "sourceUrl": "https://sfxmint.com/sets/animal-calls",
+                "usedBy": [
+                      "borderCollie"
+                ],
+                "labels": [
+                      "狗"
+                ],
                 "dur": 0.8,
                 "lufs": -18.48,
                 "truePeak": -3.2,
@@ -795,6 +999,12 @@
                 "title": "Dog Bark",
                 "source": "Freesound",
                 "sourceUrl": "https://freesound.org/people/aunrea/sounds/495658/",
+                "usedBy": [
+                      "samoyed"
+                ],
+                "labels": [
+                      "狗"
+                ],
                 "dur": 3.97,
                 "lufs": -13.14,
                 "truePeak": -3.68,
@@ -808,6 +1018,12 @@
                 "title": "San Bernard dog bark",
                 "source": "Freesound",
                 "sourceUrl": "https://freesound.org/people/Primitv094/sounds/784914/",
+                "usedBy": [
+                      "samoyed"
+                ],
+                "labels": [
+                      "狗"
+                ],
                 "dur": 4.03,
                 "lufs": -14,
                 "truePeak": -5.77,
@@ -821,6 +1037,14 @@
                 "title": "DRAGON_ROAR.wav",
                 "source": "Freesound",
                 "sourceUrl": "https://freesound.org/people/JoelAudio/sounds/85568/",
+                "usedBy": [
+                      "dragon",
+                      "pixiu",
+                      "baize"
+                ],
+                "labels": [
+                      "龙/貔貅/白泽"
+                ],
                 "dur": 2.47,
                 "lufs": -18.5,
                 "truePeak": -3.2,
@@ -834,6 +1058,13 @@
                 "title": "Dragon Roar",
                 "source": "Freesound",
                 "sourceUrl": "https://freesound.org/people/qubodup/sounds/442964/",
+                "usedBy": [
+                      "dragon",
+                      "pixiu"
+                ],
+                "labels": [
+                      "龙/貔貅/白泽"
+                ],
                 "dur": 3,
                 "lufs": -17.99,
                 "truePeak": -4.83,
@@ -847,6 +1078,13 @@
                 "title": "Dragon: Several roars, growls and snarls",
                 "source": "Freesound",
                 "sourceUrl": "https://freesound.org/people/Breviceps/sounds/479380/",
+                "usedBy": [
+                      "dragon",
+                      "baize"
+                ],
+                "labels": [
+                      "龙/貔貅/白泽"
+                ],
                 "dur": 3,
                 "lufs": -18.03,
                 "truePeak": -4.02,
@@ -860,6 +1098,12 @@
                 "title": "Flamingo Calls, Ensemble, A.wav",
                 "source": "Freesound",
                 "sourceUrl": "https://freesound.org/people/InspectorJ/sounds/400860/",
+                "usedBy": [
+                      "flamingo"
+                ],
+                "labels": [
+                      "火烈鸟"
+                ],
                 "dur": 2,
                 "lufs": -19.06,
                 "truePeak": -3.2,
@@ -873,6 +1117,12 @@
                 "title": "The call of the flamingo",
                 "source": "Freesound",
                 "sourceUrl": "https://freesound.org/people/linlinn/sounds/848862/",
+                "usedBy": [
+                      "flamingo"
+                ],
+                "labels": [
+                      "火烈鸟"
+                ],
                 "dur": 2,
                 "lufs": -17.99,
                 "truePeak": -3.88,
@@ -886,6 +1136,12 @@
                 "title": "Flaming różowy",
                 "source": "iNaturalist",
                 "sourceUrl": "https://www.inaturalist.org/observations/328920336",
+                "usedBy": [
+                      "flamingo"
+                ],
+                "labels": [
+                      "火烈鸟"
+                ],
                 "dur": 2,
                 "lufs": -19.96,
                 "truePeak": -3.2,
@@ -899,6 +1155,12 @@
                 "title": "2019209_flamingos.wav",
                 "source": "Freesound",
                 "sourceUrl": "https://freesound.org/s/496891/",
+                "usedBy": [
+                      "flamingo"
+                ],
+                "labels": [
+                      "火烈鸟"
+                ],
                 "dur": 12,
                 "lufs": -17.11,
                 "truePeak": -1.78,
@@ -912,6 +1174,12 @@
                 "title": "Greater Flamingo — flight calls",
                 "source": "xeno-canto",
                 "sourceUrl": "https://xeno-canto.org/797505",
+                "usedBy": [
+                      "flamingo"
+                ],
+                "labels": [
+                      "火烈鸟"
+                ],
                 "dur": 12,
                 "lufs": -16.61,
                 "truePeak": -1.65,
@@ -925,6 +1193,12 @@
                 "title": "Fox Call - Cleanup of sound by Janneair",
                 "source": "Freesound",
                 "sourceUrl": "https://freesound.org/people/qubodup/sounds/192782/",
+                "usedBy": [
+                      "fox"
+                ],
+                "labels": [
+                      "狐狸"
+                ],
                 "dur": 1.8,
                 "lufs": -17.98,
                 "truePeak": -7.8,
@@ -938,6 +1212,12 @@
                 "title": "Fox Screams",
                 "source": "Freesound",
                 "sourceUrl": "https://freesound.org/people/Soundburst/sounds/634005/",
+                "usedBy": [
+                      "fox"
+                ],
+                "labels": [
+                      "狐狸"
+                ],
                 "dur": 1.8,
                 "lufs": -17.92,
                 "truePeak": -6.25,
@@ -951,6 +1231,12 @@
                 "title": "Fox Mating Call",
                 "source": "Freesound",
                 "sourceUrl": "https://freesound.org/people/Bpianoholic/sounds/511000/",
+                "usedBy": [
+                      "fox"
+                ],
+                "labels": [
+                      "狐狸"
+                ],
                 "dur": 1.8,
                 "lufs": -18,
                 "truePeak": -4.64,
@@ -964,6 +1250,12 @@
                 "title": "Renard roux",
                 "source": "iNaturalist",
                 "sourceUrl": "https://www.inaturalist.org/observations/342879989",
+                "usedBy": [
+                      "fox"
+                ],
+                "labels": [
+                      "狐狸"
+                ],
                 "dur": 1.8,
                 "lufs": -18.92,
                 "truePeak": -3.98,
@@ -977,6 +1269,12 @@
                 "title": "Frog.ogg",
                 "source": "Freesound",
                 "sourceUrl": "https://freesound.org/people/egomassive/sounds/536759/",
+                "usedBy": [
+                      "frog"
+                ],
+                "labels": [
+                      "青蛙"
+                ],
                 "dur": 0.57,
                 "lufs": -18.14,
                 "truePeak": -7.48,
@@ -990,6 +1288,12 @@
                 "title": "Coqui.aif",
                 "source": "Freesound",
                 "sourceUrl": "https://freesound.org/people/dashatron/sounds/191524/",
+                "usedBy": [
+                      "frog"
+                ],
+                "labels": [
+                      "青蛙"
+                ],
                 "dur": 0.9,
                 "lufs": -17.98,
                 "truePeak": -6.98,
@@ -1003,6 +1307,12 @@
                 "title": "tree frog duett.mp3",
                 "source": "Freesound",
                 "sourceUrl": "https://freesound.org/people/reinsamba/sounds/15691/",
+                "usedBy": [
+                      "frog"
+                ],
+                "labels": [
+                      "青蛙"
+                ],
                 "dur": 0.9,
                 "lufs": -18.05,
                 "truePeak": -6.09,
@@ -1016,6 +1326,12 @@
                 "title": "200703101950PacificChorusFrogsSoloNR.wav",
                 "source": "Freesound",
                 "sourceUrl": "https://freesound.org/people/daveincamas/sounds/32807/",
+                "usedBy": [
+                      "frog"
+                ],
+                "labels": [
+                      "青蛙"
+                ],
                 "dur": 0.9,
                 "lufs": -17.96,
                 "truePeak": -7.17,
@@ -1029,6 +1345,12 @@
                 "title": "Frog Croak 14",
                 "source": "SFXMint",
                 "sourceUrl": "https://sfxmint.com/sets/animal-calls",
+                "usedBy": [
+                      "frog"
+                ],
+                "labels": [
+                      "青蛙"
+                ],
                 "dur": 0.9,
                 "lufs": -17.96,
                 "truePeak": -3.21,
@@ -1042,6 +1364,12 @@
                 "title": "frog croaking field recording",
                 "source": "Freesound",
                 "sourceUrl": "https://freesound.org/people/Garuda1982/sounds/428536/",
+                "usedBy": [
+                      "frog"
+                ],
+                "labels": [
+                      "青蛙"
+                ],
                 "dur": 12,
                 "lufs": -14.17,
                 "truePeak": -1.76,
@@ -1055,6 +1383,12 @@
                 "title": "Green frog, croaking.wav",
                 "source": "Freesound",
                 "sourceUrl": "https://freesound.org/people/SpliceSound/sounds/188195/",
+                "usedBy": [
+                      "frog"
+                ],
+                "labels": [
+                      "青蛙"
+                ],
                 "dur": 12,
                 "lufs": -16.5,
                 "truePeak": -1.73,
@@ -1068,6 +1402,12 @@
                 "title": "hedgehog.mp3",
                 "source": "Freesound",
                 "sourceUrl": "https://freesound.org/people/soundmary/sounds/194938/",
+                "usedBy": [
+                      "hedgehog"
+                ],
+                "labels": [
+                      "刺猬"
+                ],
                 "dur": 2,
                 "lufs": -22.36,
                 "truePeak": -3.2,
@@ -1081,6 +1421,12 @@
                 "title": "Hedgehog.wav",
                 "source": "Freesound",
                 "sourceUrl": "https://freesound.org/people/juskiddink/sounds/58289/",
+                "usedBy": [
+                      "hedgehog"
+                ],
+                "labels": [
+                      "刺猬"
+                ],
                 "dur": 2,
                 "lufs": -22.15,
                 "truePeak": -3.73,
@@ -1094,6 +1440,12 @@
                 "title": "Hedgehog smell and run.mp3",
                 "source": "Freesound",
                 "sourceUrl": "https://freesound.org/people/ffdown/sounds/570301/",
+                "usedBy": [
+                      "hedgehog"
+                ],
+                "labels": [
+                      "刺猬"
+                ],
                 "dur": 2,
                 "lufs": -22.02,
                 "truePeak": -4.92,
@@ -1107,6 +1459,12 @@
                 "title": "Long-tailed Tit — call, duet",
                 "source": "xeno-canto",
                 "sourceUrl": "https://xeno-canto.org/701097",
+                "usedBy": [
+                      "longtail"
+                ],
+                "labels": [
+                      "北长尾山雀"
+                ],
                 "dur": 12,
                 "lufs": -18.87,
                 "truePeak": -4,
@@ -1120,6 +1478,12 @@
                 "title": "Long-tailed Tit — call",
                 "source": "xeno-canto",
                 "sourceUrl": "https://xeno-canto.org/1186424",
+                "usedBy": [
+                      "longtail"
+                ],
+                "labels": [
+                      "北长尾山雀"
+                ],
                 "dur": 12,
                 "lufs": -17.46,
                 "truePeak": -1.02,
@@ -1133,6 +1497,12 @@
                 "title": "Long-tailed Tit",
                 "source": "iNaturalist",
                 "sourceUrl": "https://www.inaturalist.org/observations/360941705",
+                "usedBy": [
+                      "longtail"
+                ],
+                "labels": [
+                      "北长尾山雀"
+                ],
                 "dur": 1.8,
                 "lufs": -18.31,
                 "truePeak": -4.65,
@@ -1146,6 +1516,12 @@
                 "title": "Длиннохвостая синица",
                 "source": "iNaturalist",
                 "sourceUrl": "https://www.inaturalist.org/observations/244132625",
+                "usedBy": [
+                      "longtail"
+                ],
+                "labels": [
+                      "北长尾山雀"
+                ],
                 "dur": 1.8,
                 "lufs": -19.2,
                 "truePeak": -3.2,
@@ -1159,6 +1535,12 @@
                 "title": "grey heron calls at night on lake",
                 "source": "Freesound",
                 "sourceUrl": "https://freesound.org/people/Garuda1982/sounds/645157/",
+                "usedBy": [
+                      "nightHeron"
+                ],
+                "labels": [
+                      "夜鹭"
+                ],
                 "dur": 2.2,
                 "lufs": -18.45,
                 "truePeak": -3.2,
@@ -1172,6 +1554,12 @@
                 "title": "Black-crowned Night Heron — nocturnal flight call",
                 "source": "xeno-canto",
                 "sourceUrl": "https://xeno-canto.org/1186284",
+                "usedBy": [
+                      "nightHeron"
+                ],
+                "labels": [
+                      "夜鹭"
+                ],
                 "dur": 1.15,
                 "lufs": -12.46,
                 "truePeak": -2.62,
@@ -1185,6 +1573,12 @@
                 "title": "Black-crowned Night Heron — nocturnal flight call",
                 "source": "xeno-canto",
                 "sourceUrl": "https://xeno-canto.org/1160373",
+                "usedBy": [
+                      "nightHeron"
+                ],
+                "labels": [
+                      "夜鹭"
+                ],
                 "dur": 9.29,
                 "lufs": -17.74,
                 "truePeak": -1.76,
@@ -1198,6 +1592,12 @@
                 "title": "Rabbit oinks and squeaks",
                 "source": "Freesound",
                 "sourceUrl": "https://freesound.org/people/kessir/sounds/372075/",
+                "usedBy": [
+                      "rabbit"
+                ],
+                "labels": [
+                      "兔子"
+                ],
                 "dur": 1.5,
                 "lufs": -19.6,
                 "truePeak": -3.2,
@@ -1211,6 +1611,12 @@
                 "title": "Domestic Rabbit",
                 "source": "iNaturalist",
                 "sourceUrl": "https://www.inaturalist.org/observations/265568116",
+                "usedBy": [
+                      "rabbit"
+                ],
+                "labels": [
+                      "兔子"
+                ],
                 "dur": 1.5,
                 "lufs": -17.24,
                 "truePeak": -3.81,
@@ -1224,6 +1630,12 @@
                 "title": "1165black_ redstart.wav",
                 "source": "Freesound",
                 "sourceUrl": "https://freesound.org/people/reinsamba/sounds/56302/",
+                "usedBy": [
+                      "redstart"
+                ],
+                "labels": [
+                      "红尾水鸲"
+                ],
                 "dur": 2.5,
                 "lufs": -18.03,
                 "truePeak": -7.92,
@@ -1237,6 +1649,12 @@
                 "title": "Feeding chicks - Blackredstart aka Rougequeue noir",
                 "source": "Freesound",
                 "sourceUrl": "https://freesound.org/people/Sadiquecat/sounds/740067/",
+                "usedBy": [
+                      "redstart"
+                ],
+                "labels": [
+                      "红尾水鸲"
+                ],
                 "dur": 2.5,
                 "lufs": -19.12,
                 "truePeak": -3.2,
@@ -1250,6 +1668,12 @@
                 "title": "Горихвістка чорна",
                 "source": "iNaturalist",
                 "sourceUrl": "https://www.inaturalist.org/observations/373109329",
+                "usedBy": [
+                      "redstart"
+                ],
+                "labels": [
+                      "红尾水鸲"
+                ],
                 "dur": 2.5,
                 "lufs": -18.02,
                 "truePeak": -5.85,
@@ -1263,6 +1687,12 @@
                 "title": "Sheep bleating",
                 "source": "Freesound",
                 "sourceUrl": "https://freesound.org/people/zachrau/sounds/362283/",
+                "usedBy": [
+                      "sheep"
+                ],
+                "labels": [
+                      "小羊"
+                ],
                 "dur": 1.2,
                 "lufs": -18.13,
                 "truePeak": -9.79,
@@ -1276,6 +1706,12 @@
                 "title": "sheep bleat outdoors",
                 "source": "Freesound",
                 "sourceUrl": "https://freesound.org/people/Yuval/sounds/210511/",
+                "usedBy": [
+                      "sheep"
+                ],
+                "labels": [
+                      "小羊"
+                ],
                 "dur": 1.2,
                 "lufs": -18.4,
                 "truePeak": -5.25,
@@ -1289,6 +1725,12 @@
                 "title": "Sheeheep.wav",
                 "source": "Freesound",
                 "sourceUrl": "https://freesound.org/people/HerbertBoland/sounds/75190/",
+                "usedBy": [
+                      "sheep"
+                ],
+                "labels": [
+                      "小羊"
+                ],
                 "dur": 1.2,
                 "lufs": -18.08,
                 "truePeak": -5.27,
@@ -1302,6 +1744,12 @@
                 "title": "Sheep_Bleat.wav",
                 "source": "Freesound",
                 "sourceUrl": "https://freesound.org/people/n_audioman/sounds/321967/",
+                "usedBy": [
+                      "sheep"
+                ],
+                "labels": [
+                      "小羊"
+                ],
                 "dur": 1.2,
                 "lufs": -18,
                 "truePeak": -6.48,
@@ -1315,6 +1763,12 @@
                 "title": "Baa",
                 "source": "OpenGameArt",
                 "sourceUrl": "https://opengameart.org/content/baby-animals-sounds-pack",
+                "usedBy": [
+                      "sheep"
+                ],
+                "labels": [
+                      "小羊"
+                ],
                 "dur": 0.997,
                 "lufs": -18.09,
                 "truePeak": -10,
@@ -1328,6 +1782,12 @@
                 "title": "Squirrel Chatter 4 3 2016 Lincoln Nebraska .mp3",
                 "source": "Freesound",
                 "sourceUrl": "https://freesound.org/people/bmccoy2/sounds/342105/",
+                "usedBy": [
+                      "squirrel"
+                ],
+                "labels": [
+                      "松鼠"
+                ],
                 "dur": 2.5,
                 "lufs": -20.12,
                 "truePeak": -3.2,
@@ -1341,6 +1801,12 @@
                 "title": "Red_Squirrel_chatter.wav",
                 "source": "Freesound",
                 "sourceUrl": "https://freesound.org/people/philberts/sounds/111393/",
+                "usedBy": [
+                      "squirrel"
+                ],
+                "labels": [
+                      "松鼠"
+                ],
                 "dur": 2.5,
                 "lufs": -18.07,
                 "truePeak": -3.95,
@@ -1354,6 +1820,12 @@
                 "title": "squirrel chatter w city.wav",
                 "source": "Freesound",
                 "sourceUrl": "https://freesound.org/people/Littlebrojay/sounds/195440/",
+                "usedBy": [
+                      "squirrel"
+                ],
+                "labels": [
+                      "松鼠"
+                ],
                 "dur": 2.5,
                 "lufs": -18,
                 "truePeak": -5.16,
@@ -1367,6 +1839,12 @@
                 "title": "Squirrel, Grey alarm calls",
                 "source": "Freesound",
                 "sourceUrl": "https://freesound.org/people/genghisattenborough/sounds/744596/",
+                "usedBy": [
+                      "squirrel"
+                ],
+                "labels": [
+                      "松鼠"
+                ],
                 "dur": 12,
                 "lufs": -18.85,
                 "truePeak": -2.81,
@@ -1380,6 +1858,12 @@
                 "title": "Squirrel, cry call / squeal (Toronto backyard)",
                 "source": "Freesound",
                 "sourceUrl": "https://freesound.org/people/TRP/sounds/717582/",
+                "usedBy": [
+                      "squirrel"
+                ],
+                "labels": [
+                      "松鼠"
+                ],
                 "dur": 12,
                 "lufs": -18.16,
                 "truePeak": -4.23,
@@ -1393,6 +1877,12 @@
                 "title": "Red Squirrel chatter",
                 "source": "Freesound",
                 "sourceUrl": "https://freesound.org/people/philberts/sounds/111393/",
+                "usedBy": [
+                      "squirrel"
+                ],
+                "labels": [
+                      "松鼠"
+                ],
                 "dur": 12,
                 "lufs": -18.83,
                 "truePeak": -1.37,
@@ -1406,6 +1896,12 @@
                 "title": "Wolf Crying Howl",
                 "source": "Freesound",
                 "sourceUrl": "https://freesound.org/people/EminYILDIRIM/sounds/541282/",
+                "usedBy": [
+                      "wolf"
+                ],
+                "labels": [
+                      "狼"
+                ],
                 "dur": 4.28,
                 "lufs": -17.99,
                 "truePeak": -8.36,
@@ -1419,6 +1915,12 @@
                 "title": "Wren song close",
                 "source": "Freesound",
                 "sourceUrl": "https://freesound.org/people/Sacha.Julien/sounds/734533/",
+                "usedBy": [
+                      "wren"
+                ],
+                "labels": [
+                      "冬鹪鹩"
+                ],
                 "dur": 3,
                 "lufs": -18.32,
                 "truePeak": -3.2,
@@ -1431,7 +1933,13 @@
                 "author": "Coppersmith Barbet",
                 "title": "WinterWren1.wav",
                 "source": "Freesound",
-                "sourceUrl": "https://freesound.org/people/Coppersmith Barbet/sounds/33376/",
+                "sourceUrl": "https://freesound.org/people/Coppersmith%20Barbet/sounds/33376/",
+                "usedBy": [
+                      "wren"
+                ],
+                "labels": [
+                      "冬鹪鹩"
+                ],
                 "dur": 3,
                 "lufs": -18.08,
                 "truePeak": -7.75,
@@ -1445,6 +1953,12 @@
                 "title": "Winter Wren.mp3",
                 "source": "Freesound",
                 "sourceUrl": "https://freesound.org/people/wildear1/sounds/94845/",
+                "usedBy": [
+                      "wren"
+                ],
+                "labels": [
+                      "冬鹪鹩"
+                ],
                 "dur": 3,
                 "lufs": -18.06,
                 "truePeak": -7.42,
@@ -1458,6 +1972,12 @@
                 "title": "The song of an Eurasian Wren",
                 "source": "Freesound",
                 "sourceUrl": "https://freesound.org/people/hoshisato/sounds/853671/",
+                "usedBy": [
+                      "wren"
+                ],
+                "labels": [
+                      "冬鹪鹩"
+                ],
                 "dur": 3,
                 "lufs": -18.06,
                 "truePeak": -5.23,
@@ -1471,6 +1991,12 @@
                 "title": "winter wren wind leaves.wav",
                 "source": "Freesound",
                 "sourceUrl": "https://freesound.org/people/klankbeeld/sounds/265633/",
+                "usedBy": [
+                      "wren"
+                ],
+                "labels": [
+                      "冬鹪鹩"
+                ],
                 "dur": 3,
                 "lufs": -19.01,
                 "truePeak": -3.2,

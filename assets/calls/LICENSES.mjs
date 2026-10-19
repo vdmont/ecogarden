@@ -1676,7 +1676,7 @@ const ASSET_LICENSES = [
     "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
     "author": "Coppersmith Barbet",
     "source": "Freesound",
-    "sourceUrl": "https://freesound.org/people/Coppersmith Barbet/sounds/33376/",
+    "sourceUrl": "https://freesound.org/people/Coppersmith%20Barbet/sounds/33376/",
     "modified": "48kHz/16bit/单声道；LUFS 归一化；真峰值 ≤ −3.2 dBTP；首尾淡化",
     "durSec": 3,
     "lufs": -18.08,

@@ -32,7 +32,7 @@
 - “Горихвістка чорна” by Igor Balashov — https://www.inaturalist.org/observations/373109329
 - “Long-tailed Tit” by Jose Gutierrez Higa — https://www.inaturalist.org/observations/360941705
 - “Длиннохвостая синица” by Слава — https://www.inaturalist.org/observations/244132625
-- “WinterWren1.wav” by Coppersmith Barbet — https://freesound.org/people/Coppersmith Barbet/sounds/33376/
+- “WinterWren1.wav” by Coppersmith Barbet — https://freesound.org/people/Coppersmith%20Barbet/sounds/33376/
 - “Winter Wren.mp3” by wildear1 — https://freesound.org/people/wildear1/sounds/94845/
 - “winter wren wind leaves.wav” by klankbeeld — https://freesound.org/people/klankbeeld/sounds/265633/
 - “Flamingo Calls, Ensemble, A.wav” by InspectorJ — https://freesound.org/people/InspectorJ/sounds/400860/

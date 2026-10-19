@@ -629,6 +629,129 @@
       $('chapterGrid').append(wrap);
     });
   }
+  // ══════════════════ 鸣谢 / 版权说明 ══════════════════
+  //
+  // 一条都不能少：CC BY / CC BY-SA 漏署名就是违约。所以这一页的数据源是
+  // **生成出来的** EcoCalls.licenses（scripts/gen-sfxmap.cjs 从 music/manifest.json
+  // 生成），而不是手抄——手抄的那份迟早和素材对不上，而对不上时没有任何东西会报警。
+  function renderCredits(box) {
+    const section = (title, note) => {
+      const s = el('section', 'creditSec');
+      s.append(el('h3', '', title));
+      if (note) s.append(el('p', 'creditNote', note));
+      box.append(s);
+      return s;
+    };
+    const link = (li, href, text) => {
+      const a = document.createElement('a');
+      a.href = href;
+      a.target = '_blank';
+      a.rel = 'noopener noreferrer';
+      a.textContent = text;
+      li.append(document.createTextNode(' '));
+      li.append(a);
+    };
+
+    // —— 动物录音 ——
+    const lic = (globalThis.EcoCalls && globalThis.EcoCalls.licenses) || {};
+    const rows = Object.entries(lic);
+    const byLic = new Map();
+    for (const [key, v] of rows) {
+      if (!byLic.has(v.license)) byLic.set(v.license, []);
+      byLic.get(v.license).push([key, v]);
+    }
+    // 协议按名字排序，保证每次打开顺序一样（不排的话对象顺序会随素材增删变化）
+    const names = [...byLic.keys()].sort();
+    const labelOf = (v) => (v.labels || []).join('');
+    box.append(
+      el(
+        'p',
+        'creditSummary',
+        '动物录音共 ' +
+          rows.length +
+          ' 条：' +
+          names.map((n) => n + ' ' + byLic.get(n).length + ' 条').join('、') +
+          '。全部允许商用与再分发，不含任何仅限非商业（NC）的素材。',
+      ),
+    );
+
+    for (const name of names) {
+      const list = byLic
+        .get(name)
+        .sort((a, b) =>
+          labelOf(a[1]) === labelOf(b[1])
+            ? String(a[1].title).localeCompare(String(b[1].title))
+            : labelOf(a[1]).localeCompare(labelOf(b[1])),
+        );
+      const note = /^CC0/i.test(name)
+        ? 'CC0 不强制署名，我们仍然列在这里，方便追溯每一条声音的来历。'
+        : name.indexOf('SA') >= 0
+          ? '这一类要求署名。我们对音频做过裁剪与响度归一，属于改编，因此改编后的音频继续按同一协议共享。'
+          : '这一类要求署名，署名格式：作品名 — 作者 — 来源 — 协议。';
+      const s = section(name + '（' + list.length + ' 条）', note);
+      const ul = el('ul', 'creditList');
+      for (const [key, v] of list) {
+        const li = el('li');
+        li.append(el('b', '', String(v.title || key)));
+        li.append(document.createTextNode(' — ' + (v.author || '未署名')));
+        li.append(
+          el(
+            'span',
+            'creditMeta',
+            (v.source || '') +
+              (v.dur ? ' · ' + v.dur + ' 秒' : '') +
+              (v.labels && v.labels.length ? ' · 用在：' + v.labels.join('、') : ''),
+          ),
+        );
+        if (v.sourceUrl) link(li, v.sourceUrl, '原始页面');
+        li.append(el('span', 'creditLic', name));
+        ul.append(li);
+      }
+      s.append(ul);
+    }
+
+    // —— 背景音乐 ——
+    const bgm = GardenAudio.MUSIC_TRACKS || [];
+    const mus = section(
+      '背景音乐（' + bgm.length + ' 首）',
+      '这几首是本项目自己用 AI 生成工具作曲的，没有使用任何外部音乐素材，因此不涉及第三方署名。',
+    );
+    const mul = el('ul', 'creditList');
+    for (const t of bgm) {
+      const li = el('li');
+      li.append(el('b', '', String(t).split('/').pop()));
+      li.append(el('span', 'creditMeta', '本项目自制 · 随机连播'));
+      mul.append(li);
+    }
+    mus.append(mul);
+
+    // —— 界面反馈音 ——
+    section(
+      '界面反馈音',
+      '点按钮、达成成就、冒出爱心、吃东西这四种声音是游戏实时合成的，不是录音文件，不涉及外部素材与许可。',
+    );
+
+    // —— 软件 ——
+    const sw = section('软件', '');
+    const sul = el('ul', 'creditList');
+    const li = el('li');
+    li.append(el('b', '', 'Three.js'));
+    li.append(document.createTextNode(' — Three.js Authors'));
+    li.append(el('span', 'creditMeta', '3D 渲染'));
+    li.append(el('span', 'creditLic', 'MIT License'));
+    link(li, 'https://github.com/mrdoob/three.js/blob/dev/LICENSE', '许可证全文');
+    sul.append(li);
+    sw.append(sul);
+
+    box.append(
+      el(
+        'p',
+        'creditNote',
+        '离线版把音频内嵌在单个 HTML 里一起分发，并没有把音频文件单独拿出来提供下载。',
+      ),
+    );
+  }
+
   function renderAchievements() {
     $('achievementGrid').replaceChildren();
     for (const [id, title, description] of E.ACHIEVEMENTS) {
@@ -1141,6 +1264,27 @@
       panel.showModal();
     };
     $('closeSettings').onclick = () => panel.close();
+
+    // ══════════════════ 鸣谢 / 版权说明 ══════════════════
+    //
+    // 数据直接读 EcoCalls.licenses —— 那是 scripts/gen-sfxmap.cjs 从
+    // music/manifest.json 生成的。**不另抄一份**：抄一份就会出现
+    // 「台账里加了素材、页面上没署名」的漏署名，而漏一条是要违约的。
+    const creditPanel = document.createElement('dialog');
+    creditPanel.id = 'creditPanel';
+    creditPanel.innerHTML =
+      '<div class="dialogHead"><h2>鸣谢与版权</h2><button id="closeCredits">返回设置</button></div>' +
+      '<p class="intro">下面列的是游戏里用到的全部外部素材。' +
+      'CC BY / CC BY-SA 要求署名，格式按各协议的规定写全：作品名 — 作者 — 来源 — 许可，' +
+      '并附素材原始页面链接。我们对音频做过裁剪与响度归一，属于改编。</p>';
+    document.body.append(creditPanel);
+    renderCredits(creditPanel);
+    const creditsBtn = el('button', 'setting', '鸣谢与版权说明');
+    creditsBtn.id = 'creditsBtn';
+    creditsBtn.onclick = () => creditPanel.showModal();
+    panel.append(creditsBtn);
+    $('closeCredits').onclick = () => creditPanel.close();
+
     const auto = el('label', 'setting');
     auto.innerHTML = '<span>自动存档 · 每 10 秒</span><input type="checkbox" id="autosaveToggle">';
     $('saves').insertBefore(auto, $('saves').querySelector('.saveActions'));

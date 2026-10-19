@@ -56,7 +56,23 @@ for (const [type, s] of Object.entries(map.species)) {
 // 去重后的实际文件清单（多个物种可以共用同一条，比如 4 种猫分 5 条录音）
 const allFiles = [...new Set(Object.values(species).flatMap((s) => s.files))].sort();
 
-// 许可台账：只登记**实际用到的**文件
+// 许可台账：只登记**实际用到的**文件。
+//
+// usedBy（哪些物种会播这一条）和 label（中文物种名）是给游戏里那个
+// 「鸣谢 / 版权说明」页用的——那一页直接渲染这份数据，所以素材一增删，
+// 署名页自动跟着变，不会出现「台账里加了、页面上没写」的漏署名。
+const usedBy = {};
+for (const [type, s] of Object.entries(species)) {
+  for (const f of s.files) (usedBy[f] = usedBy[f] || []).push(type);
+}
+// 中文物种名：拿这个物种自己那条录音在 manifest 里登记的 species_cn。
+// ⚠ 不能去 usedBy 里按物种名找——那张表是「文件 → 物种」，方向反了。
+const speciesCn = new Map();
+for (const [type, s] of Object.entries(species)) {
+  const m = s.files.map((f) => manByKey.get(f.slice('assets/calls/'.length, -'.mp3'.length))).find(Boolean);
+  if (m && m.species_cn) speciesCn.set(type, m.species_cn);
+}
+
 const licenses = {};
 for (const f of allFiles) {
   const key = f.slice('assets/calls/'.length, -'.mp3'.length);
@@ -69,6 +85,8 @@ for (const f of allFiles) {
     title: m.title || '',
     source: m.source || '',
     sourceUrl: m.source_url || '',
+    usedBy: usedBy[f] || [],
+    labels: [...new Set((usedBy[f] || []).map((t) => speciesCn.get(t) || t))],
     dur: m.dur,
     lufs: m.lufs,
     truePeak: m.true_peak,
